@@ -3,7 +3,9 @@ package config
 import (
 	"github.com/BSick7/go-api/errors"
 	"github.com/gorilla/mux"
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac"
+	"github.com/nullstone-io/iac/services"
+	"github.com/nullstone-io/iac/services/oracle"
 	"github.com/nullstone-io/module/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,9 +15,16 @@ import (
 	"testing"
 )
 
+type FactoryDefaults struct {
+	OrgName string
+	StackId int64
+	BlockId int64
+	EnvId   int64
+}
+
 func TestParseEnvConfiguration(t *testing.T) {
 	providerType := "aws"
-	defaults := data.FactoryDefaults{
+	defaults := FactoryDefaults{
 		OrgName: "nullstone",
 		StackId: 123,
 		BlockId: 456,
@@ -171,7 +180,7 @@ func TestParseEnvConfiguration(t *testing.T) {
 							"TESTING": "abc123",
 							"BLAH":    "blahblahblah",
 						},
-						Capabilities: []CapabilityConfiguration{
+						Capabilities: []iac.CapabilityConfiguration{
 							{
 								ModuleSource:        "nullstone/aws-s3-cdn",
 								ModuleSourceVersion: &latest,
@@ -183,7 +192,7 @@ func TestParseEnvConfiguration(t *testing.T) {
 										"spa_mode": false,
 									},
 								},
-								Connections: map[string]core.ConnectionTarget{
+								Connections: map[string]iac.ConnectionTarget{
 									"subdomain": {
 										BlockName: subdomainName,
 									},
@@ -193,6 +202,7 @@ func TestParseEnvConfiguration(t *testing.T) {
 						},
 					},
 				},
+				Subdomains: map[string]SubdomainConfiguration{},
 			},
 			validationErrors: errors.ValidationErrors{},
 		},

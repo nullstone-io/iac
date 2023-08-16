@@ -1,7 +1,7 @@
 package overrides
 
 import (
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"testing"
@@ -26,7 +26,7 @@ func TestParseConfigurationOverrides(t *testing.T) {
 						ModuleSource: "nullstone/aws-s3-cdn",
 						Variables:    map[string]any{"enable_www": true},
 						Namespace:    &namespace,
-						Connections: map[string]core.ConnectionTarget{
+						Connections: map[string]iac.ConnectionTarget{
 							"subdomain": {
 								StackId:   0,
 								StackName: "",

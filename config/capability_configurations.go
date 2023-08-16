@@ -1,10 +1,11 @@
 package config
 
 import (
+	"github.com/nullstone-io/iac"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
-type CapabilityConfigurations []CapabilityConfiguration
+type CapabilityConfigurations []iac.CapabilityConfiguration
 
 func (s CapabilityConfigurations) Normalize(resolver *find.ResourceResolver) error {
 	for i, iacCap := range s {

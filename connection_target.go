@@ -1,4 +1,4 @@
-package core
+package iac
 
 import (
 	"fmt"
@@ -12,10 +12,10 @@ var _ yaml.Unmarshaler = &ConnectionTarget{}
 type ConnectionTarget types.ConnectionTarget
 
 type connectionTargetFull struct {
-	StackId int64 `yaml:"stack_id"`
-	//StackName string `yaml:"stack_name"`
-	EnvId *int64 `yaml:"env_id"`
-	//EnvName   string `yaml:"env_name"`
+	StackId   int64  `yaml:"stack_id"`
+	StackName string `yaml:"stack_name"`
+	EnvId     *int64 `yaml:"env_id"`
+	EnvName   string `yaml:"env_name"`
 	BlockName string `yaml:"block_name"`
 }
 
@@ -33,8 +33,8 @@ func (c *ConnectionTarget) UnmarshalYAML(node *yaml.Node) error {
 		if err := node.Decode(&tmp); err != nil {
 			return err
 		}
-		//c.StackName = tmp.StackName
-		//c.EnvName = tmp.EnvName
+		c.StackName = tmp.StackName
+		c.EnvName = tmp.EnvName
 		c.BlockName = tmp.BlockName
 		return nil
 	}

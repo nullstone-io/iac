@@ -2,7 +2,7 @@ package overrides
 
 import (
 	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/yaml.v3"
 )
@@ -79,9 +79,9 @@ func (a *ApplicationOverrides) Normalize(resolver *find.ResourceResolver) error 
 }
 
 type SubdomainOverrides struct {
-	Name        string                 `yaml:"-"`
-	Variables   map[string]any         `yaml:"vars"`
-	Connections core.ConnectionTargets `yaml:"connections"`
+	Name        string                `yaml:"-"`
+	Variables   map[string]any        `yaml:"vars"`
+	Connections iac.ConnectionTargets `yaml:"connections"`
 }
 
 func (s *SubdomainOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
@@ -90,5 +90,5 @@ func (s *SubdomainOverrides) Validate(resolver *find.ResourceResolver) (errors.V
 }
 
 func (s *SubdomainOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(s.Connections, resolver)
+	return iac.NormalizeConnectionTargets(s.Connections, resolver)
 }

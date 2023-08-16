@@ -1,0 +1,17 @@
+version: "0.1"
+apps:
+  acme-docs:
+    module: nullstone/aws-s3-site
+    vars:
+      enable_versioned_assets: false
+    environment:
+      TESTING: abc123
+      BLAH: blahblahblah
+    capabilities:
+      - module: nullstone/aws-postgres-access
+        vars:
+          database_name: "acme-docs"
+        connections:
+          postgres:
+            block_name: postgres
+        namespace: primary

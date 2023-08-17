@@ -10,6 +10,7 @@ import (
 type EnvConfiguration struct {
 	Version      string                            `yaml:"version" json:"version"`
 	Subdomains   map[string]SubdomainConfiguration `yaml:"subdomains" json:"subdomains"`
+	Datastores   map[string]DatastoreConfiguration `yaml:"datastores" json:"datastores"`
 	Applications map[string]AppConfiguration       `yaml:"apps" json:"apps"`
 }
 
@@ -54,6 +55,18 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	}
 	r.Subdomains = newSubdomains
 
+	newDatastores := make(map[string]DatastoreConfiguration)
+	for datastoreName, datastoreValue := range r.Datastores {
+		datastoreValue.Name = datastoreName
+		// set a default module version if not provided
+		if datastoreValue.ModuleSourceVersion == nil {
+			latest := "latest"
+			datastoreValue.ModuleSourceVersion = &latest
+		}
+		newDatastores[datastoreName] = datastoreValue
+	}
+	r.Datastores = newDatastores
+
 	return r, err
 }
 
@@ -61,6 +74,13 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.Vali
 	ve := errors.ValidationErrors{}
 	for _, subdomain := range e.Subdomains {
 		verrs, err := subdomain.Validate(resolver)
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
+	for _, datastore := range e.Datastores {
+		verrs, err := datastore.Validate(resolver)
 		if err != nil {
 			return ve, err
 		}
@@ -82,6 +102,12 @@ func (e *EnvConfiguration) Normalize(resolver *find.ResourceResolver) error {
 			return err
 		}
 		e.Subdomains[key] = subdomain
+	}
+	for key, datastore := range e.Datastores {
+		if err := datastore.Normalize(resolver); err != nil {
+			return err
+		}
+		e.Datastores[key] = datastore
 	}
 	for key, app := range e.Applications {
 		if err := app.Normalize(resolver); err != nil {

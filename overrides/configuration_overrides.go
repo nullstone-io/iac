@@ -11,12 +11,20 @@ type ConfigurationOverrides struct {
 	Version      string                          `yaml:"version"`
 	Applications map[string]ApplicationOverrides `yaml:"apps"`
 	Subdomains   map[string]SubdomainOverrides   `yaml:"subdomains"`
+	Datastores   map[string]DatastoreOverrides   `yaml:"datastores"`
 }
 
 func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
 	for _, subdomain := range c.Subdomains {
 		verrs, err := subdomain.Validate(resolver)
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
+	for _, datastore := range c.Datastores {
+		verrs, err := datastore.Validate(resolver)
 		if err != nil {
 			return ve, err
 		}
@@ -38,6 +46,12 @@ func (c *ConfigurationOverrides) Normalize(resolver *find.ResourceResolver) erro
 			return err
 		}
 		c.Subdomains[key] = subdomain
+	}
+	for key, datastore := range c.Datastores {
+		if err := datastore.Normalize(resolver); err != nil {
+			return err
+		}
+		c.Datastores[key] = datastore
 	}
 	for key, app := range c.Applications {
 		if err := app.Normalize(resolver); err != nil {
@@ -91,4 +105,19 @@ func (s *SubdomainOverrides) Validate(resolver *find.ResourceResolver) (errors.V
 
 func (s *SubdomainOverrides) Normalize(resolver *find.ResourceResolver) error {
 	return core.NormalizeConnectionTargets(s.Connections, resolver)
+}
+
+type DatastoreOverrides struct {
+	Name        string                 `yaml:"-"`
+	Variables   map[string]any         `yaml:"vars"`
+	Connections core.ConnectionTargets `yaml:"connections"`
+}
+
+func (d *DatastoreOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
+	// TODO: Implement: How do we validate if we don't have a module to resolve
+	return errors.ValidationErrors{}, nil
+}
+
+func (d *DatastoreOverrides) Normalize(resolver *find.ResourceResolver) error {
+	return core.NormalizeConnectionTargets(d.Connections, resolver)
 }

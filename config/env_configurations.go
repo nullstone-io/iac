@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac"
+	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/yaml.v3"
 )
@@ -28,7 +28,7 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 			latest := "latest"
 			appValue.ModuleSourceVersion = &latest
 		}
-		newCaps := make([]iac.CapabilityConfiguration, len(appValue.Capabilities))
+		newCaps := make([]core.CapabilityConfiguration, len(appValue.Capabilities))
 		for i, capValue := range appValue.Capabilities {
 			// set a default module version if not provided
 			if capValue.ModuleSourceVersion == nil {

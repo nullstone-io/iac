@@ -3,18 +3,18 @@ package config
 import (
 	"fmt"
 	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac"
+	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
 type SubdomainConfiguration struct {
 	Name string `yaml:"-" json:"name"`
 	// TODO: Implement DnsName in DesiredConfig
-	DnsName             string                `yaml:"dns_name" json:"dnsName"`
-	ModuleSource        string                `yaml:"module" json:"module"`
-	ModuleSourceVersion *string               `yaml:"module_version" json:"moduleVersion"`
-	Variables           map[string]any        `yaml:"vars" json:"vars"`
-	Connections         iac.ConnectionTargets `yaml:"connections" json:"connections"`
+	DnsName             string                 `yaml:"dns_name" json:"dnsName"`
+	ModuleSource        string                 `yaml:"module" json:"module"`
+	ModuleSourceVersion *string                `yaml:"module_version" json:"moduleVersion"`
+	Variables           map[string]any         `yaml:"vars" json:"vars"`
+	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
 }
 
 func (s SubdomainConfiguration) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
@@ -23,5 +23,5 @@ func (s SubdomainConfiguration) Validate(resolver *find.ResourceResolver) (error
 }
 
 func (s *SubdomainConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return iac.NormalizeConnectionTargets(s.Connections, resolver)
+	return core.NormalizeConnectionTargets(s.Connections, resolver)
 }

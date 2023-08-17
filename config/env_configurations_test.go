@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/BSick7/go-api/errors"
 	"github.com/gorilla/mux"
-	"github.com/nullstone-io/iac"
+	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/services"
 	"github.com/nullstone-io/iac/services/oracle"
 	"github.com/nullstone-io/module/config"
@@ -180,7 +180,7 @@ func TestParseEnvConfiguration(t *testing.T) {
 							"TESTING": "abc123",
 							"BLAH":    "blahblahblah",
 						},
-						Capabilities: []iac.CapabilityConfiguration{
+						Capabilities: []core.CapabilityConfiguration{
 							{
 								ModuleSource:        "nullstone/aws-s3-cdn",
 								ModuleSourceVersion: &latest,
@@ -192,7 +192,7 @@ func TestParseEnvConfiguration(t *testing.T) {
 										"spa_mode": false,
 									},
 								},
-								Connections: map[string]iac.ConnectionTarget{
+								Connections: map[string]core.ConnectionTarget{
 									"subdomain": {
 										BlockName: subdomainName,
 									},
@@ -346,7 +346,7 @@ func TestParseEnvConfiguration(t *testing.T) {
 			}
 			sr := &find.StackResolver{
 				ApiClient:           apiHub.Client(defaults.OrgName),
-				Stack:               types.Stack{Name: "core"},
+				Stack:               types.Stack{Name: "core", ProviderType: providerType},
 				PreviewsSharedEnvId: 0,
 				EnvsById:            map[int64]types.Environment{},
 				EnvsByName:          map[string]types.Environment{},
@@ -354,12 +354,11 @@ func TestParseEnvConfiguration(t *testing.T) {
 				BlocksByName:        blocksByName,
 			}
 			resolver := &find.ResourceResolver{
-				ApiClient:       apiHub.Client(defaults.OrgName),
-				CurStackId:      defaults.StackId,
-				CurEnvId:        defaults.EnvId,
-				CurProviderType: providerType,
-				StacksById:      map[int64]*find.StackResolver{defaults.StackId: sr},
-				StacksByName:    map[string]*find.StackResolver{"core": sr},
+				ApiClient:    apiHub.Client(defaults.OrgName),
+				CurStackId:   defaults.StackId,
+				CurEnvId:     defaults.EnvId,
+				StacksById:   map[int64]*find.StackResolver{defaults.StackId: sr},
+				StacksByName: map[string]*find.StackResolver{"core": sr},
 			}
 			ve, err := got.Validate(resolver)
 			require.NoError(t, err, "unexpected error")

@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac"
+	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
@@ -38,7 +38,7 @@ func (a AppConfiguration) GetCapabilities(orgName string, stackId, blockId, envI
 			target := types.ConnectionTarget{}
 			// each connection must have a block_name to identify which block it is connected to
 			if conn.BlockName == "" {
-				return nil, iac.InvalidConfigurationError{fmt.Errorf("The connection (%s) must have a block_name to identify which block it is connected to.", key)}
+				return nil, core.InvalidConfigurationError{fmt.Errorf("The connection (%s) must have a block_name to identify which block it is connected to.", key)}
 			}
 			target.BlockName = conn.BlockName
 			// each connection must also have a stack_id

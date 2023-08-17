@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac"
+	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
@@ -13,7 +13,7 @@ func ValidateCapabilities(resolver *find.ResourceResolver, path string, capabili
 	ve := errors.ValidationErrors{}
 	for i, iacCap := range capabilities {
 		capPath := fmt.Sprintf("%s.capabilities[%d]", path, i)
-		verrs, err := iac.ValidateCapability(resolver, capPath, iacCap, string(subcategory))
+		verrs, err := core.ValidateCapability(resolver, capPath, iacCap, string(subcategory))
 		if err != nil {
 			return ve, err
 		}

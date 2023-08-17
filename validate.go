@@ -87,7 +87,11 @@ func ValidateConnection(resolver *find.ResourceResolver, path string, connName s
 
 func ValidateCapability(resolver *find.ResourceResolver, path string, iacCap CapabilityConfiguration, subcategory string) (errors.ValidationErrors, error) {
 	// ensure the module is a capability module and supports the provider type (e.g. aws, gcp, azure)
-	contract := fmt.Sprintf("capability/%s/*", resolver.CurProviderType)
+	providerType, err := resolver.ResolveCurProviderType()
+	if err != nil {
+		return nil, fmt.Errorf("unable to resolve current provider type: %w", err)
+	}
+	contract := fmt.Sprintf("capability/%s/*", providerType)
 	m, mv, verrs, err := ResolveModule(resolver, path, iacCap.ModuleSource, *iacCap.ModuleSourceVersion, contract)
 	if err != nil {
 		return nil, err

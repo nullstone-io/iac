@@ -7,7 +7,8 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/nullstone-io/module v0.2.9
 	github.com/stretchr/testify v1.8.4
-	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20230815015432-9628c438921a
+	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20230817163215-54dbd5b26d4d
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -25,5 +26,4 @@ require (
 	github.com/zclconf/go-cty v1.6.1 // indirect
 	golang.org/x/mod v0.5.1 // indirect
 	golang.org/x/text v0.3.2 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

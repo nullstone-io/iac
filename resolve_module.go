@@ -6,7 +6,6 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"log"
 	"strings"
 )
 
@@ -20,13 +19,11 @@ func ResolveModule(resolver *find.ResourceResolver, iacPath, moduleSource, modul
 		return nil, nil, errors.ValidationErrors{InvalidModuleFormatError(fmt.Sprintf("%s.module", iacPath), moduleSource, err)}, nil
 	}
 	// TODO: Add support for ms.Host
-	log.Printf("DEBUG: fetching module (orgName=%s moduleName=%s)", ms.OrgName, ms.ModuleName)
 	m, err := resolver.ApiClient.Modules().Get(ms.OrgName, ms.ModuleName)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to validate module (%s): module lookup failed: %w", moduleSource, err)
 	}
 	if m == nil {
-		log.Printf("DEBUG: module not found")
 		return nil, nil, errors.ValidationErrors{MissingModuleError(iacPath, moduleSource)}, nil
 	}
 	mcn1, err := types.ParseModuleContractName(contract)

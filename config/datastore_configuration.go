@@ -15,9 +15,9 @@ type DatastoreConfiguration struct {
 	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
 }
 
-func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
+func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
 	yamlPath := fmt.Sprintf("datastores.%s", d.Name)
-	return ValidateBlock(resolver, yamlPath, "datastore/*/*", d.ModuleSource, *d.ModuleSourceVersion, d.Variables, d.Connections, nil)
+	return ValidateBlock(resolver, configBlocks, yamlPath, "datastore/*/*", d.ModuleSource, *d.ModuleSourceVersion, d.Variables, d.Connections, nil)
 }
 
 func (d *DatastoreConfiguration) Normalize(resolver *find.ResourceResolver) error {

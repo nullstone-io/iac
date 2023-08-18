@@ -25,7 +25,7 @@ func ValidateVariables(path string, variables map[string]any, expectedVariables 
 }
 
 // ValidateConnections performs validation on all IaC connections by matching them against connections in the module
-func ValidateConnections(resolver *find.ResourceResolver, path string, connections ConnectionTargets, manifestConnections map[string]config.Connection, moduleName string) (errors.ValidationErrors, error) {
+func ValidateConnections(resolver *find.ResourceResolver, configBlocks []BlockConfiguration, path string, connections ConnectionTargets, manifestConnections map[string]config.Connection, moduleName string) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
 	for key, conn := range connections {
 		conPath := fmt.Sprintf("%s.connections.%s", path, key)
@@ -34,7 +34,7 @@ func ValidateConnections(resolver *find.ResourceResolver, path string, connectio
 			ve = append(ve, ConnectionDoesNotExistError(path, key, moduleName))
 			continue
 		}
-		verrs, err := ValidateConnection(resolver, conPath, key, conn, manifestConnection, moduleName)
+		verrs, err := ValidateConnection(resolver, configBlocks, conPath, key, conn, manifestConnection, moduleName)
 		if err != nil {
 			log.Printf("unable to validate (%s) connection (%s): %s\n", moduleName, key, err)
 			return ve, err
@@ -48,26 +48,30 @@ func ValidateConnections(resolver *find.ResourceResolver, path string, connectio
 //  1. Verifies that a connection specified in IaC exists in the module
 //  2. Resolves the connection's target (i.e. block)
 //  3. Verifies the block matches the connection contract
-func ValidateConnection(resolver *find.ResourceResolver, path string, connName string, connection ConnectionTarget, manifestConnection config.Connection, moduleName string) (errors.ValidationErrors, error) {
-	block, err := resolver.FindBlock(types.ConnectionTarget(connection))
-	if err != nil {
-		if find.IsMissingResource(err) {
-			return errors.ValidationErrors{MissingConnectionTargetError(path, err)}, nil
+func ValidateConnection(resolver *find.ResourceResolver, configBlocks []BlockConfiguration, path string, connName string, connection ConnectionTarget, manifestConnection config.Connection, moduleName string) (errors.ValidationErrors, error) {
+	found := findBlock(connection.BlockName, configBlocks)
+	if found == nil {
+		block, err := resolver.FindBlock(types.ConnectionTarget(connection))
+		if err != nil {
+			if find.IsMissingResource(err) {
+				return errors.ValidationErrors{MissingConnectionTargetError(path, err)}, nil
+			}
+			return nil, err
 		}
-		return nil, err
+		found = &BlockConfiguration{Name: block.Name, ModuleSource: block.ModuleSource, ModuleSourceVersion: &block.ModuleSourceVersion}
 	}
 
 	mcn1, mcnErr := types.ParseModuleContractName(manifestConnection.Contract)
 	if mcnErr != nil {
 		return errors.ValidationErrors{InvalidConnectionContractError(path, connName, manifestConnection.Contract, moduleName)}, nil
 	}
-	ms, err := artifacts.ParseSource(block.ModuleSource)
+	ms, err := artifacts.ParseSource(found.ModuleSource)
 	if err != nil {
-		return errors.ValidationErrors{InvalidModuleFormatError(path, block.ModuleSource, err)}, nil
+		return errors.ValidationErrors{InvalidModuleFormatError(path, found.ModuleSource, err)}, nil
 	}
 	m, mErr := resolver.ApiClient.Modules().Get(ms.OrgName, ms.ModuleName)
 	if mErr != nil {
-		return nil, fmt.Errorf("module lookup failed (%s): %w", block.ModuleSource, mErr)
+		return nil, fmt.Errorf("module lookup failed (%s): %w", found.ModuleSource, mErr)
 	}
 	if mcnErr == nil && m != nil {
 		mcn2 := types.ModuleContractName{
@@ -78,14 +82,23 @@ func ValidateConnection(resolver *find.ResourceResolver, path string, connName s
 			Subplatform: m.Subplatform,
 		}
 		if ok := mcn1.Match(mcn2); !ok {
-			return errors.ValidationErrors{MismatchedConnectionContractError(path, block, manifestConnection)}, nil
+			return errors.ValidationErrors{MismatchedConnectionContractError(path, *found, manifestConnection)}, nil
 		}
 	}
 
 	return nil, nil
 }
 
-func ValidateCapability(resolver *find.ResourceResolver, path string, iacCap CapabilityConfiguration, subcategory string) (errors.ValidationErrors, error) {
+func findBlock(name string, configBlocks []BlockConfiguration) *BlockConfiguration {
+	for _, n := range configBlocks {
+		if name == n.Name {
+			return &n
+		}
+	}
+	return nil
+}
+
+func ValidateCapability(resolver *find.ResourceResolver, configBlocks []BlockConfiguration, path string, iacCap CapabilityConfiguration, subcategory string) (errors.ValidationErrors, error) {
 	// ensure the module is a capability module and supports the provider type (e.g. aws, gcp, azure)
 	providerType, err := resolver.ResolveCurProviderType()
 	if err != nil {
@@ -123,7 +136,7 @@ func ValidateCapability(resolver *find.ResourceResolver, path string, iacCap Cap
 		verrs := ValidateVariables(path, iacCap.Variables, mv.Manifest.Variables, moduleName)
 		ve = append(ve, verrs...)
 
-		verrs, err := ValidateConnections(resolver, path, iacCap.Connections, mv.Manifest.Connections, moduleName)
+		verrs, err := ValidateConnections(resolver, configBlocks, path, iacCap.Connections, mv.Manifest.Connections, moduleName)
 		if err != nil {
 			return ve, nil
 		}

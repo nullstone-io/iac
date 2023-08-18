@@ -73,27 +73,41 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
 	for _, subdomain := range e.Subdomains {
-		verrs, err := subdomain.Validate(resolver)
+		verrs, err := subdomain.Validate(resolver, e.blocksFromConfig())
 		if err != nil {
 			return ve, err
 		}
 		ve = append(ve, verrs...)
 	}
 	for _, datastore := range e.Datastores {
-		verrs, err := datastore.Validate(resolver)
+		verrs, err := datastore.Validate(resolver, e.blocksFromConfig())
 		if err != nil {
 			return ve, err
 		}
 		ve = append(ve, verrs...)
 	}
 	for _, app := range e.Applications {
-		verrs, err := app.Validate(resolver)
+		verrs, err := app.Validate(resolver, e.blocksFromConfig())
 		if err != nil {
 			return ve, err
 		}
 		ve = append(ve, verrs...)
 	}
 	return ve, nil
+}
+
+func (e EnvConfiguration) blocksFromConfig() []core.BlockConfiguration {
+	result := make([]core.BlockConfiguration, 0)
+	for name, sub := range e.Subdomains {
+		result = append(result, core.BlockConfiguration{Name: name, ModuleSource: sub.ModuleSource, ModuleSourceVersion: sub.ModuleSourceVersion})
+	}
+	for name, ds := range e.Datastores {
+		result = append(result, core.BlockConfiguration{Name: name, ModuleSource: ds.ModuleSource, ModuleSourceVersion: ds.ModuleSourceVersion})
+	}
+	for name, app := range e.Applications {
+		result = append(result, core.BlockConfiguration{Name: name, ModuleSource: app.ModuleSource, ModuleSourceVersion: app.ModuleSourceVersion})
+	}
+	return result
 }
 
 func (e *EnvConfiguration) Normalize(resolver *find.ResourceResolver) error {

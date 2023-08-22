@@ -7,7 +7,7 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
-func ValidateBlock(resolver *find.ResourceResolver, yamlPath, contract, moduleSource, moduleSourceVersion string, variables map[string]any, connections core.ConnectionTargets, capabilities CapabilityConfigurations) (errors.ValidationErrors, error) {
+func ValidateBlock(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration, yamlPath, contract, moduleSource, moduleSourceVersion string, variables map[string]any, connections core.ConnectionTargets, capabilities CapabilityConfigurations) (errors.ValidationErrors, error) {
 	m, mv, verrs, err := core.ResolveModule(resolver, yamlPath, moduleSource, moduleSourceVersion, contract)
 	if err != nil {
 		return nil, err
@@ -21,7 +21,7 @@ func ValidateBlock(resolver *find.ResourceResolver, yamlPath, contract, moduleSo
 	ve = append(ve, core.ValidateVariables(yamlPath, variables, mv.Manifest.Variables, moduleName)...)
 
 	if connections != nil {
-		verrs, err := core.ValidateConnections(resolver, yamlPath, connections, mv.Manifest.Connections, moduleName)
+		verrs, err := core.ValidateConnections(resolver, configBlocks, yamlPath, connections, mv.Manifest.Connections, moduleName)
 		if err != nil {
 			return ve, err
 		}
@@ -29,7 +29,7 @@ func ValidateBlock(resolver *find.ResourceResolver, yamlPath, contract, moduleSo
 	}
 
 	if capabilities != nil {
-		verrs, err := ValidateCapabilities(resolver, yamlPath, capabilities, m.Subcategory)
+		verrs, err := ValidateCapabilities(resolver, configBlocks, yamlPath, capabilities, m.Subcategory)
 		if err != nil {
 			return ve, err
 		}

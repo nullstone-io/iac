@@ -59,7 +59,7 @@ func (a *AppConfiguration) Normalize(resolver *find.ResourceResolver) error {
 	return a.Capabilities.Normalize(resolver)
 }
 
-func (a AppConfiguration) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
+func (a AppConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
 	yamlPath := fmt.Sprintf("apps.%s", a.Name)
-	return ValidateBlock(resolver, yamlPath, "app/*/*", a.ModuleSource, *a.ModuleSourceVersion, a.Variables, nil, a.Capabilities)
+	return ValidateBlock(resolver, configBlocks, yamlPath, "app/*/*", a.ModuleSource, *a.ModuleSourceVersion, a.Variables, nil, a.Capabilities)
 }

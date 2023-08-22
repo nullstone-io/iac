@@ -9,11 +9,11 @@ import (
 )
 
 // ValidateCapabilities performs validation on a all IaC capabilities within an application
-func ValidateCapabilities(resolver *find.ResourceResolver, path string, capabilities CapabilityConfigurations, subcategory types.SubcategoryName) (errors.ValidationErrors, error) {
+func ValidateCapabilities(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration, path string, capabilities CapabilityConfigurations, subcategory types.SubcategoryName) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
 	for i, iacCap := range capabilities {
 		capPath := fmt.Sprintf("%s.capabilities[%d]", path, i)
-		verrs, err := core.ValidateCapability(resolver, capPath, iacCap, string(subcategory))
+		verrs, err := core.ValidateCapability(resolver, configBlocks, capPath, iacCap, string(subcategory))
 		if err != nil {
 			return ve, err
 		}

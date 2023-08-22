@@ -10,6 +10,7 @@ import (
 type EnvConfiguration struct {
 	Version      string                            `yaml:"version" json:"version"`
 	Subdomains   map[string]SubdomainConfiguration `yaml:"subdomains" json:"subdomains"`
+	Datastores   map[string]DatastoreConfiguration `yaml:"datastores" json:"datastores"`
 	Applications map[string]AppConfiguration       `yaml:"apps" json:"apps"`
 }
 
@@ -54,20 +55,39 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	}
 	r.Subdomains = newSubdomains
 
+	newDatastores := make(map[string]DatastoreConfiguration)
+	for datastoreName, datastoreValue := range r.Datastores {
+		datastoreValue.Name = datastoreName
+		// set a default module version if not provided
+		if datastoreValue.ModuleSourceVersion == nil {
+			latest := "latest"
+			datastoreValue.ModuleSourceVersion = &latest
+		}
+		newDatastores[datastoreName] = datastoreValue
+	}
+	r.Datastores = newDatastores
+
 	return r, err
 }
 
 func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
 	for _, subdomain := range e.Subdomains {
-		verrs, err := subdomain.Validate(resolver)
+		verrs, err := subdomain.Validate(resolver, e.blocksFromConfig())
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
+	for _, datastore := range e.Datastores {
+		verrs, err := datastore.Validate(resolver, e.blocksFromConfig())
 		if err != nil {
 			return ve, err
 		}
 		ve = append(ve, verrs...)
 	}
 	for _, app := range e.Applications {
-		verrs, err := app.Validate(resolver)
+		verrs, err := app.Validate(resolver, e.blocksFromConfig())
 		if err != nil {
 			return ve, err
 		}
@@ -76,12 +96,32 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.Vali
 	return ve, nil
 }
 
+func (e EnvConfiguration) blocksFromConfig() []core.BlockConfiguration {
+	result := make([]core.BlockConfiguration, 0)
+	for name, sub := range e.Subdomains {
+		result = append(result, core.BlockConfiguration{Name: name, ModuleSource: sub.ModuleSource, ModuleSourceVersion: sub.ModuleSourceVersion})
+	}
+	for name, ds := range e.Datastores {
+		result = append(result, core.BlockConfiguration{Name: name, ModuleSource: ds.ModuleSource, ModuleSourceVersion: ds.ModuleSourceVersion})
+	}
+	for name, app := range e.Applications {
+		result = append(result, core.BlockConfiguration{Name: name, ModuleSource: app.ModuleSource, ModuleSourceVersion: app.ModuleSourceVersion})
+	}
+	return result
+}
+
 func (e *EnvConfiguration) Normalize(resolver *find.ResourceResolver) error {
 	for key, subdomain := range e.Subdomains {
 		if err := subdomain.Normalize(resolver); err != nil {
 			return err
 		}
 		e.Subdomains[key] = subdomain
+	}
+	for key, datastore := range e.Datastores {
+		if err := datastore.Normalize(resolver); err != nil {
+			return err
+		}
+		e.Datastores[key] = datastore
 	}
 	for key, app := range e.Applications {
 		if err := app.Normalize(resolver); err != nil {

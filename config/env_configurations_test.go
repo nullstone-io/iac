@@ -202,6 +202,7 @@ func TestParseEnvConfiguration(t *testing.T) {
 						},
 					},
 				},
+				Datastores: map[string]DatastoreConfiguration{},
 				Subdomains: map[string]SubdomainConfiguration{},
 			},
 			validationErrors: errors.ValidationErrors{},

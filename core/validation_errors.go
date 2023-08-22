@@ -63,10 +63,10 @@ func InvalidConnectionContractError(path, connName, contract, moduleName string)
 	}
 }
 
-func MismatchedConnectionContractError(path string, block types.Block, connection config.Connection) errors.ValidationError {
+func MismatchedConnectionContractError(path string, blockConfig BlockConfiguration, connection config.Connection) errors.ValidationError {
 	return errors.ValidationError{
 		Context: path,
-		Message: fmt.Sprintf("block (%s) does not match the required contract (%s) for the capability connection", block.Name, connection.Contract),
+		Message: fmt.Sprintf("block (%s) does not match the required contract (%s) for the capability connection", blockConfig.Name, connection.Contract),
 	}
 }
 

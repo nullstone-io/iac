@@ -12,11 +12,11 @@ var _ yaml.Unmarshaler = &ConnectionTarget{}
 type ConnectionTarget types.ConnectionTarget
 
 type connectionTargetFull struct {
-	StackId   int64  `yaml:"stack_id"`
-	StackName string `yaml:"stack_name"`
-	EnvId     *int64 `yaml:"env_id"`
-	EnvName   string `yaml:"env_name"`
-	BlockName string `yaml:"block_name"`
+	StackId   int64  `yaml:"stack_id,omitempty"`
+	StackName string `yaml:"stack_name,omitempty"`
+	EnvId     *int64 `yaml:"env_id,omitempty"`
+	EnvName   string `yaml:"env_name,omitempty"`
+	BlockName string `yaml:"block_name,omitempty"`
 }
 
 func (c *ConnectionTarget) UnmarshalYAML(node *yaml.Node) error {

@@ -11,10 +11,10 @@ import (
 type SubdomainConfiguration struct {
 	Name                string                 `yaml:"-" json:"name"`
 	ModuleSource        string                 `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                `yaml:"module_version" json:"moduleVersion"`
+	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
 	DnsName             string                 `yaml:"dns_name" json:"dnsName"`
-	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
+	Variables           map[string]any         `yaml:"vars,omitempty" json:"vars"`
+	Connections         core.ConnectionTargets `yaml:"connections,omitempty" json:"connections"`
 }
 
 func (s SubdomainConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {

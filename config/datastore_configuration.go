@@ -12,7 +12,7 @@ type DatastoreConfiguration struct {
 	ModuleSource        string                 `yaml:"module" json:"module"`
 	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
 	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections,omitempty" json:"connections"`
+	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
 }
 
 func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {

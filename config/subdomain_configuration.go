@@ -14,7 +14,7 @@ type SubdomainConfiguration struct {
 	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
 	DnsName             string                 `yaml:"dns_name,omitempty" json:"dnsName"`
 	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections,omitempty" json:"connections"`
+	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
 }
 
 func (s SubdomainConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {

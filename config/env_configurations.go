@@ -9,9 +9,9 @@ import (
 
 type EnvConfiguration struct {
 	Version      string                            `yaml:"version" json:"version"`
-	Subdomains   map[string]SubdomainConfiguration `yaml:"subdomains" json:"subdomains"`
-	Datastores   map[string]DatastoreConfiguration `yaml:"datastores" json:"datastores"`
-	Applications map[string]AppConfiguration       `yaml:"apps" json:"apps"`
+	Subdomains   map[string]SubdomainConfiguration `yaml:"subdomains,omitempty" json:"subdomains"`
+	Datastores   map[string]DatastoreConfiguration `yaml:"datastores,omitempty" json:"datastores"`
+	Applications map[string]AppConfiguration       `yaml:"apps,omitempty" json:"apps"`
 }
 
 func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {

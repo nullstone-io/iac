@@ -9,9 +9,9 @@ import (
 
 type ConfigurationOverrides struct {
 	Version      string                          `yaml:"version"`
-	Applications map[string]ApplicationOverrides `yaml:"apps"`
-	Subdomains   map[string]SubdomainOverrides   `yaml:"subdomains"`
-	Datastores   map[string]DatastoreOverrides   `yaml:"datastores"`
+	Applications map[string]ApplicationOverrides `yaml:"apps,omitempty"`
+	Subdomains   map[string]SubdomainOverrides   `yaml:"subdomains,omitempty"`
+	Datastores   map[string]DatastoreOverrides   `yaml:"datastores,omitempty"`
 }
 
 func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {

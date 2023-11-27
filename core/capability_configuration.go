@@ -6,7 +6,7 @@ import (
 )
 
 type CapabilityConfiguration struct {
-	ModuleSource        string            `yaml:"module" json:"module"`
+	ModuleSource        string            `yaml:"module,omitempty" json:"module"`
 	ModuleSourceVersion *string           `yaml:"module_version,omitempty" json:"moduleVersion"`
 	Variables           map[string]any    `yaml:"vars,omitempty" json:"vars"`
 	Connections         ConnectionTargets `yaml:"connections,omitempty" json:"connections"`

@@ -11,7 +11,7 @@ var _ yaml.Unmarshaler = &ConnectionTarget{}
 
 type ConnectionTarget types.ConnectionTarget
 
-type ConnectionTargetFull struct {
+type connectionTargetFull struct {
 	StackId   int64  `yaml:"stack_id,omitempty"`
 	StackName string `yaml:"stack_name,omitempty"`
 	EnvId     *int64 `yaml:"env_id,omitempty"`
@@ -29,7 +29,7 @@ func (c *ConnectionTarget) UnmarshalYAML(node *yaml.Node) error {
 		tmp := types.ParseConnectionTarget(full)
 		*c = ConnectionTarget(tmp)
 	case yaml.MappingNode:
-		var tmp ConnectionTargetFull
+		var tmp connectionTargetFull
 		if err := node.Decode(&tmp); err != nil {
 			return err
 		}

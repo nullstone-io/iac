@@ -11,8 +11,8 @@ import (
 type SubdomainConfiguration struct {
 	Name                string                 `yaml:"-" json:"name"`
 	ModuleSource        string                 `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                `yaml:"module_version" json:"moduleVersion"`
-	DnsName             string                 `yaml:"dns_name" json:"dnsName"`
+	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
+	DnsName             string                 `yaml:"dns_name,omitempty" json:"dnsName"`
 	Variables           map[string]any         `yaml:"vars" json:"vars"`
 	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
 }

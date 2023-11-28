@@ -7,6 +7,13 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
+func InvalidYamlError(filename string, err error) errors.ValidationError {
+	return errors.ValidationError{
+		Context: fmt.Sprintf("file: %s", filename),
+		Message: fmt.Sprintf("invalid .nullstone/%s file: %s", filename, err),
+	}
+}
+
 func VariableDoesNotExistError(path, name, moduleName string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.vars.%s", path, name),

@@ -65,6 +65,10 @@ func (c *ConfigurationOverrides) Normalize(resolver *find.ResourceResolver) erro
 func ParseConfigurationOverrides(data []byte) (*ConfigurationOverrides, error) {
 	var r *ConfigurationOverrides
 	err := yaml.Unmarshal(data, &r)
+	if err != nil {
+		return nil, core.InvalidYamlError("previews.yml", err)
+	}
+
 	for k, ao := range r.Applications {
 		ao.Name = k
 		r.Applications[k] = ao
@@ -73,7 +77,7 @@ func ParseConfigurationOverrides(data []byte) (*ConfigurationOverrides, error) {
 		so.Name = k
 		r.Subdomains[k] = so
 	}
-	return r, err
+	return r, nil
 }
 
 type ApplicationOverrides struct {

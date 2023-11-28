@@ -18,7 +18,7 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	var r *EnvConfiguration
 	err := yaml.Unmarshal(data, &r)
 	if err != nil {
-		return nil, err
+		return nil, core.InvalidYamlError("config.yml", err)
 	}
 
 	newApps := make(map[string]AppConfiguration)

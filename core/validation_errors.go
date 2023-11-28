@@ -9,8 +9,8 @@ import (
 
 func InvalidYamlError(filename string, err error) errors.ValidationError {
 	return errors.ValidationError{
-		Context: fmt.Sprintf("file: %s", filename),
-		Message: fmt.Sprintf("invalid .nullstone/%s file: %s", filename, err),
+		Context: fmt.Sprintf(".nullstone/%s", filename),
+		Message: err.Error(),
 	}
 }
 

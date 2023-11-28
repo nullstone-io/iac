@@ -18,7 +18,7 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	var r *EnvConfiguration
 	err := yaml.Unmarshal(data, &r)
 	if err != nil {
-		return nil, err
+		return nil, core.InvalidYamlError("config.yml", err)
 	}
 
 	newApps := make(map[string]AppConfiguration)
@@ -67,7 +67,7 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	}
 	r.Datastores = newDatastores
 
-	return r, err
+	return r, nil
 }
 
 func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {

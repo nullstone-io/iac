@@ -67,7 +67,7 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	}
 	r.Datastores = newDatastores
 
-	return r, err
+	return r, nil
 }
 
 func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {

@@ -7,7 +7,7 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
-type DatastoreConfiguration struct {
+type BlockConfiguration struct {
 	Name                string                 `yaml:"-" json:"name"`
 	ModuleSource        string                 `yaml:"module" json:"module"`
 	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
@@ -15,11 +15,11 @@ type DatastoreConfiguration struct {
 	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
 }
 
-func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
-	yamlPath := fmt.Sprintf("datastores.%s", d.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "datastore/*/*", d.ModuleSource, *d.ModuleSourceVersion, d.Variables, d.Connections, nil)
+func (b BlockConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+	yamlPath := fmt.Sprintf("datastores.%s", b.Name)
+	return ValidateBlock(resolver, configBlocks, yamlPath, "datastore/*/*", b.ModuleSource, *b.ModuleSourceVersion, b.Variables, b.Connections, nil)
 }
 
-func (d *DatastoreConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(d.Connections, resolver)
+func (b *BlockConfiguration) Normalize(resolver *find.ResourceResolver) error {
+	return core.NormalizeConnectionTargets(b.Connections, resolver)
 }

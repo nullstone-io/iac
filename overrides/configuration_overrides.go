@@ -10,8 +10,8 @@ import (
 type ConfigurationOverrides struct {
 	Version      string                          `yaml:"version"`
 	Applications map[string]ApplicationOverrides `yaml:"apps,omitempty"`
-	Subdomains   map[string]SubdomainOverrides   `yaml:"subdomains,omitempty"`
-	Datastores   map[string]DatastoreOverrides   `yaml:"datastores,omitempty"`
+	Subdomains   map[string]BlockOverrides       `yaml:"subdomains,omitempty"`
+	Datastores   map[string]BlockOverrides       `yaml:"datastores,omitempty"`
 }
 
 func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
@@ -78,50 +78,4 @@ func ParseConfigurationOverrides(data []byte) (*ConfigurationOverrides, error) {
 		r.Subdomains[k] = so
 	}
 	return r, nil
-}
-
-type ApplicationOverrides struct {
-	Name         string              `yaml:"-"`
-	Variables    map[string]any      `yaml:"vars"`
-	EnvVariables map[string]string   `yaml:"environment"`
-	Capabilities CapabilityOverrides `yaml:"capabilities"`
-}
-
-func (a *ApplicationOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (a *ApplicationOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return a.Capabilities.Normalize(resolver)
-}
-
-type SubdomainOverrides struct {
-	Name        string                 `yaml:"-"`
-	Variables   map[string]any         `yaml:"vars"`
-	Connections core.ConnectionTargets `yaml:"connections"`
-}
-
-func (s *SubdomainOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (s *SubdomainOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(s.Connections, resolver)
-}
-
-type DatastoreOverrides struct {
-	Name        string                 `yaml:"-"`
-	Variables   map[string]any         `yaml:"vars"`
-	Connections core.ConnectionTargets `yaml:"connections"`
-}
-
-func (d *DatastoreOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (d *DatastoreOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(d.Connections, resolver)
 }

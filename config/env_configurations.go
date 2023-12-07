@@ -10,7 +10,7 @@ import (
 type EnvConfiguration struct {
 	Version      string                            `yaml:"version" json:"version"`
 	Subdomains   map[string]SubdomainConfiguration `yaml:"subdomains,omitempty" json:"subdomains"`
-	Datastores   map[string]DatastoreConfiguration `yaml:"datastores,omitempty" json:"datastores"`
+	Datastores   map[string]BlockConfiguration     `yaml:"datastores,omitempty" json:"datastores"`
 	Applications map[string]AppConfiguration       `yaml:"apps,omitempty" json:"apps"`
 }
 
@@ -55,7 +55,7 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	}
 	r.Subdomains = newSubdomains
 
-	newDatastores := make(map[string]DatastoreConfiguration)
+	newDatastores := make(map[string]BlockConfiguration)
 	for datastoreName, datastoreValue := range r.Datastores {
 		datastoreValue.Name = datastoreName
 		// set a default module version if not provided
@@ -73,21 +73,21 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
 	for _, subdomain := range e.Subdomains {
-		verrs, err := subdomain.Validate(resolver, e.blocksFromConfig())
+		verrs, err := subdomain.Validate(resolver, e.AllBlocks())
 		if err != nil {
 			return ve, err
 		}
 		ve = append(ve, verrs...)
 	}
 	for _, datastore := range e.Datastores {
-		verrs, err := datastore.Validate(resolver, e.blocksFromConfig())
+		verrs, err := datastore.Validate(resolver, e.AllBlocks())
 		if err != nil {
 			return ve, err
 		}
 		ve = append(ve, verrs...)
 	}
 	for _, app := range e.Applications {
-		verrs, err := app.Validate(resolver, e.blocksFromConfig())
+		verrs, err := app.Validate(resolver, e.AllBlocks())
 		if err != nil {
 			return ve, err
 		}
@@ -96,7 +96,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.Vali
 	return ve, nil
 }
 
-func (e EnvConfiguration) blocksFromConfig() []core.BlockConfiguration {
+func (e EnvConfiguration) AllBlocks() []core.BlockConfiguration {
 	result := make([]core.BlockConfiguration, 0)
 	for name, sub := range e.Subdomains {
 		result = append(result, core.BlockConfiguration{Name: name, ModuleSource: sub.ModuleSource, ModuleSourceVersion: sub.ModuleSourceVersion})

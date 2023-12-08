@@ -12,6 +12,7 @@ type ConfigurationOverrides struct {
 	Applications map[string]ApplicationOverrides `yaml:"apps,omitempty"`
 	Subdomains   map[string]BlockOverrides       `yaml:"subdomains,omitempty"`
 	Datastores   map[string]BlockOverrides       `yaml:"datastores,omitempty"`
+	Blocks       map[string]BlockOverrides       `yaml:"blocks,omitempty"`
 }
 
 func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {

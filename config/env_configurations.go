@@ -11,7 +11,7 @@ type EnvConfiguration struct {
 	Version      string                            `yaml:"version" json:"version"`
 	Applications map[string]AppConfiguration       `yaml:"apps,omitempty" json:"apps"`
 	Subdomains   map[string]SubdomainConfiguration `yaml:"subdomains,omitempty" json:"subdomains"`
-	Datastores   map[string]BlockConfiguration     `yaml:"datastores,omitempty" json:"datastores"`
+	Datastores   map[string]DatastoreConfiguration `yaml:"datastores,omitempty" json:"datastores"`
 	Blocks       map[string]BlockConfiguration     `yaml:"blocks,omitempty" json:"blocks"`
 }
 
@@ -56,7 +56,7 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	}
 	r.Subdomains = newSubdomains
 
-	newDatastores := make(map[string]BlockConfiguration)
+	newDatastores := make(map[string]DatastoreConfiguration)
 	for datastoreName, datastoreValue := range r.Datastores {
 		datastoreValue.Name = datastoreName
 		// set a default module version if not provided
@@ -68,11 +68,30 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	}
 	r.Datastores = newDatastores
 
+	newBlocks := make(map[string]BlockConfiguration)
+	for blockName, blockValue := range r.Blocks {
+		blockValue.Name = blockName
+		// set a default module version if not provided
+		if blockValue.ModuleSourceVersion == nil {
+			latest := "latest"
+			blockValue.ModuleSourceVersion = &latest
+		}
+		newBlocks[blockName] = blockValue
+	}
+	r.Blocks = newBlocks
+
 	return r, nil
 }
 
 func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
+	for _, block := range e.Blocks {
+		verrs, err := block.Validate(resolver, e.AllBlocks())
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
 	for _, subdomain := range e.Subdomains {
 		verrs, err := subdomain.Validate(resolver, e.AllBlocks())
 		if err != nil {
@@ -99,6 +118,9 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.Vali
 
 func (e EnvConfiguration) AllBlocks() []core.BlockConfiguration {
 	result := make([]core.BlockConfiguration, 0)
+	for name, block := range e.Blocks {
+		result = append(result, core.BlockConfiguration{Name: name, ModuleSource: block.ModuleSource, ModuleSourceVersion: block.ModuleSourceVersion})
+	}
 	for name, sub := range e.Subdomains {
 		result = append(result, core.BlockConfiguration{Name: name, ModuleSource: sub.ModuleSource, ModuleSourceVersion: sub.ModuleSourceVersion})
 	}
@@ -112,6 +134,12 @@ func (e EnvConfiguration) AllBlocks() []core.BlockConfiguration {
 }
 
 func (e *EnvConfiguration) Normalize(resolver *find.ResourceResolver) error {
+	for key, block := range e.Blocks {
+		if err := block.Normalize(resolver); err != nil {
+			return err
+		}
+		e.Blocks[key] = block
+	}
 	for key, subdomain := range e.Subdomains {
 		if err := subdomain.Normalize(resolver); err != nil {
 			return err

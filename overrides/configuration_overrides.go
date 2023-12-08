@@ -17,6 +17,13 @@ type ConfigurationOverrides struct {
 
 func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
+	for _, block := range c.Blocks {
+		verrs, err := block.Validate(resolver)
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
 	for _, subdomain := range c.Subdomains {
 		verrs, err := subdomain.Validate(resolver)
 		if err != nil {
@@ -42,6 +49,12 @@ func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (erro
 }
 
 func (c *ConfigurationOverrides) Normalize(resolver *find.ResourceResolver) error {
+	for key, block := range c.Blocks {
+		if err := block.Normalize(resolver); err != nil {
+			return err
+		}
+		c.Blocks[key] = block
+	}
 	for key, subdomain := range c.Subdomains {
 		if err := subdomain.Normalize(resolver); err != nil {
 			return err
@@ -77,6 +90,14 @@ func ParseConfigurationOverrides(data []byte) (*ConfigurationOverrides, error) {
 	for k, so := range r.Subdomains {
 		so.Name = k
 		r.Subdomains[k] = so
+	}
+	for k, do := range r.Datastores {
+		do.Name = k
+		r.Datastores[k] = do
+	}
+	for k, bo := range r.Blocks {
+		bo.Name = k
+		r.Blocks[k] = bo
 	}
 	return r, nil
 }

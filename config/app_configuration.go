@@ -9,12 +9,9 @@ import (
 )
 
 type AppConfiguration struct {
-	Name                string                   `yaml:"-" json:"name"`
-	ModuleSource        string                   `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                  `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any           `yaml:"vars" json:"vars"`
-	EnvVariables        map[string]string        `yaml:"environment" json:"envVars"`
-	Capabilities        CapabilityConfigurations `yaml:"capabilities" json:"capabilities"`
+	BlockConfiguration
+	EnvVariables map[string]string        `yaml:"environment" json:"envVars"`
+	Capabilities CapabilityConfigurations `yaml:"capabilities" json:"capabilities"`
 }
 
 func (a AppConfiguration) GetCapabilities(orgName string, stackId, blockId, envId int64) ([]types.Capability, error) {

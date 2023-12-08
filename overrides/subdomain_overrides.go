@@ -5,16 +5,16 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
-type BlockOverrides struct {
+type SubdomainOverrides struct {
 	Name      string         `yaml:"-"`
 	Variables map[string]any `yaml:"vars"`
 }
 
-func (b *BlockOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
+func (s *SubdomainOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	// TODO: Implement: How do we validate if we don't have a module to resolve
 	return errors.ValidationErrors{}, nil
 }
 
-func (b *BlockOverrides) Normalize(resolver *find.ResourceResolver) error {
+func (s *SubdomainOverrides) Normalize(resolver *find.ResourceResolver) error {
 	return nil
 }

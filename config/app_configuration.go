@@ -9,7 +9,12 @@ import (
 )
 
 type AppConfiguration struct {
-	BlockConfiguration
+	Name                string                 `yaml:"-" json:"name"`
+	ModuleSource        string                 `yaml:"module" json:"module"`
+	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
+	Variables           map[string]any         `yaml:"vars" json:"vars"`
+	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
+
 	EnvVariables map[string]string        `yaml:"environment" json:"envVars"`
 	Capabilities CapabilityConfigurations `yaml:"capabilities" json:"capabilities"`
 }
@@ -53,6 +58,10 @@ func (a AppConfiguration) GetCapabilities(orgName string, stackId, blockId, envI
 }
 
 func (a *AppConfiguration) Normalize(resolver *find.ResourceResolver) error {
+	err := core.NormalizeConnectionTargets(a.Connections, resolver)
+	if err != nil {
+		return err
+	}
 	return a.Capabilities.Normalize(resolver)
 }
 

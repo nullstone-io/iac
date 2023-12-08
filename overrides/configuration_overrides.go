@@ -10,8 +10,8 @@ import (
 type ConfigurationOverrides struct {
 	Version      string                          `yaml:"version"`
 	Applications map[string]ApplicationOverrides `yaml:"apps,omitempty"`
-	Subdomains   map[string]BlockOverrides       `yaml:"subdomains,omitempty"`
-	Datastores   map[string]BlockOverrides       `yaml:"datastores,omitempty"`
+	Subdomains   map[string]SubdomainOverrides   `yaml:"subdomains,omitempty"`
+	Datastores   map[string]DatastoreOverrides   `yaml:"datastores,omitempty"`
 	Blocks       map[string]BlockOverrides       `yaml:"blocks,omitempty"`
 }
 

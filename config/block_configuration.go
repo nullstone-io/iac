@@ -16,8 +16,8 @@ type BlockConfiguration struct {
 }
 
 func (b BlockConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
-	yamlPath := fmt.Sprintf("datastores.%s", b.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "datastore/*/*", b.ModuleSource, *b.ModuleSourceVersion, b.Variables, b.Connections, nil)
+	yamlPath := fmt.Sprintf("blocks.%s", b.Name)
+	return ValidateBlock(resolver, configBlocks, yamlPath, "*/*/*", b.ModuleSource, *b.ModuleSourceVersion, b.Variables, b.Connections, nil)
 }
 
 func (b *BlockConfiguration) Normalize(resolver *find.ResourceResolver) error {

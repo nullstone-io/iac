@@ -4,6 +4,9 @@ apps:
     module: nullstone/aws-invalid-module
     vars:
       service_count: 2
+    connections:
+      cluster-namespace:
+        block_name: namespace0
     environment:
       TESTING: abc123
       BLAH: blahblahblah

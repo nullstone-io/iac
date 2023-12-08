@@ -3,6 +3,9 @@ apps:
   acme-docs:
     vars:
       service_count: 2
+    connections:
+      cluster-namespace:
+        block_name: namespace0
     environment:
       TESTING: abc123
       BLAH: blahblahblah

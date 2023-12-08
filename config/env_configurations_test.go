@@ -176,7 +176,13 @@ func TestParseEnvConfiguration(t *testing.T) {
 						ModuleSourceVersion: &latest,
 						Variables: map[string]any{
 							"enable_versioned_assets": false,
-						}, EnvVariables: map[string]string{
+						},
+						Connections: map[string]core.ConnectionTarget{
+							"cluster-namespace": {
+								BlockName: "namespace0",
+							},
+						},
+						EnvVariables: map[string]string{
 							"TESTING": "abc123",
 							"BLAH":    "blahblahblah",
 						},
@@ -202,8 +208,9 @@ func TestParseEnvConfiguration(t *testing.T) {
 						},
 					},
 				},
-				Datastores: map[string]BlockConfiguration{},
+				Datastores: map[string]DatastoreConfiguration{},
 				Subdomains: map[string]SubdomainConfiguration{},
+				Blocks:     map[string]BlockConfiguration{},
 			},
 			validationErrors: errors.ValidationErrors{},
 		},

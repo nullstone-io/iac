@@ -86,28 +86,28 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
 	for _, block := range e.Blocks {
-		verrs, err := block.Validate(resolver, e.AllBlocks())
+		verrs, err := block.Validate(resolver, e.blocksFromConfig())
 		if err != nil {
 			return ve, err
 		}
 		ve = append(ve, verrs...)
 	}
 	for _, subdomain := range e.Subdomains {
-		verrs, err := subdomain.Validate(resolver, e.AllBlocks())
+		verrs, err := subdomain.Validate(resolver, e.blocksFromConfig())
 		if err != nil {
 			return ve, err
 		}
 		ve = append(ve, verrs...)
 	}
 	for _, datastore := range e.Datastores {
-		verrs, err := datastore.Validate(resolver, e.AllBlocks())
+		verrs, err := datastore.Validate(resolver, e.blocksFromConfig())
 		if err != nil {
 			return ve, err
 		}
 		ve = append(ve, verrs...)
 	}
 	for _, app := range e.Applications {
-		verrs, err := app.Validate(resolver, e.AllBlocks())
+		verrs, err := app.Validate(resolver, e.blocksFromConfig())
 		if err != nil {
 			return ve, err
 		}
@@ -116,7 +116,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) (errors.Vali
 	return ve, nil
 }
 
-func (e EnvConfiguration) AllBlocks() []core.BlockConfiguration {
+func (e EnvConfiguration) blocksFromConfig() []core.BlockConfiguration {
 	result := make([]core.BlockConfiguration, 0)
 	for name, block := range e.Blocks {
 		result = append(result, core.BlockConfiguration{Name: name, ModuleSource: block.ModuleSource, ModuleSourceVersion: block.ModuleSourceVersion})

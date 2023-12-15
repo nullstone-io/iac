@@ -12,10 +12,18 @@ type ConfigurationOverrides struct {
 	Applications map[string]ApplicationOverrides `yaml:"apps,omitempty"`
 	Subdomains   map[string]SubdomainOverrides   `yaml:"subdomains,omitempty"`
 	Datastores   map[string]DatastoreOverrides   `yaml:"datastores,omitempty"`
+	Blocks       map[string]BlockOverrides       `yaml:"blocks,omitempty"`
 }
 
 func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
+	for _, block := range c.Blocks {
+		verrs, err := block.Validate(resolver)
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
 	for _, subdomain := range c.Subdomains {
 		verrs, err := subdomain.Validate(resolver)
 		if err != nil {
@@ -41,6 +49,12 @@ func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (erro
 }
 
 func (c *ConfigurationOverrides) Normalize(resolver *find.ResourceResolver) error {
+	for key, block := range c.Blocks {
+		if err := block.Normalize(resolver); err != nil {
+			return err
+		}
+		c.Blocks[key] = block
+	}
 	for key, subdomain := range c.Subdomains {
 		if err := subdomain.Normalize(resolver); err != nil {
 			return err
@@ -77,51 +91,13 @@ func ParseConfigurationOverrides(data []byte) (*ConfigurationOverrides, error) {
 		so.Name = k
 		r.Subdomains[k] = so
 	}
+	for k, do := range r.Datastores {
+		do.Name = k
+		r.Datastores[k] = do
+	}
+	for k, bo := range r.Blocks {
+		bo.Name = k
+		r.Blocks[k] = bo
+	}
 	return r, nil
-}
-
-type ApplicationOverrides struct {
-	Name         string              `yaml:"-"`
-	Variables    map[string]any      `yaml:"vars"`
-	EnvVariables map[string]string   `yaml:"environment"`
-	Capabilities CapabilityOverrides `yaml:"capabilities"`
-}
-
-func (a *ApplicationOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (a *ApplicationOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return a.Capabilities.Normalize(resolver)
-}
-
-type SubdomainOverrides struct {
-	Name        string                 `yaml:"-"`
-	Variables   map[string]any         `yaml:"vars"`
-	Connections core.ConnectionTargets `yaml:"connections"`
-}
-
-func (s *SubdomainOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (s *SubdomainOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(s.Connections, resolver)
-}
-
-type DatastoreOverrides struct {
-	Name        string                 `yaml:"-"`
-	Variables   map[string]any         `yaml:"vars"`
-	Connections core.ConnectionTargets `yaml:"connections"`
-}
-
-func (d *DatastoreOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (d *DatastoreOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(d.Connections, resolver)
 }

@@ -7,7 +7,7 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
-type BlockConfiguration struct {
+type IngressConfiguration struct {
 	Name                string                 `yaml:"-" json:"name"`
 	ModuleSource        string                 `yaml:"module" json:"module"`
 	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
@@ -15,11 +15,11 @@ type BlockConfiguration struct {
 	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
 }
 
-func (b BlockConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
-	yamlPath := fmt.Sprintf("blocks.%s", b.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "block/*/*", b.ModuleSource, *b.ModuleSourceVersion, b.Variables, b.Connections, nil)
+func (i IngressConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+	yamlPath := fmt.Sprintf("ingresses.%s", i.Name)
+	return ValidateBlock(resolver, configBlocks, yamlPath, "ingress/*/*", i.ModuleSource, *i.ModuleSourceVersion, i.Variables, i.Connections, nil)
 }
 
-func (b *BlockConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(b.Connections, resolver)
+func (i *IngressConfiguration) Normalize(resolver *find.ResourceResolver) error {
+	return core.NormalizeConnectionTargets(i.Connections, resolver)
 }

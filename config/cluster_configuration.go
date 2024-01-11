@@ -7,7 +7,7 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
-type BlockConfiguration struct {
+type ClusterConfiguration struct {
 	Name                string                 `yaml:"-" json:"name"`
 	ModuleSource        string                 `yaml:"module" json:"module"`
 	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
@@ -15,11 +15,11 @@ type BlockConfiguration struct {
 	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
 }
 
-func (b BlockConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
-	yamlPath := fmt.Sprintf("blocks.%s", b.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "block/*/*", b.ModuleSource, *b.ModuleSourceVersion, b.Variables, b.Connections, nil)
+func (c ClusterConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+	yamlPath := fmt.Sprintf("clusters.%s", c.Name)
+	return ValidateBlock(resolver, configBlocks, yamlPath, "cluster/*/*", c.ModuleSource, *c.ModuleSourceVersion, c.Variables, c.Connections, nil)
 }
 
-func (b *BlockConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(b.Connections, resolver)
+func (c *ClusterConfiguration) Normalize(resolver *find.ResourceResolver) error {
+	return core.NormalizeConnectionTargets(c.Connections, resolver)
 }

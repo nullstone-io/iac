@@ -8,17 +8,57 @@ import (
 )
 
 type ConfigurationOverrides struct {
-	Version      string                          `yaml:"version"`
-	Applications map[string]ApplicationOverrides `yaml:"apps,omitempty"`
-	Subdomains   map[string]SubdomainOverrides   `yaml:"subdomains,omitempty"`
-	Datastores   map[string]DatastoreOverrides   `yaml:"datastores,omitempty"`
-	Blocks       map[string]BlockOverrides       `yaml:"blocks,omitempty"`
+	Version           string                               `yaml:"version"`
+	Applications      map[string]ApplicationOverrides      `yaml:"apps,omitempty"`
+	Subdomains        map[string]SubdomainOverrides        `yaml:"subdomains,omitempty"`
+	Datastores        map[string]DatastoreOverrides        `yaml:"datastores,omitempty"`
+	Domains           map[string]DomainOverrides           `yaml:"domains,omitempty"`
+	Ingresses         map[string]IngressOverrides          `yaml:"ingresses,omitempty"`
+	ClusterNamespaces map[string]ClusterNamespaceOverrides `yaml:"cluster_namespaces,omitempty"`
+	Clusters          map[string]ClusterOverrides          `yaml:"clusters,omitempty"`
+	Networks          map[string]NetworkOverrides          `yaml:"networks,omitempty"`
+	Blocks            map[string]BlockOverrides            `yaml:"blocks,omitempty"`
 }
 
 func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
 	for _, block := range c.Blocks {
 		verrs, err := block.Validate(resolver)
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
+	for _, network := range c.Networks {
+		verrs, err := network.Validate(resolver)
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
+	for _, cluster := range c.Clusters {
+		verrs, err := cluster.Validate(resolver)
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
+	for _, clusterNamespace := range c.ClusterNamespaces {
+		verrs, err := clusterNamespace.Validate(resolver)
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
+	for _, ingress := range c.Ingresses {
+		verrs, err := ingress.Validate(resolver)
+		if err != nil {
+			return ve, err
+		}
+		ve = append(ve, verrs...)
+	}
+	for _, domain := range c.Domains {
+		verrs, err := domain.Validate(resolver)
 		if err != nil {
 			return ve, err
 		}
@@ -54,6 +94,36 @@ func (c *ConfigurationOverrides) Normalize(resolver *find.ResourceResolver) erro
 			return err
 		}
 		c.Blocks[key] = block
+	}
+	for key, network := range c.Networks {
+		if err := network.Normalize(resolver); err != nil {
+			return err
+		}
+		c.Networks[key] = network
+	}
+	for key, cluster := range c.Clusters {
+		if err := cluster.Normalize(resolver); err != nil {
+			return err
+		}
+		c.Clusters[key] = cluster
+	}
+	for key, clusterNamespace := range c.ClusterNamespaces {
+		if err := clusterNamespace.Normalize(resolver); err != nil {
+			return err
+		}
+		c.ClusterNamespaces[key] = clusterNamespace
+	}
+	for key, ingress := range c.Ingresses {
+		if err := ingress.Normalize(resolver); err != nil {
+			return err
+		}
+		c.Ingresses[key] = ingress
+	}
+	for key, domain := range c.Domains {
+		if err := domain.Normalize(resolver); err != nil {
+			return err
+		}
+		c.Domains[key] = domain
 	}
 	for key, subdomain := range c.Subdomains {
 		if err := subdomain.Normalize(resolver); err != nil {
@@ -94,6 +164,26 @@ func ParseConfigurationOverrides(data []byte) (*ConfigurationOverrides, error) {
 	for k, do := range r.Datastores {
 		do.Name = k
 		r.Datastores[k] = do
+	}
+	for k, bo := range r.Domains {
+		bo.Name = k
+		r.Domains[k] = bo
+	}
+	for k, bo := range r.Ingresses {
+		bo.Name = k
+		r.Ingresses[k] = bo
+	}
+	for k, bo := range r.ClusterNamespaces {
+		bo.Name = k
+		r.ClusterNamespaces[k] = bo
+	}
+	for k, bo := range r.Clusters {
+		bo.Name = k
+		r.Clusters[k] = bo
+	}
+	for k, bo := range r.Networks {
+		bo.Name = k
+		r.Networks[k] = bo
 	}
 	for k, bo := range r.Blocks {
 		bo.Name = k

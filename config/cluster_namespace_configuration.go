@@ -17,7 +17,7 @@ type ClusterNamespaceConfiguration struct {
 
 func (cn ClusterNamespaceConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
 	yamlPath := fmt.Sprintf("cluster_namespaces.%s", cn.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "*/*/*", cn.ModuleSource, *cn.ModuleSourceVersion, cn.Variables, cn.Connections, nil)
+	return ValidateBlock(resolver, configBlocks, yamlPath, "cluster-namespace/*/*", cn.ModuleSource, *cn.ModuleSourceVersion, cn.Variables, cn.Connections, nil)
 }
 
 func (cn *ClusterNamespaceConfiguration) Normalize(resolver *find.ResourceResolver) error {

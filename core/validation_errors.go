@@ -1,11 +1,9 @@
 package core
 
 import (
-	errors3 "errors"
+	errors2 "errors"
 	"fmt"
 	"github.com/BSick7/go-api/errors"
-	config2 "github.com/nullstone-io/iac/config"
-	"github.com/nullstone-io/module/config"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
@@ -65,10 +63,10 @@ func InvalidConnectionContractError(path, connName, contract, moduleName string)
 	}
 }
 
-func MismatchedConnectionContractError(path string, blockConfig config2.BlockConfiguration, connection config.Connection) errors.ValidationError {
+func MismatchedConnectionContractError(path string, blockName, connectionContract string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: path,
-		Message: fmt.Sprintf("block (%s) does not match the required contract (%s) for the capability connection", blockConfig.Name, connection.Contract),
+		Message: fmt.Sprintf("block (%s) does not match the required contract (%s) for the capability connection", blockName, connectionContract),
 	}
 }
 
@@ -82,11 +80,11 @@ func UnsupportedAppCategoryError(path, moduleSource, subcategory string) errors.
 // AsValidationErrors is a helper function to format an error into validation errors for the user to see
 func AsValidationErrors(err error) errors.ValidationErrors {
 	var verrs errors.ValidationErrors
-	if errors3.As(err, &verrs) {
+	if errors2.As(err, &verrs) {
 		return verrs
 	}
 	var verr errors.ValidationError
-	if errors3.As(err, &verr) {
+	if errors2.As(err, &verr) {
 		return errors.ValidationErrors{verr}
 	}
 	return nil

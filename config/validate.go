@@ -87,7 +87,7 @@ func ValidateConnection(resolver *find.ResourceResolver, configBlocks []BlockCon
 			Subplatform: m.Subplatform,
 		}
 		if ok := mcn1.Match(mcn2); !ok {
-			return errors.ValidationErrors{core.MismatchedConnectionContractError(path, *found, manifestConnection)}
+			return errors.ValidationErrors{core.MismatchedConnectionContractError(path, (*found).Name, manifestConnection.Contract)}
 		}
 	}
 

@@ -2,24 +2,39 @@ package config
 
 import (
 	"fmt"
-	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
 type ClusterConfiguration struct {
-	Name                string                 `yaml:"-" json:"name"`
-	ModuleSource        string                 `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
+	BlockConfiguration
 }
 
-func (c ClusterConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+func convertClusterConfigurations(parsed map[string]yaml.ClusterConfiguration) map[string]ClusterConfiguration {
+	result := make(map[string]ClusterConfiguration)
+	for clusterName, clusterValue := range parsed {
+		// set a default module version if not provided
+		moduleVersion := "latest"
+		if clusterValue.ModuleSourceVersion != nil {
+			moduleVersion = *clusterValue.ModuleSourceVersion
+		}
+		cluster := ClusterConfiguration{
+			BlockConfiguration: BlockConfiguration{
+				Type:                BlockTypeCluster,
+				Name:                clusterName,
+				ModuleSource:        clusterValue.ModuleSource,
+				ModuleSourceVersion: moduleVersion,
+				Variables:           clusterValue.Variables,
+				Connections:         convertConnections(clusterValue.Connections),
+			},
+		}
+		result[clusterName] = cluster
+	}
+	return result
+}
+
+func (c ClusterConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("clusters.%s", c.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "cluster/*/*", c.ModuleSource, *c.ModuleSourceVersion, c.Variables, c.Connections, nil)
-}
-
-func (c *ClusterConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(c.Connections, resolver)
+	contract := fmt.Sprintf("cluster/*/*")
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, c.ModuleSource, c.ModuleSourceVersion, c.Variables, c.Connections, nil)
 }

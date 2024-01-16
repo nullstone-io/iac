@@ -1,20 +1,21 @@
 package overrides
 
-import (
-	"github.com/BSick7/go-api/errors"
-	"gopkg.in/nullstone-io/go-api-client.v0/find"
-)
+import "github.com/nullstone-io/iac/yaml"
 
 type DomainOverrides struct {
-	Name      string         `yaml:"-"`
-	Variables map[string]any `yaml:"vars"`
+	BlockOverrides
 }
 
-func (d *DomainOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (d *DomainOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return nil
+func convertDomainOverrides(parsed map[string]yaml.DomainOverrides) map[string]DomainOverrides {
+	result := make(map[string]DomainOverrides)
+	for domainName, domainValue := range parsed {
+		d := DomainOverrides{
+			BlockOverrides: BlockOverrides{
+				Name:      domainName,
+				Variables: domainValue.Variables,
+			},
+		}
+		result[domainName] = d
+	}
+	return result
 }

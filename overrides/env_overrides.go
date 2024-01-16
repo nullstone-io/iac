@@ -2,25 +2,37 @@ package overrides
 
 import (
 	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
-	"gopkg.in/yaml.v3"
 )
 
-type ConfigurationOverrides struct {
-	Version           string                               `yaml:"version"`
-	Applications      map[string]ApplicationOverrides      `yaml:"apps,omitempty"`
-	Subdomains        map[string]SubdomainOverrides        `yaml:"subdomains,omitempty"`
-	Datastores        map[string]DatastoreOverrides        `yaml:"datastores,omitempty"`
-	Domains           map[string]DomainOverrides           `yaml:"domains,omitempty"`
-	Ingresses         map[string]IngressOverrides          `yaml:"ingresses,omitempty"`
-	ClusterNamespaces map[string]ClusterNamespaceOverrides `yaml:"cluster_namespaces,omitempty"`
-	Clusters          map[string]ClusterOverrides          `yaml:"clusters,omitempty"`
-	Networks          map[string]NetworkOverrides          `yaml:"networks,omitempty"`
-	Blocks            map[string]BlockOverrides            `yaml:"blocks,omitempty"`
+type EnvOverrides struct {
+	Applications      map[string]AppOverrides
+	Subdomains        map[string]SubdomainOverrides
+	Datastores        map[string]DatastoreOverrides
+	Domains           map[string]DomainOverrides
+	Ingresses         map[string]IngressOverrides
+	ClusterNamespaces map[string]ClusterNamespaceOverrides
+	Clusters          map[string]ClusterOverrides
+	Networks          map[string]NetworkOverrides
+	Blocks            map[string]BlockOverrides
 }
 
-func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
+func ConvertOverrides(parsed yaml.EnvOverrides) (*EnvOverrides, error) {
+	result := &EnvOverrides{}
+	result.Applications = convertAppOverrides(parsed.Applications)
+	result.Datastores = convertDatastoreOverrides(parsed.Datastores)
+	result.Subdomains = convertSubdomainOverrides(parsed.Subdomains)
+	result.Domains = convertDomainOverrides(parsed.Domains)
+	result.Ingresses = convertIngressOverrides(parsed.Ingresses)
+	result.ClusterNamespaces = convertClusterNamespaceOverrides(parsed.ClusterNamespaces)
+	result.Clusters = convertClusterOverrides(parsed.Clusters)
+	result.Networks = convertNetworkOverrides(parsed.Networks)
+	result.Blocks = convertBlockOverrides(parsed.Blocks)
+	return result, nil
+}
+
+func (c *EnvOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
 	ve := errors.ValidationErrors{}
 	for _, block := range c.Blocks {
 		verrs, err := block.Validate(resolver)
@@ -88,7 +100,7 @@ func (c *ConfigurationOverrides) Validate(resolver *find.ResourceResolver) (erro
 	return ve, nil
 }
 
-func (c *ConfigurationOverrides) Normalize(resolver *find.ResourceResolver) error {
+func (c *EnvOverrides) Normalize(resolver *find.ResourceResolver) error {
 	for key, block := range c.Blocks {
 		if err := block.Normalize(resolver); err != nil {
 			return err
@@ -144,50 +156,4 @@ func (c *ConfigurationOverrides) Normalize(resolver *find.ResourceResolver) erro
 		c.Applications[key] = app
 	}
 	return nil
-}
-
-func ParseConfigurationOverrides(data []byte) (*ConfigurationOverrides, error) {
-	var r *ConfigurationOverrides
-	err := yaml.Unmarshal(data, &r)
-	if err != nil {
-		return nil, core.InvalidYamlError("previews.yml", err)
-	}
-
-	for k, ao := range r.Applications {
-		ao.Name = k
-		r.Applications[k] = ao
-	}
-	for k, so := range r.Subdomains {
-		so.Name = k
-		r.Subdomains[k] = so
-	}
-	for k, do := range r.Datastores {
-		do.Name = k
-		r.Datastores[k] = do
-	}
-	for k, bo := range r.Domains {
-		bo.Name = k
-		r.Domains[k] = bo
-	}
-	for k, bo := range r.Ingresses {
-		bo.Name = k
-		r.Ingresses[k] = bo
-	}
-	for k, bo := range r.ClusterNamespaces {
-		bo.Name = k
-		r.ClusterNamespaces[k] = bo
-	}
-	for k, bo := range r.Clusters {
-		bo.Name = k
-		r.Clusters[k] = bo
-	}
-	for k, bo := range r.Networks {
-		bo.Name = k
-		r.Networks[k] = bo
-	}
-	for k, bo := range r.Blocks {
-		bo.Name = k
-		r.Blocks[k] = bo
-	}
-	return r, nil
 }

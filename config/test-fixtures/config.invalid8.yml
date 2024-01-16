@@ -2,11 +2,6 @@ version: "0.1"
 apps:
   acme-docs:
     module: nullstone/aws-s3-site
-    vars:
-      enable_versioned_assets: false
-    connections:
-      cluster-namespace:
-        block_name: namespace0
     environment:
       TESTING: abc123
       BLAH: blahblahblah

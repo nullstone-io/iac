@@ -1,20 +1,21 @@
 package overrides
 
-import (
-	"github.com/BSick7/go-api/errors"
-	"gopkg.in/nullstone-io/go-api-client.v0/find"
-)
+import "github.com/nullstone-io/iac/yaml"
 
 type ClusterNamespaceOverrides struct {
-	Name      string         `yaml:"-"`
-	Variables map[string]any `yaml:"vars"`
+	BlockOverrides
 }
 
-func (cn *ClusterNamespaceOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (cn *ClusterNamespaceOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return nil
+func convertClusterNamespaceOverrides(parsed map[string]yaml.ClusterNamespaceOverrides) map[string]ClusterNamespaceOverrides {
+	result := make(map[string]ClusterNamespaceOverrides)
+	for clusterNamespaceName, clusterNamespaceValue := range parsed {
+		cn := ClusterNamespaceOverrides{
+			BlockOverrides: BlockOverrides{
+				Name:      clusterNamespaceName,
+				Variables: clusterNamespaceValue.Variables,
+			},
+		}
+		result[clusterNamespaceName] = cn
+	}
+	return result
 }

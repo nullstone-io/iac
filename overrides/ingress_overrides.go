@@ -1,20 +1,21 @@
 package overrides
 
-import (
-	"github.com/BSick7/go-api/errors"
-	"gopkg.in/nullstone-io/go-api-client.v0/find"
-)
+import "github.com/nullstone-io/iac/yaml"
 
 type IngressOverrides struct {
-	Name      string         `yaml:"-"`
-	Variables map[string]any `yaml:"vars"`
+	BlockOverrides
 }
 
-func (i *IngressOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (i *IngressOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return nil
+func convertIngressOverrides(parsed map[string]yaml.IngressOverrides) map[string]IngressOverrides {
+	result := make(map[string]IngressOverrides)
+	for ingressName, ingressValue := range parsed {
+		i := IngressOverrides{
+			BlockOverrides: BlockOverrides{
+				Name:      ingressName,
+				Variables: ingressValue.Variables,
+			},
+		}
+		result[ingressName] = i
+	}
+	return result
 }

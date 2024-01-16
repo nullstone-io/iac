@@ -2,22 +2,75 @@ package config
 
 import (
 	"fmt"
-	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
+	"gopkg.in/nullstone-io/go-api-client.v0/types"
+)
+
+type BlockType string
+
+const (
+	BlockTypeApplication      BlockType = "Application"
+	BlockTypeDatastore        BlockType = "Datastore"
+	BlockTypeSubdomain        BlockType = "Subdomain"
+	BlockTypeDomain           BlockType = "Domain"
+	BlockTypeIngress          BlockType = "Ingress"
+	BlockTypeClusterNamespace BlockType = "ClusterNamespace"
+	BlockTypeCluster          BlockType = "Cluster"
+	BlockTypeNetwork          BlockType = "Network"
+	BlockTypeBlock            BlockType = "Block"
 )
 
 type BlockConfiguration struct {
-	Name                string                 `yaml:"-" json:"name"`
-	ModuleSource        string                 `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
+	Type                BlockType
+	Name                string
+	ModuleSource        string
+	ModuleSourceVersion string
+	Variables           map[string]any
+	Connections         types.ConnectionTargets
 }
 
-func (b BlockConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+func convertConnections(parsed map[string]yaml.ConnectionTarget) map[string]types.ConnectionTarget {
+	result := make(map[string]types.ConnectionTarget)
+	for key, conn := range parsed {
+		result[key] = types.ConnectionTarget{
+			StackId:   conn.StackId,
+			StackName: conn.StackName,
+			BlockId:   conn.BlockId,
+			BlockName: conn.BlockName,
+			EnvId:     conn.EnvId,
+			EnvName:   conn.EnvName,
+		}
+	}
+	return result
+}
+
+func convertBlockConfigurations(parsed map[string]yaml.BlockConfiguration) map[string]BlockConfiguration {
+	result := map[string]BlockConfiguration{}
+	for blockName, blockValue := range parsed {
+		// set a default module version if not provided
+		moduleVersion := "latest"
+		if blockValue.ModuleSourceVersion != nil {
+			moduleVersion = *blockValue.ModuleSourceVersion
+		}
+		block := BlockConfiguration{
+			Type:                BlockTypeBlock,
+			Name:                blockName,
+			ModuleSource:        blockValue.ModuleSource,
+			ModuleSourceVersion: moduleVersion,
+			Variables:           blockValue.Variables,
+			Connections:         convertConnections(blockValue.Connections),
+		}
+		result[blockName] = block
+	}
+	return result
+}
+
+func (b BlockConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("blocks.%s", b.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "block/*/*", b.ModuleSource, *b.ModuleSourceVersion, b.Variables, b.Connections, nil)
+	contract := fmt.Sprintf("block/*/*")
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, b.ModuleSource, b.ModuleSourceVersion, b.Variables, b.Connections, nil)
 }
 
 func (b *BlockConfiguration) Normalize(resolver *find.ResourceResolver) error {

@@ -1,20 +1,21 @@
 package overrides
 
-import (
-	"github.com/BSick7/go-api/errors"
-	"gopkg.in/nullstone-io/go-api-client.v0/find"
-)
+import "github.com/nullstone-io/iac/yaml"
 
 type NetworkOverrides struct {
-	Name      string         `yaml:"-"`
-	Variables map[string]any `yaml:"vars"`
+	BlockOverrides
 }
 
-func (n *NetworkOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (n *NetworkOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return nil
+func convertNetworkOverrides(parsed map[string]yaml.NetworkOverrides) map[string]NetworkOverrides {
+	result := make(map[string]NetworkOverrides)
+	for networkName, networkValue := range parsed {
+		n := NetworkOverrides{
+			BlockOverrides: BlockOverrides{
+				Name:      networkName,
+				Variables: networkValue.Variables,
+			},
+		}
+		result[networkName] = n
+	}
+	return result
 }

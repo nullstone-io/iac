@@ -4,6 +4,7 @@ import (
 	errs "errors"
 	"fmt"
 	"github.com/BSick7/go-api/errors"
+	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/module/config"
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
@@ -15,7 +16,7 @@ func ValidateVariables(path string, variables map[string]any, expectedVariables 
 	ve := errors.ValidationErrors{}
 	for k, _ := range variables {
 		if _, ok := expectedVariables[k]; !ok {
-			ve = append(ve, VariableDoesNotExistError(path, k, moduleName))
+			ve = append(ve, core.VariableDoesNotExistError(path, k, moduleName))
 		}
 	}
 	if len(ve) > 0 {
@@ -31,7 +32,7 @@ func ValidateConnections(resolver *find.ResourceResolver, configBlocks []BlockCo
 		conPath := fmt.Sprintf("%s.connections.%s", path, key)
 		manifestConnection, found := manifestConnections[key]
 		if !found {
-			ve = append(ve, ConnectionDoesNotExistError(path, key, moduleName))
+			ve = append(ve, core.ConnectionDoesNotExistError(path, key, moduleName))
 			continue
 		}
 		err := ValidateConnection(resolver, configBlocks, conPath, key, conn, manifestConnection, moduleName)
@@ -58,7 +59,7 @@ func ValidateConnection(resolver *find.ResourceResolver, configBlocks []BlockCon
 		block, err := resolver.FindBlock(types.ConnectionTarget(connection))
 		if err != nil {
 			if find.IsMissingResource(err) {
-				return errors.ValidationErrors{MissingConnectionTargetError(path, err)}
+				return errors.ValidationErrors{core.MissingConnectionTargetError(path, err)}
 			}
 			return err
 		}
@@ -67,11 +68,11 @@ func ValidateConnection(resolver *find.ResourceResolver, configBlocks []BlockCon
 
 	mcn1, mcnErr := types.ParseModuleContractName(manifestConnection.Contract)
 	if mcnErr != nil {
-		return errors.ValidationErrors{InvalidConnectionContractError(path, connName, manifestConnection.Contract, moduleName)}
+		return errors.ValidationErrors{core.InvalidConnectionContractError(path, connName, manifestConnection.Contract, moduleName)}
 	}
 	ms, err := artifacts.ParseSource(found.ModuleSource)
 	if err != nil {
-		return errors.ValidationErrors{InvalidModuleFormatError(path, found.ModuleSource, err)}
+		return errors.ValidationErrors{core.InvalidModuleFormatError(path, found.ModuleSource, err)}
 	}
 	m, mErr := resolver.ApiClient.Modules().Get(ms.OrgName, ms.ModuleName)
 	if mErr != nil {
@@ -86,7 +87,7 @@ func ValidateConnection(resolver *find.ResourceResolver, configBlocks []BlockCon
 			Subplatform: m.Subplatform,
 		}
 		if ok := mcn1.Match(mcn2); !ok {
-			return errors.ValidationErrors{MismatchedConnectionContractError(path, *found, manifestConnection)}
+			return errors.ValidationErrors{core.MismatchedConnectionContractError(path, *found, manifestConnection)}
 		}
 	}
 
@@ -126,7 +127,7 @@ func ValidateCapability(resolver *find.ResourceResolver, configBlocks []BlockCon
 			}
 		}
 		if !found {
-			ve = append(ve, UnsupportedAppCategoryError(path, iacCap.ModuleSource, subcategory))
+			ve = append(ve, core.UnsupportedAppCategoryError(path, iacCap.ModuleSource, subcategory))
 		}
 	}
 

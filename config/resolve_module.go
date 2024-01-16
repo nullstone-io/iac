@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/BSick7/go-api/errors"
+	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -16,7 +17,7 @@ func ResolveModule(resolver *find.ResourceResolver, iacPath, moduleSource, modul
 
 	ms, err := artifacts.ParseSource(moduleSource)
 	if err != nil {
-		return nil, nil, errors.ValidationErrors{InvalidModuleFormatError(fmt.Sprintf("%s.module", iacPath), moduleSource, err)}
+		return nil, nil, errors.ValidationErrors{core.InvalidModuleFormatError(fmt.Sprintf("%s.module", iacPath), moduleSource, err)}
 	}
 	// TODO: Add support for ms.Host
 	m, err := resolver.ApiClient.Modules().Get(ms.OrgName, ms.ModuleName)
@@ -24,7 +25,7 @@ func ResolveModule(resolver *find.ResourceResolver, iacPath, moduleSource, modul
 		return nil, nil, fmt.Errorf("unable to validate module (%s): module lookup failed: %w", moduleSource, err)
 	}
 	if m == nil {
-		return nil, nil, errors.ValidationErrors{MissingModuleError(iacPath, moduleSource)}
+		return nil, nil, errors.ValidationErrors{core.MissingModuleError(iacPath, moduleSource)}
 	}
 	mcn1, err := types.ParseModuleContractName(contract)
 	if err != nil {
@@ -38,7 +39,7 @@ func ResolveModule(resolver *find.ResourceResolver, iacPath, moduleSource, modul
 		Subplatform: m.Subplatform,
 	}
 	if ok := mcn1.Match(mcn2); !ok {
-		return nil, nil, errors.ValidationErrors{InvalidModuleContractError(iacPath, moduleSource, mcn1, mcn2)}
+		return nil, nil, errors.ValidationErrors{core.InvalidModuleContractError(iacPath, moduleSource, mcn1, mcn2)}
 	}
 
 	var mv *types.ModuleVersion
@@ -51,7 +52,7 @@ func ResolveModule(resolver *find.ResourceResolver, iacPath, moduleSource, modul
 		}
 	}
 	if mv == nil {
-		return nil, nil, errors.ValidationErrors{MissingModuleVersionError(iacPath, ms.String(), moduleSourceVersion)}
+		return nil, nil, errors.ValidationErrors{core.MissingModuleVersionError(iacPath, ms.String(), moduleSourceVersion)}
 	}
 
 	return m, mv, nil

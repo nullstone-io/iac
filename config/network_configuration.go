@@ -2,24 +2,39 @@ package config
 
 import (
 	"fmt"
-	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
 type NetworkConfiguration struct {
-	Name                string                 `yaml:"-" json:"name"`
-	ModuleSource        string                 `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
+	BlockConfiguration
 }
 
-func (n NetworkConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+func convertNetworkConfigurations(parsed map[string]yaml.NetworkConfiguration) map[string]NetworkConfiguration {
+	result := make(map[string]NetworkConfiguration)
+	for networkName, networkValue := range parsed {
+		// set a default module version if not provided
+		moduleVersion := "latest"
+		if networkValue.ModuleSourceVersion != nil {
+			moduleVersion = *networkValue.ModuleSourceVersion
+		}
+		network := NetworkConfiguration{
+			BlockConfiguration: BlockConfiguration{
+				Type:                BlockTypeNetwork,
+				Name:                networkName,
+				ModuleSource:        networkValue.ModuleSource,
+				ModuleSourceVersion: moduleVersion,
+				Variables:           networkValue.Variables,
+				Connections:         convertConnections(networkValue.Connections),
+			},
+		}
+		result[networkName] = network
+	}
+	return result
+}
+
+func (n NetworkConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("networks.%s", n.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "network/*/*", n.ModuleSource, *n.ModuleSourceVersion, n.Variables, n.Connections, nil)
-}
-
-func (n *NetworkConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(n.Connections, resolver)
+	contract := fmt.Sprintf("network/*/*")
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, n.ModuleSource, n.ModuleSourceVersion, n.Variables, n.Connections, nil)
 }

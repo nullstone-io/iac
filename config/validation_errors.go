@@ -1,4 +1,4 @@
-package core
+package config
 
 import (
 	"fmt"
@@ -6,13 +6,6 @@ import (
 	"github.com/nullstone-io/module/config"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
-
-func InvalidYamlError(filename string, err error) errors.ValidationError {
-	return errors.ValidationError{
-		Context: fmt.Sprintf(".nullstone/%s", filename),
-		Message: err.Error(),
-	}
-}
 
 func VariableDoesNotExistError(path, name, moduleName string) errors.ValidationError {
 	return errors.ValidationError{

@@ -1,4 +1,4 @@
-package core
+package config
 
 import (
 	errors3 "errors"

@@ -1,20 +1,21 @@
 package overrides
 
-import (
-	"github.com/BSick7/go-api/errors"
-	"gopkg.in/nullstone-io/go-api-client.v0/find"
-)
+import "github.com/nullstone-io/iac/yaml"
 
 type DatastoreOverrides struct {
-	Name      string         `yaml:"-"`
-	Variables map[string]any `yaml:"vars"`
+	BlockOverrides
 }
 
-func (d *DatastoreOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {
-	// TODO: Implement: How do we validate if we don't have a module to resolve
-	return errors.ValidationErrors{}, nil
-}
-
-func (d *DatastoreOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return nil
+func convertDatastoreOverrides(parsed map[string]yaml.DatastoreOverrides) map[string]DatastoreOverrides {
+	result := make(map[string]DatastoreOverrides)
+	for datastoreName, datastoreValue := range parsed {
+		d := DatastoreOverrides{
+			BlockOverrides: BlockOverrides{
+				Name:      datastoreName,
+				Variables: datastoreValue.Variables,
+			},
+		}
+		result[datastoreName] = d
+	}
+	return result
 }

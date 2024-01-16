@@ -2,24 +2,39 @@ package config
 
 import (
 	"fmt"
-	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
 type ClusterNamespaceConfiguration struct {
-	Name                string                 `yaml:"-" json:"name"`
-	ModuleSource        string                 `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
+	BlockConfiguration
 }
 
-func (cn ClusterNamespaceConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+func convertClusterNamespaceConfigurations(parsed map[string]yaml.ClusterNamespaceConfiguration) map[string]ClusterNamespaceConfiguration {
+	result := make(map[string]ClusterNamespaceConfiguration)
+	for clusterNamespaceName, clusterNamespaceValue := range parsed {
+		// set a default module version if not provided
+		moduleVersion := "latest"
+		if clusterNamespaceValue.ModuleSourceVersion != nil {
+			moduleVersion = *clusterNamespaceValue.ModuleSourceVersion
+		}
+		cn := ClusterNamespaceConfiguration{
+			BlockConfiguration: BlockConfiguration{
+				Type:                BlockTypeClusterNamespace,
+				Name:                clusterNamespaceName,
+				ModuleSource:        clusterNamespaceValue.ModuleSource,
+				ModuleSourceVersion: moduleVersion,
+				Variables:           clusterNamespaceValue.Variables,
+				Connections:         convertConnections(clusterNamespaceValue.Connections),
+			},
+		}
+		result[clusterNamespaceName] = cn
+	}
+	return result
+}
+
+func (cn ClusterNamespaceConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("cluster_namespaces.%s", cn.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "cluster-namespace/*/*", cn.ModuleSource, *cn.ModuleSourceVersion, cn.Variables, cn.Connections, nil)
-}
-
-func (cn *ClusterNamespaceConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(cn.Connections, resolver)
+	contract := fmt.Sprintf("cluster-namespace/*/*")
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, cn.ModuleSource, cn.ModuleSourceVersion, cn.Variables, cn.Connections, nil)
 }

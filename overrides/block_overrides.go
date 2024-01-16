@@ -2,12 +2,25 @@ package overrides
 
 import (
 	"github.com/BSick7/go-api/errors"
+	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
 type BlockOverrides struct {
-	Name      string         `yaml:"-"`
-	Variables map[string]any `yaml:"vars"`
+	Name      string
+	Variables map[string]any
+}
+
+func convertBlockOverrides(parsed map[string]yaml.BlockOverrides) map[string]BlockOverrides {
+	result := make(map[string]BlockOverrides)
+	for blockName, blockValue := range parsed {
+		block := BlockOverrides{
+			Name:      blockName,
+			Variables: blockValue.Variables,
+		}
+		result[blockName] = block
+	}
+	return result
 }
 
 func (b *BlockOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {

@@ -2,24 +2,39 @@ package config
 
 import (
 	"fmt"
-	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
 type IngressConfiguration struct {
-	Name                string                 `yaml:"-" json:"name"`
-	ModuleSource        string                 `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
+	BlockConfiguration
 }
 
-func (i IngressConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+func convertIngressConfigurations(parsed map[string]yaml.IngressConfiguration) map[string]IngressConfiguration {
+	result := make(map[string]IngressConfiguration)
+	for ingressName, ingressValue := range parsed {
+		// set a default module version if not provided
+		moduleVersion := "latest"
+		if ingressValue.ModuleSourceVersion != nil {
+			moduleVersion = *ingressValue.ModuleSourceVersion
+		}
+		ingress := IngressConfiguration{
+			BlockConfiguration: BlockConfiguration{
+				Type:                BlockTypeIngress,
+				Name:                ingressName,
+				ModuleSource:        ingressValue.ModuleSource,
+				ModuleSourceVersion: moduleVersion,
+				Variables:           ingressValue.Variables,
+				Connections:         convertConnections(ingressValue.Connections),
+			},
+		}
+		result[ingressName] = ingress
+	}
+	return result
+}
+
+func (i IngressConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("ingresses.%s", i.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "ingress/*/*", i.ModuleSource, *i.ModuleSourceVersion, i.Variables, i.Connections, nil)
-}
-
-func (i *IngressConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(i.Connections, resolver)
+	contract := fmt.Sprintf("ingress/*/*")
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, i.ModuleSource, i.ModuleSourceVersion, i.Variables, i.Connections, nil)
 }

@@ -2,25 +2,42 @@ package config
 
 import (
 	"fmt"
-	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
 type DomainConfiguration struct {
-	Name                string                 `yaml:"-" json:"name"`
-	ModuleSource        string                 `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
-	DnsName             string                 `yaml:"dns_name" json:"dnsName"`
-	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
+	BlockConfiguration
+
+	DnsName string
 }
 
-func (d DomainConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map[string]DomainConfiguration {
+	result := make(map[string]DomainConfiguration)
+	for domainName, domainValue := range parsed {
+		// set a default module version if not provided
+		moduleVersion := "latest"
+		if domainValue.ModuleSourceVersion != nil {
+			moduleVersion = *domainValue.ModuleSourceVersion
+		}
+		domain := DomainConfiguration{
+			BlockConfiguration: BlockConfiguration{
+				Type:                BlockTypeDomain,
+				Name:                domainName,
+				ModuleSource:        domainValue.ModuleSource,
+				ModuleSourceVersion: moduleVersion,
+				Variables:           domainValue.Variables,
+				Connections:         convertConnections(domainValue.Connections),
+			},
+			DnsName: domainValue.DnsName,
+		}
+		result[domainName] = domain
+	}
+	return result
+}
+
+func (d DomainConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("domains.%s", d.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "domain/*/*", d.ModuleSource, *d.ModuleSourceVersion, d.Variables, d.Connections, nil)
-}
-
-func (d *DomainConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(d.Connections, resolver)
+	contract := fmt.Sprintf("domain/*/*")
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil)
 }

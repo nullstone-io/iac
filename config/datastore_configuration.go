@@ -2,24 +2,39 @@ package config
 
 import (
 	"fmt"
-	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
 type DatastoreConfiguration struct {
-	Name                string                 `yaml:"-" json:"name"`
-	ModuleSource        string                 `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
+	BlockConfiguration
 }
 
-func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+func convertDatastoreConfigurations(parsed map[string]yaml.DatastoreConfiguration) map[string]DatastoreConfiguration {
+	result := make(map[string]DatastoreConfiguration)
+	for datastoreName, datastoreValue := range parsed {
+		// set a default module version if not provided
+		moduleVersion := "latest"
+		if datastoreValue.ModuleSourceVersion != nil {
+			moduleVersion = *datastoreValue.ModuleSourceVersion
+		}
+		ds := DatastoreConfiguration{
+			BlockConfiguration: BlockConfiguration{
+				Type:                BlockTypeDatastore,
+				Name:                datastoreName,
+				ModuleSource:        datastoreValue.ModuleSource,
+				ModuleSourceVersion: moduleVersion,
+				Variables:           datastoreValue.Variables,
+				Connections:         convertConnections(datastoreValue.Connections),
+			},
+		}
+		result[datastoreName] = ds
+	}
+	return result
+}
+
+func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("datastores.%s", d.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "datastore/*/*", d.ModuleSource, *d.ModuleSourceVersion, d.Variables, d.Connections, nil)
-}
-
-func (d *DatastoreConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(d.Connections, resolver)
+	contract := fmt.Sprintf("datastore/*/*")
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil)
 }

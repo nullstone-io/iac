@@ -2,8 +2,6 @@ version: "0.1"
 apps:
   acme-docs:
     module: nullstone/aws-s3-site
-    vars:
-      enable_versioned_assets: false
     environment:
       TESTING: abc123
       BLAH: blahblahblah

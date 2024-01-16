@@ -1,20 +1,19 @@
 version: "0.1"
 apps:
   acme-docs:
-    module: nullstone/aws-s3-site
+    module: nullstone/aws-fargate-service
     vars:
-      enable_versioned_assets: false
+      num_tasks: 2
+    connections:
+      cluster-namespace:
+        block_name: namespace0
     environment:
       TESTING: abc123
       BLAH: blahblahblah
     capabilities:
-      - module: nullstone/aws-s3-cdn
+      - module: nullstone/aws-load-balancer
         vars:
-          enable_www: false
-          notfound_behavior:
-            document: 404.html
-            enabled: true
-            spa_mode: false
+          health_check_path: "/status"
         connections:
           subdomain:
             block_name: postgres

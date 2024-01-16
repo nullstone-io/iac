@@ -1,4 +1,4 @@
-package overrides
+package config
 
 import (
 	"github.com/nullstone-io/iac/core"
@@ -6,20 +6,20 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
-type CapabilityOverrides []CapabilityOverride
+type CapabilityConfigurations []CapabilityConfiguration
 
-func (s CapabilityOverrides) Normalize(resolver *find.ResourceResolver) error {
-	for i, iacCap := range s {
+func (c CapabilityConfigurations) Normalize(resolver *find.ResourceResolver) error {
+	for i, iacCap := range c {
 		resolved, err := iacCap.Normalize(resolver)
 		if err != nil {
 			return err
 		}
-		s[i] = resolved
+		c[i] = resolved
 	}
 	return nil
 }
 
-type CapabilityOverride struct {
+type CapabilityConfiguration struct {
 	ModuleSource        string
 	ModuleSourceVersion string
 	Variables           map[string]any
@@ -27,7 +27,7 @@ type CapabilityOverride struct {
 	Namespace           *string
 }
 
-func (c CapabilityOverride) Normalize(resolver *find.ResourceResolver) (CapabilityOverride, error) {
+func (c CapabilityConfiguration) Normalize(resolver *find.ResourceResolver) (CapabilityConfiguration, error) {
 	if err := core.NormalizeConnectionTargets(c.Connections, resolver); err != nil {
 		return c, err
 	}

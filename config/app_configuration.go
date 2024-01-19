@@ -5,7 +5,6 @@ import (
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
-	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
 type AppConfiguration struct {
@@ -70,47 +69,4 @@ func (a *AppConfiguration) Normalize(resolver *find.ResourceResolver) error {
 		return err
 	}
 	return a.Capabilities.Normalize(resolver)
-}
-
-type InvalidConfigurationError struct {
-	Err error
-}
-
-func (e InvalidConfigurationError) Error() string {
-	return fmt.Sprintf("invalid app configuration: %s", e.Err.Error())
-}
-
-func (a AppConfiguration) GetCapabilities(orgName string, stackId, blockId, envId int64) ([]types.Capability, error) {
-	caps := make([]types.Capability, len(a.Capabilities))
-	for i, cap := range a.Capabilities {
-		updateCap := types.Capability{
-			OrgName:             orgName,
-			AppId:               blockId,
-			EnvId:               envId,
-			ModuleSource:        cap.ModuleSource,
-			ModuleSourceVersion: cap.ModuleSourceVersion,
-			Connections:         map[string]types.ConnectionTarget{},
-		}
-		if cap.Namespace != nil {
-			updateCap.Namespace = *cap.Namespace
-		}
-		for key, conn := range cap.Connections {
-			target := types.ConnectionTarget{}
-			// each connection must have a block_name to identify which block it is connected to
-			if conn.BlockName == "" {
-				return nil, InvalidConfigurationError{fmt.Errorf("The connection (%s) must have a block_name to identify which block it is connected to.", key)}
-			}
-			target.BlockName = conn.BlockName
-			// each connection must also have a stack_id
-			if conn.StackId != 0 {
-				target.StackId = conn.StackId
-			} else {
-				target.StackId = stackId
-			}
-			target.EnvId = conn.EnvId
-			updateCap.Connections[key] = target
-		}
-		caps[i] = updateCap
-	}
-	return caps, nil
 }

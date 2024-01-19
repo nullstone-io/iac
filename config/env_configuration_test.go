@@ -429,6 +429,17 @@ func TestConvertConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:     "blockName is required",
+			filename: "test-fixtures/config.invalid12.yml",
+			want:     nil,
+			validationErrors: errors.ValidationErrors{
+				errors.ValidationError{
+					Context: "apps.acme-docs.capabilities[0].connections.subdomain.block_name",
+					Message: "connection must have a block_name to identify which block it is connected to",
+				},
+			},
+		},
 	}
 
 	router := mux.NewRouter()

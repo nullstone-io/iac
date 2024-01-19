@@ -54,6 +54,10 @@ func ValidateConnections(resolver *find.ResourceResolver, configBlocks []BlockCo
 //  2. Resolves the connection's target (i.e. block)
 //  3. Verifies the block matches the connection contract
 func ValidateConnection(resolver *find.ResourceResolver, configBlocks []BlockConfiguration, path string, connName string, connection types.ConnectionTarget, manifestConnection config.Connection, moduleName string) error {
+	if connection.BlockName == "" {
+		return errors.ValidationErrors{core.MissingConnectionBlockError(path)}
+	}
+
 	found := findBlock(connection.BlockName, configBlocks)
 	if found == nil {
 		block, err := resolver.FindBlock(types.ConnectionTarget(connection))
@@ -103,6 +107,26 @@ func findBlock(name string, configBlocks []BlockConfiguration) *BlockConfigurati
 	return nil
 }
 
+// ValidateCapabilities performs validation on a all IaC capabilities within an application
+func ValidateCapabilities(resolver *find.ResourceResolver, configBlocks []BlockConfiguration, path string, capabilities CapabilityConfigurations, subcategory types.SubcategoryName) error {
+	ve := errors.ValidationErrors{}
+	for i, iacCap := range capabilities {
+		capPath := fmt.Sprintf("%s.capabilities[%d]", path, i)
+		err := ValidateCapability(resolver, configBlocks, capPath, iacCap, string(subcategory))
+		if err != nil {
+			var verrs errors.ValidationErrors
+			if errs.As(err, &verrs) {
+				ve = append(ve, verrs...)
+			}
+		}
+	}
+
+	if len(ve) > 0 {
+		return ve
+	}
+	return nil
+}
+
 func ValidateCapability(resolver *find.ResourceResolver, configBlocks []BlockConfiguration, path string, iacCap CapabilityConfiguration, subcategory string) error {
 	// ensure the module is a capability module and supports the provider type (e.g. aws, gcp, azure)
 	providerType, err := resolver.ResolveCurProviderType()
@@ -146,6 +170,44 @@ func ValidateCapability(resolver *find.ResourceResolver, configBlocks []BlockCon
 				ve = append(ve, verrs...)
 			}
 		}
+	}
+
+	if len(ve) > 0 {
+		return ve
+	}
+	return nil
+}
+
+func ValidateBlock(resolver *find.ResourceResolver, configBlocks []BlockConfiguration, yamlPath, contract, moduleSource, moduleSourceVersion string, variables map[string]any, connections types.ConnectionTargets, capabilities CapabilityConfigurations) error {
+	m, mv, err := ResolveModule(resolver, yamlPath, moduleSource, moduleSourceVersion, contract)
+	if err != nil {
+		return err
+	}
+
+	moduleName := fmt.Sprintf("%s/%s@%s", m.OrgName, m.Name, mv.Version)
+
+	ve := errors.ValidationErrors{}
+	ve = append(ve, ValidateVariables(yamlPath, variables, mv.Manifest.Variables, moduleName)...)
+
+	if connections != nil {
+		err := ValidateConnections(resolver, configBlocks, yamlPath, connections, mv.Manifest.Connections, moduleName)
+		if err != nil {
+			var verrs errors.ValidationErrors
+			if errs.As(err, &verrs) {
+				ve = append(ve, verrs...)
+			}
+		}
+	}
+
+	if capabilities != nil {
+		err := ValidateCapabilities(resolver, configBlocks, yamlPath, capabilities, m.Subcategory)
+		if err != nil {
+			var verrs errors.ValidationErrors
+			if errs.As(err, &verrs) {
+				ve = append(ve, verrs...)
+			}
+		}
+
 	}
 
 	if len(ve) > 0 {

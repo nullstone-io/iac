@@ -21,6 +21,13 @@ func ConnectionDoesNotExistError(path, name, moduleName string) errors.Validatio
 	}
 }
 
+func MissingConnectionBlockError(path string) errors.ValidationError {
+	return errors.ValidationError{
+		Context: fmt.Sprintf("%s.block_name", path),
+		Message: fmt.Sprintf("connection must have a block_name to identify which block it is connected to"),
+	}
+}
+
 func MissingConnectionTargetError(path string, err error) errors.ValidationError {
 	return errors.ValidationError{
 		Context: path,

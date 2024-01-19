@@ -454,11 +454,10 @@ func TestConvertConfiguration(t *testing.T) {
 			parsed, err := config2.ParseEnvConfiguration(buf)
 			assert.NoError(t, err)
 
-			got, err := ConvertConfiguration(*parsed)
-			assert.NoError(t, err)
+			got := ConvertConfiguration(*parsed)
 
 			if test.want != nil {
-				assert.Equal(t, test.want, got)
+				assert.Equal(t, *test.want, got)
 			}
 
 			sr := &find.StackResolver{

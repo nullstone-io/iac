@@ -19,8 +19,8 @@ type EnvConfiguration struct {
 	Blocks            map[string]BlockConfiguration
 }
 
-func ConvertConfiguration(parsed yaml.EnvConfiguration) (*EnvConfiguration, error) {
-	result := &EnvConfiguration{}
+func ConvertConfiguration(parsed yaml.EnvConfiguration) EnvConfiguration {
+	result := EnvConfiguration{}
 	result.Applications = convertAppConfigurations(parsed.Applications)
 	result.Datastores = convertDatastoreConfigurations(parsed.Datastores)
 	result.Subdomains = convertSubdomainConfigurations(parsed.Subdomains)
@@ -30,7 +30,7 @@ func ConvertConfiguration(parsed yaml.EnvConfiguration) (*EnvConfiguration, erro
 	result.Clusters = convertClusterConfigurations(parsed.Clusters)
 	result.Networks = convertNetworkConfigurations(parsed.Networks)
 	result.Blocks = convertBlockConfigurations(parsed.Blocks)
-	return result, nil
+	return result
 }
 
 func (e EnvConfiguration) getBlocks() []BlockConfiguration {

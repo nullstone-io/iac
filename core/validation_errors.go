@@ -14,6 +14,20 @@ func VariableDoesNotExistError(path, name, moduleName string) errors.ValidationE
 	}
 }
 
+func EnvVariableKeyStartsWithNumberError(path, key string) errors.ValidationError {
+	return errors.ValidationError{
+		Context: fmt.Sprintf("%s.env_vars.%s", path, key),
+		Message: fmt.Sprintf("invalid environment variable key (%s) - it must not start with a number", key),
+	}
+}
+
+func EnvVariableKeyInvalidCharsError(path, key string) errors.ValidationError {
+	return errors.ValidationError{
+		Context: fmt.Sprintf("%s.env_vars.%s", path, key),
+		Message: fmt.Sprintf("invalid environment variable key (%s) - it must only contain letters, numbers, and underscores", key),
+	}
+}
+
 func ConnectionDoesNotExistError(path, name, moduleName string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.connections.%s", path, name),

@@ -36,5 +36,5 @@ func convertNetworkConfigurations(parsed map[string]yaml.NetworkConfiguration) m
 func (n NetworkConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("networks.%s", n.Name)
 	contract := fmt.Sprintf("network/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, n.ModuleSource, n.ModuleSourceVersion, n.Variables, n.Connections, nil)
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, n.ModuleSource, n.ModuleSourceVersion, n.Variables, n.Connections, nil, nil)
 }

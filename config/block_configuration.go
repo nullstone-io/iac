@@ -70,7 +70,7 @@ func convertBlockConfigurations(parsed map[string]yaml.BlockConfiguration) map[s
 func (b BlockConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("blocks.%s", b.Name)
 	contract := fmt.Sprintf("block/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, b.ModuleSource, b.ModuleSourceVersion, b.Variables, b.Connections, nil)
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, b.ModuleSource, b.ModuleSourceVersion, b.Variables, b.Connections, nil, nil)
 }
 
 func (b *BlockConfiguration) Normalize(resolver *find.ResourceResolver) error {

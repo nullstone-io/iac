@@ -39,5 +39,5 @@ func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map
 func (d DomainConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("domains.%s", d.Name)
 	contract := fmt.Sprintf("domain/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil)
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil, nil)
 }

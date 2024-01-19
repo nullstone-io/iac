@@ -107,6 +107,32 @@ func findBlock(name string, configBlocks []BlockConfiguration) *BlockConfigurati
 	return nil
 }
 
+func hasInvalidChars(r rune) bool {
+	return (r < 'A' || r > 'z') && r != '_' && (r < '0' || r > '9')
+}
+
+func startsWithNumber(s string) bool {
+	return s[0] >= '0' && s[0] <= '9'
+}
+
+func ValidateEnvVariables(path string, envVariables map[string]string) error {
+	ve := errors.ValidationErrors{}
+
+	for k, _ := range envVariables {
+		if startsWithNumber(k) {
+			ve = append(ve, core.EnvVariableKeyStartsWithNumberError(path, k))
+		}
+		if strings.IndexFunc(k, hasInvalidChars) != -1 {
+			ve = append(ve, core.EnvVariableKeyInvalidCharsError(path, k))
+		}
+	}
+
+	if len(ve) > 0 {
+		return ve
+	}
+	return nil
+}
+
 // ValidateCapabilities performs validation on a all IaC capabilities within an application
 func ValidateCapabilities(resolver *find.ResourceResolver, configBlocks []BlockConfiguration, path string, capabilities CapabilityConfigurations, subcategory types.SubcategoryName) error {
 	ve := errors.ValidationErrors{}
@@ -178,7 +204,7 @@ func ValidateCapability(resolver *find.ResourceResolver, configBlocks []BlockCon
 	return nil
 }
 
-func ValidateBlock(resolver *find.ResourceResolver, configBlocks []BlockConfiguration, yamlPath, contract, moduleSource, moduleSourceVersion string, variables map[string]any, connections types.ConnectionTargets, capabilities CapabilityConfigurations) error {
+func ValidateBlock(resolver *find.ResourceResolver, configBlocks []BlockConfiguration, yamlPath, contract, moduleSource, moduleSourceVersion string, variables map[string]any, connections types.ConnectionTargets, envVars map[string]string, capabilities CapabilityConfigurations) error {
 	m, mv, err := ResolveModule(resolver, yamlPath, moduleSource, moduleSourceVersion, contract)
 	if err != nil {
 		return err
@@ -191,6 +217,16 @@ func ValidateBlock(resolver *find.ResourceResolver, configBlocks []BlockConfigur
 
 	if connections != nil {
 		err := ValidateConnections(resolver, configBlocks, yamlPath, connections, mv.Manifest.Connections, moduleName)
+		if err != nil {
+			var verrs errors.ValidationErrors
+			if errs.As(err, &verrs) {
+				ve = append(ve, verrs...)
+			}
+		}
+	}
+
+	if envVars != nil {
+		err := ValidateEnvVariables(yamlPath, envVars)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {

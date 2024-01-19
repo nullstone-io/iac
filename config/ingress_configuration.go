@@ -36,5 +36,5 @@ func convertIngressConfigurations(parsed map[string]yaml.IngressConfiguration) m
 func (i IngressConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
 	yamlPath := fmt.Sprintf("ingresses.%s", i.Name)
 	contract := fmt.Sprintf("ingress/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, i.ModuleSource, i.ModuleSourceVersion, i.Variables, i.Connections, nil)
+	return ValidateBlock(resolver, configBlocks, yamlPath, contract, i.ModuleSource, i.ModuleSourceVersion, i.Variables, i.Connections, nil, nil)
 }

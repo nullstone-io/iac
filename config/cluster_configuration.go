@@ -33,8 +33,8 @@ func convertClusterConfigurations(parsed map[string]yaml.ClusterConfiguration) m
 	return result
 }
 
-func (c ClusterConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
+func (c ClusterConfiguration) Validate(resolver *find.ResourceResolver) error {
 	yamlPath := fmt.Sprintf("clusters.%s", c.Name)
 	contract := fmt.Sprintf("cluster/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, c.ModuleSource, c.ModuleSourceVersion, c.Variables, c.Connections, nil, nil)
+	return ValidateBlock(resolver, yamlPath, contract, c.ModuleSource, c.ModuleSourceVersion, c.Variables, c.Connections, nil, nil)
 }

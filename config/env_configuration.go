@@ -33,43 +33,10 @@ func ConvertConfiguration(parsed yaml.EnvConfiguration) EnvConfiguration {
 	return result
 }
 
-func (e EnvConfiguration) getBlocks() []BlockConfiguration {
-	var blocks []BlockConfiguration
-	for _, block := range e.Applications {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Datastores {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Subdomains {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Domains {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Ingresses {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.ClusterNamespaces {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Clusters {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Networks {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Blocks {
-		blocks = append(blocks, block)
-	}
-	return blocks
-}
-
 func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
-	blocks := e.getBlocks()
 	ve := errors.ValidationErrors{}
 	for _, app := range e.Applications {
-		err := app.Validate(resolver, blocks)
+		err := app.Validate(resolver)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -78,7 +45,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, ds := range e.Datastores {
-		err := ds.Validate(resolver, blocks)
+		err := ds.Validate(resolver)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -87,7 +54,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, sub := range e.Subdomains {
-		err := sub.Validate(resolver, blocks)
+		err := sub.Validate(resolver)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -96,7 +63,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, domain := range e.Domains {
-		err := domain.Validate(resolver, blocks)
+		err := domain.Validate(resolver)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -105,7 +72,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, ingress := range e.Ingresses {
-		err := ingress.Validate(resolver, blocks)
+		err := ingress.Validate(resolver)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -114,7 +81,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
-		err := clusterNamespace.Validate(resolver, blocks)
+		err := clusterNamespace.Validate(resolver)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -123,7 +90,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, cluster := range e.Clusters {
-		err := cluster.Validate(resolver, blocks)
+		err := cluster.Validate(resolver)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -132,7 +99,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, network := range e.Networks {
-		err := network.Validate(resolver, blocks)
+		err := network.Validate(resolver)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -141,7 +108,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, block := range e.Blocks {
-		err := block.Validate(resolver, blocks)
+		err := block.Validate(resolver)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {

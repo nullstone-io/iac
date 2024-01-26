@@ -8,7 +8,7 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
-func Validate(config *config.EnvConfiguration, overrides *overrides.EnvOverrides, resolver *find.ResourceResolver) error {
+func Validate(config *config.EnvConfiguration, overrides map[string]overrides.EnvOverrides, resolver *find.ResourceResolver) error {
 	ve := errors.ValidationErrors{}
 	if config != nil {
 		err := config.Validate(resolver)
@@ -21,13 +21,14 @@ func Validate(config *config.EnvConfiguration, overrides *overrides.EnvOverrides
 			}
 		}
 	}
-	if overrides != nil {
-		verrs, err := overrides.Validate(resolver)
+	for _, envOverrides := range overrides {
+		verrs, err := envOverrides.Validate(resolver)
 		if err != nil {
 			return err
 		}
 		ve = append(ve, verrs...)
 	}
+
 	if len(ve) > 0 {
 		return ve
 	}

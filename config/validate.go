@@ -94,15 +94,6 @@ func ValidateConnection(resolver *find.ResourceResolver, path string, connName s
 	return nil
 }
 
-func findBlock(name string, configBlocks []BlockConfiguration) *BlockConfiguration {
-	for _, n := range configBlocks {
-		if name == n.Name {
-			return &n
-		}
-	}
-	return nil
-}
-
 func hasInvalidChars(r rune) bool {
 	return (r < 'A' || r > 'z') && r != '_' && (r < '0' || r > '9')
 }

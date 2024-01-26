@@ -26,6 +26,7 @@ func convertClusterNamespaceConfigurations(parsed map[string]yaml.ClusterNamespa
 				ModuleSourceVersion: moduleVersion,
 				Variables:           clusterNamespaceValue.Variables,
 				Connections:         convertConnections(clusterNamespaceValue.Connections),
+				IsShared:            clusterNamespaceValue.IsShared,
 			},
 		}
 		result[clusterNamespaceName] = cn

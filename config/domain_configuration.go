@@ -28,6 +28,7 @@ func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map
 				ModuleSourceVersion: moduleVersion,
 				Variables:           domainValue.Variables,
 				Connections:         convertConnections(domainValue.Connections),
+				IsShared:            domainValue.IsShared,
 			},
 			DnsName: domainValue.DnsName,
 		}

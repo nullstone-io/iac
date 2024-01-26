@@ -26,6 +26,7 @@ func convertDatastoreConfigurations(parsed map[string]yaml.DatastoreConfiguratio
 				ModuleSourceVersion: moduleVersion,
 				Variables:           datastoreValue.Variables,
 				Connections:         convertConnections(datastoreValue.Connections),
+				IsShared:            datastoreValue.IsShared,
 			},
 		}
 		result[datastoreName] = ds

@@ -26,6 +26,7 @@ func convertNetworkConfigurations(parsed map[string]yaml.NetworkConfiguration) m
 				ModuleSourceVersion: moduleVersion,
 				Variables:           networkValue.Variables,
 				Connections:         convertConnections(networkValue.Connections),
+				IsShared:            networkValue.IsShared,
 			},
 		}
 		result[networkName] = network

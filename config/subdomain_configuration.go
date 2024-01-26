@@ -28,6 +28,7 @@ func convertSubdomainConfigurations(parsed map[string]yaml.SubdomainConfiguratio
 				ModuleSourceVersion: moduleVersion,
 				Variables:           subValue.Variables,
 				Connections:         convertConnections(subValue.Connections),
+				IsShared:            subValue.IsShared,
 			},
 			DnsName: subValue.DnsName,
 		}

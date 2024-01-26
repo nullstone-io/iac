@@ -7,4 +7,5 @@ type SubdomainConfiguration struct {
 	DnsName             string            `yaml:"dns_name,omitempty" json:"dnsName"`
 	Variables           map[string]any    `yaml:"vars" json:"vars"`
 	Connections         ConnectionTargets `yaml:"connections" json:"connections"`
+	IsShared            bool              `yaml:"is_shared" json:"isShared"`
 }

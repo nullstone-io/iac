@@ -29,6 +29,7 @@ type BlockConfiguration struct {
 	ModuleSourceVersion string
 	Variables           map[string]any
 	Connections         types.ConnectionTargets
+	IsShared            bool
 }
 
 func convertConnections(parsed map[string]yaml.ConnectionTarget) map[string]types.ConnectionTarget {
@@ -61,6 +62,7 @@ func convertBlockConfigurations(parsed map[string]yaml.BlockConfiguration) map[s
 			ModuleSourceVersion: moduleVersion,
 			Variables:           blockValue.Variables,
 			Connections:         convertConnections(blockValue.Connections),
+			IsShared:            blockValue.IsShared,
 		}
 		result[blockName] = block
 	}

@@ -48,6 +48,7 @@ func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[strin
 				ModuleSourceVersion: moduleVersion,
 				Variables:           appValue.Variables,
 				Connections:         convertConnections(appValue.Connections),
+				IsShared:            appValue.IsShared,
 			},
 			EnvVariables: appValue.EnvVariables,
 			Capabilities: convertCapabilities(appValue.Capabilities),

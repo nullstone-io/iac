@@ -26,6 +26,7 @@ func convertClusterConfigurations(parsed map[string]yaml.ClusterConfiguration) m
 				ModuleSourceVersion: moduleVersion,
 				Variables:           clusterValue.Variables,
 				Connections:         convertConnections(clusterValue.Connections),
+				IsShared:            clusterValue.IsShared,
 			},
 		}
 		result[clusterName] = cluster

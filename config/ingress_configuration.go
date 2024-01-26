@@ -26,6 +26,7 @@ func convertIngressConfigurations(parsed map[string]yaml.IngressConfiguration) m
 				ModuleSourceVersion: moduleVersion,
 				Variables:           ingressValue.Variables,
 				Connections:         convertConnections(ingressValue.Connections),
+				IsShared:            ingressValue.IsShared,
 			},
 		}
 		result[ingressName] = ingress

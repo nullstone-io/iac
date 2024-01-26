@@ -8,6 +8,7 @@ import (
 )
 
 type EnvConfiguration struct {
+	Filename          string
 	Applications      map[string]AppConfiguration
 	Datastores        map[string]DatastoreConfiguration
 	Subdomains        map[string]SubdomainConfiguration
@@ -19,8 +20,8 @@ type EnvConfiguration struct {
 	Blocks            map[string]BlockConfiguration
 }
 
-func ConvertConfiguration(parsed yaml.EnvConfiguration) EnvConfiguration {
-	result := EnvConfiguration{}
+func ConvertConfiguration(filename string, parsed yaml.EnvConfiguration) EnvConfiguration {
+	result := EnvConfiguration{Filename: filename}
 	result.Applications = convertAppConfigurations(parsed.Applications)
 	result.Datastores = convertDatastoreConfigurations(parsed.Datastores)
 	result.Subdomains = convertSubdomainConfigurations(parsed.Subdomains)

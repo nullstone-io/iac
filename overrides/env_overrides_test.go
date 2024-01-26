@@ -71,7 +71,7 @@ func TestParseEnvOverrides(t *testing.T) {
 			parsed, err := yaml.ParseEnvOverrides(buf)
 			assert.NoError(t, err)
 
-			got := ConvertOverrides(*parsed)
+			got := ConvertOverrides("previews.yml", *parsed)
 
 			assert.Equal(t, result, got)
 		})

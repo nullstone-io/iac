@@ -454,7 +454,7 @@ func TestConvertConfiguration(t *testing.T) {
 			parsed, err := config2.ParseEnvConfiguration(buf)
 			assert.NoError(t, err)
 
-			got := ConvertConfiguration(*parsed)
+			got := ConvertConfiguration("config.yml", *parsed)
 
 			if test.want != nil {
 				assert.Equal(t, *test.want, got)

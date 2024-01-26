@@ -7,6 +7,7 @@ import (
 )
 
 type EnvOverrides struct {
+	Filename          string
 	Applications      map[string]AppOverrides
 	Subdomains        map[string]SubdomainOverrides
 	Datastores        map[string]DatastoreOverrides
@@ -18,8 +19,8 @@ type EnvOverrides struct {
 	Blocks            map[string]BlockOverrides
 }
 
-func ConvertOverrides(parsed yaml.EnvOverrides) EnvOverrides {
-	result := EnvOverrides{}
+func ConvertOverrides(filename string, parsed yaml.EnvOverrides) EnvOverrides {
+	result := EnvOverrides{Filename: filename}
 	result.Applications = convertAppOverrides(parsed.Applications)
 	result.Datastores = convertDatastoreOverrides(parsed.Datastores)
 	result.Subdomains = convertSubdomainOverrides(parsed.Subdomains)

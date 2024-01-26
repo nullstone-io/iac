@@ -11,6 +11,7 @@ import (
 func TestParseEnvOverrides(t *testing.T) {
 	namespace := "secondary"
 	result := EnvOverrides{
+		Filename: "previews.yml",
 		Applications: map[string]AppOverrides{
 			"acme-api": {
 				BlockOverrides: BlockOverrides{

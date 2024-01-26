@@ -260,6 +260,7 @@ func TestConvertConfiguration(t *testing.T) {
 			name:     "valid configuration",
 			filename: "test-fixtures/config.yml",
 			want: &EnvConfiguration{
+				Filename: "config.yml",
 				Applications: map[string]AppConfiguration{
 					"acme-docs": {
 						BlockConfiguration: BlockConfiguration{

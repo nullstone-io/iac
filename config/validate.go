@@ -72,7 +72,7 @@ func ValidateConnection(resolver *find.ResourceResolver, path string, connName s
 	}
 	ms, err := artifacts.ParseSource(found.ModuleSource)
 	if err != nil {
-		return errors.ValidationErrors{core.InvalidModuleFormatError(path, found.ModuleSource, err)}
+		return errors.ValidationErrors{core.InvalidModuleFormatError(path, found.ModuleSource)}
 	}
 	m, mErr := resolver.ApiClient.Modules().Get(ms.OrgName, ms.ModuleName)
 	if mErr != nil {

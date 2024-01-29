@@ -10,91 +10,98 @@ import (
 func VariableDoesNotExistError(path, name, moduleName string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.vars.%s", path, name),
-		Message: fmt.Sprintf("variable does not exist on the module (%s)", moduleName),
+		Message: fmt.Sprintf("Variable does not exist on the module (%s)", moduleName),
 	}
 }
 
 func EnvVariableKeyStartsWithNumberError(path, key string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.env_vars.%s", path, key),
-		Message: fmt.Sprintf("invalid environment variable key (%s) - it must not start with a number", key),
+		Message: fmt.Sprintf("Invalid environment variable key (%s) - it must not start with a number", key),
 	}
 }
 
 func EnvVariableKeyInvalidCharsError(path, key string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.env_vars.%s", path, key),
-		Message: fmt.Sprintf("invalid environment variable key (%s) - it must only contain letters, numbers, and underscores", key),
+		Message: fmt.Sprintf("Invalid environment variable key (%s) - it must only contain letters, numbers, and underscores", key),
 	}
 }
 
 func ConnectionDoesNotExistError(path, name, moduleName string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.connections.%s", path, name),
-		Message: fmt.Sprintf("connection does not exist on the module (%s)", moduleName),
+		Message: fmt.Sprintf("Connection does not exist on the module (%s)", moduleName),
 	}
 }
 
 func MissingConnectionBlockError(path string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.block_name", path),
-		Message: fmt.Sprintf("connection must have a block_name to identify which block it is connected to"),
+		Message: fmt.Sprintf("Connection must have a block_name to identify which block it is connected to"),
 	}
 }
 
 func MissingConnectionTargetError(path string, err error) errors.ValidationError {
 	return errors.ValidationError{
 		Context: path,
-		Message: fmt.Sprintf("connection is invalid, %s", err),
+		Message: fmt.Sprintf("Connection is invalid, %s", err),
 	}
 }
 
-func InvalidModuleFormatError(path, moduleSource string, err error) errors.ValidationError {
+func InvalidModuleFormatError(path, moduleSource string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.module", path),
-		Message: fmt.Sprintf("%s (%s), must be in the format \"<module-org>/<module-name>\"", err, moduleSource),
+		Message: fmt.Sprintf("Invalid module format (%s) - must be in the format \"<module-org>/<module-name>\"", moduleSource),
+	}
+}
+
+func RequiredModuleError(path string) errors.ValidationError {
+	return errors.ValidationError{
+		Context: fmt.Sprintf("%s.module", path),
+		Message: fmt.Sprintf("Module is required"),
 	}
 }
 
 func MissingModuleError(path, moduleSource string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.module", path),
-		Message: fmt.Sprintf("module (%s) does not exist", moduleSource),
+		Message: fmt.Sprintf("Module (%s) does not exist", moduleSource),
 	}
 }
 
 func InvalidModuleContractError(path, moduleSource string, want, got types.ModuleContractName) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.module", path),
-		Message: fmt.Sprintf("module (%s) must be %s module and match the contract (%s), it is defined as %s", moduleSource, want.Category, want, got),
+		Message: fmt.Sprintf("Module (%s) must be %s module and match the contract (%s), it is defined as %s", moduleSource, want.Category, want, got),
 	}
 }
 
 func MissingModuleVersionError(path, source, version string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.module_version", path),
-		Message: fmt.Sprintf("module version (%s@%s) does not exist", source, version),
+		Message: fmt.Sprintf("Module version (%s@%s) does not exist", source, version),
 	}
 }
 
 func InvalidConnectionContractError(path, connName, contract, moduleName string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: path,
-		Message: fmt.Sprintf("connection contract (name=%s, contract=%s) in module (%s) is invalid", connName, contract, moduleName),
+		Message: fmt.Sprintf("Connection contract (name=%s, contract=%s) in module (%s) is invalid", connName, contract, moduleName),
 	}
 }
 
 func MismatchedConnectionContractError(path string, blockName, connectionContract string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: path,
-		Message: fmt.Sprintf("block (%s) does not match the required contract (%s) for the capability connection", blockName, connectionContract),
+		Message: fmt.Sprintf("Block (%s) does not match the required contract (%s) for the capability connection", blockName, connectionContract),
 	}
 }
 
 func UnsupportedAppCategoryError(path, moduleSource, subcategory string) errors.ValidationError {
 	return errors.ValidationError{
 		Context: fmt.Sprintf("%s.module", path),
-		Message: fmt.Sprintf("module (%s) does not support application category (%s)", moduleSource, subcategory),
+		Message: fmt.Sprintf("Module (%s) does not support application category (%s)", moduleSource, subcategory),
 	}
 }
 

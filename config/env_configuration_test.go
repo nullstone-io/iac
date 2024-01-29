@@ -315,8 +315,8 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				{
-					Context: "apps.acme-docs",
-					Message: "module is required",
+					Context: "apps.acme-docs.module",
+					Message: "Module is required",
 				},
 			},
 		},
@@ -327,7 +327,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: errors.ValidationErrors{
 				{
 					Context: "apps.acme-docs.module",
-					Message: "module (nullstone/aws-invalid-module) does not exist",
+					Message: "Module (nullstone/aws-invalid-module) does not exist",
 				},
 			},
 		},
@@ -338,7 +338,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: errors.ValidationErrors{
 				{
 					Context: "apps.acme-docs.module",
-					Message: "module (nullstone/aws-s3-cdn) must be app module and match the contract (app/*/*), it is defined as capability/aws/",
+					Message: "Module (nullstone/aws-s3-cdn) must be app module and match the contract (app/*/*), it is defined as capability/aws/",
 				},
 			},
 		},
@@ -349,7 +349,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "apps.acme-docs.vars.service_count",
-					Message: "variable does not exist on the module (nullstone/aws-fargate-service@0.0.1)",
+					Message: "Variable does not exist on the module (nullstone/aws-fargate-service@0.0.1)",
 				},
 			},
 		},
@@ -359,8 +359,8 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				{
-					Context: "apps.acme-docs.capabilities[0]",
-					Message: "module is required",
+					Context: "apps.acme-docs.capabilities[0].module",
+					Message: "Module is required",
 				},
 			},
 		},
@@ -371,7 +371,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: errors.ValidationErrors{
 				{
 					Context: "apps.acme-docs.capabilities[0].module",
-					Message: "module (nullstone/aws-invalid-module) does not exist",
+					Message: "Module (nullstone/aws-invalid-module) does not exist",
 				},
 			},
 		},
@@ -382,7 +382,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: errors.ValidationErrors{
 				{
 					Context: "apps.acme-docs.capabilities[0].module",
-					Message: "module (nullstone/aws-s3-site) must be capability module and match the contract (capability/aws/*), it is defined as app:static-site/aws/s3",
+					Message: "Module (nullstone/aws-s3-site) must be capability module and match the contract (capability/aws/*), it is defined as app:static-site/aws/s3",
 				},
 			},
 		},
@@ -393,7 +393,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "apps.acme-docs.capabilities[0].module",
-					Message: "module (nullstone/aws-postgres-access) does not support application category (static-site)",
+					Message: "Module (nullstone/aws-postgres-access) does not support application category (static-site)",
 				},
 			},
 		},
@@ -404,7 +404,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "apps.acme-docs.capabilities[0].vars.database_name",
-					Message: "variable does not exist on the module (nullstone/aws-load-balancer@latest)",
+					Message: "Variable does not exist on the module (nullstone/aws-load-balancer@latest)",
 				},
 			},
 		},
@@ -415,7 +415,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "apps.acme-docs.capabilities[0].connections.subdomain",
-					Message: "connection is invalid, block core/ns-sub-for-blah does not exist",
+					Message: "Connection is invalid, block core/ns-sub-for-blah does not exist",
 				},
 			},
 		},
@@ -426,7 +426,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "apps.acme-docs.capabilities[0].connections.subdomain",
-					Message: "block (postgres) does not match the required contract (subdomain/aws/route53) for the capability connection",
+					Message: "Block (postgres) does not match the required contract (subdomain/aws/route53) for the capability connection",
 				},
 			},
 		},
@@ -437,7 +437,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "apps.acme-docs.capabilities[0].connections.subdomain.block_name",
-					Message: "connection must have a block_name to identify which block it is connected to",
+					Message: "Connection must have a block_name to identify which block it is connected to",
 				},
 			},
 		},

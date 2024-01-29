@@ -12,12 +12,12 @@ import (
 
 func ResolveModule(resolver *find.ResourceResolver, iacPath, moduleSource, moduleSourceVersion, contract string) (*types.Module, *types.ModuleVersion, error) {
 	if moduleSource == "" {
-		return nil, nil, errors.ValidationErrors{{Context: iacPath, Message: "module is required"}}
+		return nil, nil, errors.ValidationErrors{core.RequiredModuleError(iacPath)}
 	}
 
 	ms, err := artifacts.ParseSource(moduleSource)
 	if err != nil {
-		return nil, nil, errors.ValidationErrors{core.InvalidModuleFormatError(fmt.Sprintf("%s.module", iacPath), moduleSource, err)}
+		return nil, nil, errors.ValidationErrors{core.InvalidModuleFormatError(fmt.Sprintf("%s.module", iacPath), moduleSource)}
 	}
 	// TODO: Add support for ms.Host
 	m, err := resolver.ApiClient.Modules().Get(ms.OrgName, ms.ModuleName)

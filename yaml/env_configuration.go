@@ -1,8 +1,6 @@
 package yaml
 
 import (
-	"fmt"
-	"github.com/BSick7/go-api/errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -19,18 +17,11 @@ type EnvConfiguration struct {
 	Blocks            map[string]BlockConfiguration            `yaml:"blocks,omitempty" json:"blocks"`
 }
 
-func InvalidYamlError(filename string, err error) errors.ValidationError {
-	return errors.ValidationError{
-		Context: fmt.Sprintf(".nullstone/%s", filename),
-		Message: err.Error(),
-	}
-}
-
 func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	var r *EnvConfiguration
 	err := yaml.Unmarshal(data, &r)
 	if err != nil {
-		return nil, InvalidYamlError("config.yml", err)
+		return nil, err
 	}
 
 	return r, nil

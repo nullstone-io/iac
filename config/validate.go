@@ -12,11 +12,11 @@ import (
 	"strings"
 )
 
-func ValidateVariables(path string, variables map[string]any, expectedVariables map[string]config.Variable, moduleName string) errors.ValidationErrors {
+func ValidateVariables(repoName, filename, path string, variables map[string]any, expectedVariables map[string]config.Variable, moduleName string) errors.ValidationErrors {
 	ve := errors.ValidationErrors{}
 	for k, _ := range variables {
 		if _, ok := expectedVariables[k]; !ok {
-			ve = append(ve, core.VariableDoesNotExistError(path, k, moduleName))
+			ve = append(ve, core.VariableDoesNotExistError(repoName, filename, path, k, moduleName))
 		}
 	}
 	if len(ve) > 0 {
@@ -26,16 +26,16 @@ func ValidateVariables(path string, variables map[string]any, expectedVariables 
 }
 
 // ValidateConnections performs validation on all IaC connections by matching them against connections in the module
-func ValidateConnections(resolver *find.ResourceResolver, path string, connections types.ConnectionTargets, manifestConnections map[string]config.Connection, moduleName string) error {
+func ValidateConnections(resolver *find.ResourceResolver, repoName, filename, path string, connections types.ConnectionTargets, manifestConnections map[string]config.Connection, moduleName string) error {
 	ve := errors.ValidationErrors{}
 	for key, conn := range connections {
 		conPath := fmt.Sprintf("%s.connections.%s", path, key)
 		manifestConnection, found := manifestConnections[key]
 		if !found {
-			ve = append(ve, core.ConnectionDoesNotExistError(path, key, moduleName))
+			ve = append(ve, core.ConnectionDoesNotExistError(repoName, filename, path, key, moduleName))
 			continue
 		}
-		err := ValidateConnection(resolver, conPath, key, conn, manifestConnection, moduleName)
+		err := ValidateConnection(resolver, repoName, filename, conPath, key, conn, manifestConnection, moduleName)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -53,26 +53,26 @@ func ValidateConnections(resolver *find.ResourceResolver, path string, connectio
 //  1. Verifies that a connection specified in IaC exists in the module
 //  2. Resolves the connection's target (i.e. block)
 //  3. Verifies the block matches the connection contract
-func ValidateConnection(resolver *find.ResourceResolver, path string, connName string, connection types.ConnectionTarget, manifestConnection config.Connection, moduleName string) error {
+func ValidateConnection(resolver *find.ResourceResolver, repoName, filename, path string, connName string, connection types.ConnectionTarget, manifestConnection config.Connection, moduleName string) error {
 	if connection.BlockName == "" {
-		return errors.ValidationErrors{core.MissingConnectionBlockError(path)}
+		return errors.ValidationErrors{core.MissingConnectionBlockError(repoName, filename, path)}
 	}
 
 	found, err := resolver.FindBlock(connection)
 	if err != nil {
 		if find.IsMissingResource(err) {
-			return errors.ValidationErrors{core.MissingConnectionTargetError(path, err)}
+			return errors.ValidationErrors{core.MissingConnectionTargetError(repoName, filename, path, err)}
 		}
 		return err
 	}
 
 	mcn1, mcnErr := types.ParseModuleContractName(manifestConnection.Contract)
 	if mcnErr != nil {
-		return errors.ValidationErrors{core.InvalidConnectionContractError(path, connName, manifestConnection.Contract, moduleName)}
+		return errors.ValidationErrors{core.InvalidConnectionContractError(repoName, filename, path, connName, manifestConnection.Contract, moduleName)}
 	}
 	ms, err := artifacts.ParseSource(found.ModuleSource)
 	if err != nil {
-		return errors.ValidationErrors{core.InvalidModuleFormatError(path, found.ModuleSource)}
+		return errors.ValidationErrors{core.InvalidModuleFormatError(repoName, filename, path, found.ModuleSource)}
 	}
 	m, mErr := resolver.ApiClient.Modules().Get(ms.OrgName, ms.ModuleName)
 	if mErr != nil {
@@ -87,7 +87,7 @@ func ValidateConnection(resolver *find.ResourceResolver, path string, connName s
 			Subplatform: m.Subplatform,
 		}
 		if ok := mcn1.Match(mcn2); !ok {
-			return errors.ValidationErrors{core.MismatchedConnectionContractError(path, found.Name, manifestConnection.Contract)}
+			return errors.ValidationErrors{core.MismatchedConnectionContractError(repoName, filename, path, found.Name, manifestConnection.Contract)}
 		}
 	}
 
@@ -102,15 +102,15 @@ func startsWithNumber(s string) bool {
 	return s[0] >= '0' && s[0] <= '9'
 }
 
-func ValidateEnvVariables(path string, envVariables map[string]string) error {
+func ValidateEnvVariables(repoName, filename, path string, envVariables map[string]string) error {
 	ve := errors.ValidationErrors{}
 
 	for k, _ := range envVariables {
 		if startsWithNumber(k) {
-			ve = append(ve, core.EnvVariableKeyStartsWithNumberError(path, k))
+			ve = append(ve, core.EnvVariableKeyStartsWithNumberError(repoName, filename, path, k))
 		}
 		if strings.IndexFunc(k, hasInvalidChars) != -1 {
-			ve = append(ve, core.EnvVariableKeyInvalidCharsError(path, k))
+			ve = append(ve, core.EnvVariableKeyInvalidCharsError(repoName, filename, path, k))
 		}
 	}
 
@@ -121,11 +121,11 @@ func ValidateEnvVariables(path string, envVariables map[string]string) error {
 }
 
 // ValidateCapabilities performs validation on a all IaC capabilities within an application
-func ValidateCapabilities(resolver *find.ResourceResolver, path string, capabilities CapabilityConfigurations, subcategory types.SubcategoryName) error {
+func ValidateCapabilities(resolver *find.ResourceResolver, repoName, filename, path string, capabilities CapabilityConfigurations, subcategory types.SubcategoryName) error {
 	ve := errors.ValidationErrors{}
 	for i, iacCap := range capabilities {
 		capPath := fmt.Sprintf("%s.capabilities[%d]", path, i)
-		err := ValidateCapability(resolver, capPath, iacCap, string(subcategory))
+		err := ValidateCapability(resolver, repoName, filename, capPath, iacCap, string(subcategory))
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -140,14 +140,14 @@ func ValidateCapabilities(resolver *find.ResourceResolver, path string, capabili
 	return nil
 }
 
-func ValidateCapability(resolver *find.ResourceResolver, path string, iacCap CapabilityConfiguration, subcategory string) error {
+func ValidateCapability(resolver *find.ResourceResolver, repoName, filename, path string, iacCap CapabilityConfiguration, subcategory string) error {
 	// ensure the module is a capability module and supports the provider type (e.g. aws, gcp, azure)
 	providerType, err := resolver.ResolveCurProviderType()
 	if err != nil {
 		return fmt.Errorf("unable to resolve current provider type: %w", err)
 	}
 	contract := fmt.Sprintf("capability/%s/*", providerType)
-	m, mv, err := ResolveModule(resolver, path, iacCap.ModuleSource, iacCap.ModuleSourceVersion, contract)
+	m, mv, err := ResolveModule(resolver, repoName, filename, path, iacCap.ModuleSource, iacCap.ModuleSourceVersion, contract)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func ValidateCapability(resolver *find.ResourceResolver, path string, iacCap Cap
 			}
 		}
 		if !found {
-			ve = append(ve, core.UnsupportedAppCategoryError(path, iacCap.ModuleSource, subcategory))
+			ve = append(ve, core.UnsupportedAppCategoryError(repoName, filename, path, iacCap.ModuleSource, subcategory))
 		}
 	}
 
@@ -173,10 +173,10 @@ func ValidateCapability(resolver *find.ResourceResolver, path string, iacCap Cap
 	//   2. validate each of the connections to ensure the block matches the connection contract
 	if mv != nil {
 		moduleName := fmt.Sprintf("%s@%s", iacCap.ModuleSource, iacCap.ModuleSourceVersion)
-		verrs := ValidateVariables(path, iacCap.Variables, mv.Manifest.Variables, moduleName)
+		verrs := ValidateVariables(repoName, filename, path, iacCap.Variables, mv.Manifest.Variables, moduleName)
 		ve = append(ve, verrs...)
 
-		err := ValidateConnections(resolver, path, iacCap.Connections, mv.Manifest.Connections, moduleName)
+		err := ValidateConnections(resolver, repoName, filename, path, iacCap.Connections, mv.Manifest.Connections, moduleName)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -191,8 +191,8 @@ func ValidateCapability(resolver *find.ResourceResolver, path string, iacCap Cap
 	return nil
 }
 
-func ValidateBlock(resolver *find.ResourceResolver, yamlPath, contract, moduleSource, moduleSourceVersion string, variables map[string]any, connections types.ConnectionTargets, envVars map[string]string, capabilities CapabilityConfigurations) error {
-	m, mv, err := ResolveModule(resolver, yamlPath, moduleSource, moduleSourceVersion, contract)
+func ValidateBlock(resolver *find.ResourceResolver, repoName, filename, yamlPath, contract, moduleSource, moduleSourceVersion string, variables map[string]any, connections types.ConnectionTargets, envVars map[string]string, capabilities CapabilityConfigurations) error {
+	m, mv, err := ResolveModule(resolver, repoName, filename, yamlPath, moduleSource, moduleSourceVersion, contract)
 	if err != nil {
 		return err
 	}
@@ -200,10 +200,10 @@ func ValidateBlock(resolver *find.ResourceResolver, yamlPath, contract, moduleSo
 	moduleName := fmt.Sprintf("%s/%s@%s", m.OrgName, m.Name, mv.Version)
 
 	ve := errors.ValidationErrors{}
-	ve = append(ve, ValidateVariables(yamlPath, variables, mv.Manifest.Variables, moduleName)...)
+	ve = append(ve, ValidateVariables(repoName, filename, yamlPath, variables, mv.Manifest.Variables, moduleName)...)
 
 	if connections != nil {
-		err := ValidateConnections(resolver, yamlPath, connections, mv.Manifest.Connections, moduleName)
+		err := ValidateConnections(resolver, repoName, filename, yamlPath, connections, mv.Manifest.Connections, moduleName)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -213,7 +213,7 @@ func ValidateBlock(resolver *find.ResourceResolver, yamlPath, contract, moduleSo
 	}
 
 	if envVars != nil {
-		err := ValidateEnvVariables(yamlPath, envVars)
+		err := ValidateEnvVariables(repoName, filename, yamlPath, envVars)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -223,7 +223,7 @@ func ValidateBlock(resolver *find.ResourceResolver, yamlPath, contract, moduleSo
 	}
 
 	if capabilities != nil {
-		err := ValidateCapabilities(resolver, yamlPath, capabilities, m.Subcategory)
+		err := ValidateCapabilities(resolver, repoName, filename, yamlPath, capabilities, m.Subcategory)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {

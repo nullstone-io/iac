@@ -34,8 +34,8 @@ func convertDatastoreConfigurations(parsed map[string]yaml.DatastoreConfiguratio
 	return result
 }
 
-func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver) error {
+func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("datastores.%s", d.Name)
 	contract := fmt.Sprintf("datastore/*/*")
-	return ValidateBlock(resolver, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil, nil)
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil, nil)
 }

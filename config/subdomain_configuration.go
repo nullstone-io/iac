@@ -37,8 +37,8 @@ func convertSubdomainConfigurations(parsed map[string]yaml.SubdomainConfiguratio
 	return result
 }
 
-func (s SubdomainConfiguration) Validate(resolver *find.ResourceResolver) error {
+func (s SubdomainConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("subdomains.%s", s.Name)
 	contract := fmt.Sprintf("subdomain/*/*")
-	return ValidateBlock(resolver, yamlPath, contract, s.ModuleSource, s.ModuleSourceVersion, s.Variables, s.Connections, nil, nil)
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, s.ModuleSource, s.ModuleSourceVersion, s.Variables, s.Connections, nil, nil)
 }

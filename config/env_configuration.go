@@ -8,6 +8,7 @@ import (
 )
 
 type EnvConfiguration struct {
+	RepoName          string
 	Filename          string
 	Applications      map[string]AppConfiguration
 	Datastores        map[string]DatastoreConfiguration
@@ -20,8 +21,8 @@ type EnvConfiguration struct {
 	Blocks            map[string]BlockConfiguration
 }
 
-func ConvertConfiguration(filename string, parsed yaml.EnvConfiguration) EnvConfiguration {
-	result := EnvConfiguration{Filename: filename}
+func ConvertConfiguration(repoName, filename string, parsed yaml.EnvConfiguration) EnvConfiguration {
+	result := EnvConfiguration{RepoName: repoName, Filename: filename}
 	result.Applications = convertAppConfigurations(parsed.Applications)
 	result.Datastores = convertDatastoreConfigurations(parsed.Datastores)
 	result.Subdomains = convertSubdomainConfigurations(parsed.Subdomains)
@@ -37,7 +38,7 @@ func ConvertConfiguration(filename string, parsed yaml.EnvConfiguration) EnvConf
 func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 	ve := errors.ValidationErrors{}
 	for _, app := range e.Applications {
-		err := app.Validate(resolver)
+		err := app.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -46,7 +47,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, ds := range e.Datastores {
-		err := ds.Validate(resolver)
+		err := ds.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -55,7 +56,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, sub := range e.Subdomains {
-		err := sub.Validate(resolver)
+		err := sub.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -64,7 +65,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, domain := range e.Domains {
-		err := domain.Validate(resolver)
+		err := domain.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -73,7 +74,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, ingress := range e.Ingresses {
-		err := ingress.Validate(resolver)
+		err := ingress.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -82,7 +83,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
-		err := clusterNamespace.Validate(resolver)
+		err := clusterNamespace.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -91,7 +92,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, cluster := range e.Clusters {
-		err := cluster.Validate(resolver)
+		err := cluster.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -100,7 +101,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, network := range e.Networks {
-		err := network.Validate(resolver)
+		err := network.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -109,7 +110,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, block := range e.Blocks {
-		err := block.Validate(resolver)
+		err := block.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {

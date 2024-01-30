@@ -58,10 +58,10 @@ func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[strin
 	return apps
 }
 
-func (a AppConfiguration) Validate(resolver *find.ResourceResolver) error {
+func (a AppConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("apps.%s", a.Name)
 	contract := fmt.Sprintf("app/*/*")
-	return ValidateBlock(resolver, yamlPath, contract, a.ModuleSource, a.ModuleSourceVersion, a.Variables, a.Connections, a.EnvVariables, a.Capabilities)
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, a.ModuleSource, a.ModuleSourceVersion, a.Variables, a.Connections, a.EnvVariables, a.Capabilities)
 }
 
 func (a *AppConfiguration) Normalize(resolver *find.ResourceResolver) error {

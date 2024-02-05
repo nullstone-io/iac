@@ -2,26 +2,43 @@ package config
 
 import (
 	"fmt"
-	"github.com/BSick7/go-api/errors"
-	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
-// TODO: Implement DnsName in DesiredConfig
 type SubdomainConfiguration struct {
-	Name                string                 `yaml:"-" json:"name"`
-	ModuleSource        string                 `yaml:"module" json:"module"`
-	ModuleSourceVersion *string                `yaml:"module_version,omitempty" json:"moduleVersion"`
-	DnsName             string                 `yaml:"dns_name,omitempty" json:"dnsName"`
-	Variables           map[string]any         `yaml:"vars" json:"vars"`
-	Connections         core.ConnectionTargets `yaml:"connections" json:"connections"`
+	BlockConfiguration
+
+	DnsName string
 }
 
-func (s SubdomainConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []core.BlockConfiguration) (errors.ValidationErrors, error) {
+func convertSubdomainConfigurations(parsed map[string]yaml.SubdomainConfiguration) map[string]SubdomainConfiguration {
+	result := make(map[string]SubdomainConfiguration)
+	for subName, subValue := range parsed {
+		// set a default module version if not provided
+		moduleVersion := "latest"
+		if subValue.ModuleSourceVersion != nil {
+			moduleVersion = *subValue.ModuleSourceVersion
+		}
+		sub := SubdomainConfiguration{
+			BlockConfiguration: BlockConfiguration{
+				Type:                BlockTypeSubdomain,
+				Name:                subName,
+				ModuleSource:        subValue.ModuleSource,
+				ModuleSourceVersion: moduleVersion,
+				Variables:           subValue.Variables,
+				Connections:         convertConnections(subValue.Connections),
+				IsShared:            subValue.IsShared,
+			},
+			DnsName: subValue.DnsName,
+		}
+		result[subName] = sub
+	}
+	return result
+}
+
+func (s SubdomainConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("subdomains.%s", s.Name)
-	return ValidateBlock(resolver, configBlocks, yamlPath, "subdomain/*/*", s.ModuleSource, *s.ModuleSourceVersion, s.Variables, s.Connections, nil)
-}
-
-func (s *SubdomainConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(s.Connections, resolver)
+	contract := fmt.Sprintf("subdomain/*/*")
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, s.ModuleSource, s.ModuleSourceVersion, s.Variables, s.Connections, nil, nil)
 }

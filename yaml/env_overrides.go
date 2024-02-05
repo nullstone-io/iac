@@ -21,7 +21,7 @@ func ParseEnvOverrides(data []byte) (*EnvOverrides, error) {
 	var r *EnvOverrides
 	err := yaml.Unmarshal(data, &r)
 	if err != nil {
-		return nil, InvalidYamlError("previews.yml", err)
+		return nil, err
 	}
 
 	return r, nil

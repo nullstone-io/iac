@@ -26,6 +26,7 @@ func convertDatastoreConfigurations(parsed map[string]yaml.DatastoreConfiguratio
 				ModuleSourceVersion: moduleVersion,
 				Variables:           datastoreValue.Variables,
 				Connections:         convertConnections(datastoreValue.Connections),
+				IsShared:            datastoreValue.IsShared,
 			},
 		}
 		result[datastoreName] = ds
@@ -33,8 +34,8 @@ func convertDatastoreConfigurations(parsed map[string]yaml.DatastoreConfiguratio
 	return result
 }
 
-func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
+func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("datastores.%s", d.Name)
 	contract := fmt.Sprintf("datastore/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil)
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil, nil)
 }

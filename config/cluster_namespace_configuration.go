@@ -26,6 +26,7 @@ func convertClusterNamespaceConfigurations(parsed map[string]yaml.ClusterNamespa
 				ModuleSourceVersion: moduleVersion,
 				Variables:           clusterNamespaceValue.Variables,
 				Connections:         convertConnections(clusterNamespaceValue.Connections),
+				IsShared:            clusterNamespaceValue.IsShared,
 			},
 		}
 		result[clusterNamespaceName] = cn
@@ -33,8 +34,8 @@ func convertClusterNamespaceConfigurations(parsed map[string]yaml.ClusterNamespa
 	return result
 }
 
-func (cn ClusterNamespaceConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
+func (cn ClusterNamespaceConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("cluster_namespaces.%s", cn.Name)
 	contract := fmt.Sprintf("cluster-namespace/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, cn.ModuleSource, cn.ModuleSourceVersion, cn.Variables, cn.Connections, nil)
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, cn.ModuleSource, cn.ModuleSourceVersion, cn.Variables, cn.Connections, nil, nil)
 }

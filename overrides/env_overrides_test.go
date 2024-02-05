@@ -10,7 +10,8 @@ import (
 
 func TestParseEnvOverrides(t *testing.T) {
 	namespace := "secondary"
-	result := &EnvOverrides{
+	result := EnvOverrides{
+		Filename: "previews.yml",
 		Applications: map[string]AppOverrides{
 			"acme-api": {
 				BlockOverrides: BlockOverrides{
@@ -71,8 +72,7 @@ func TestParseEnvOverrides(t *testing.T) {
 			parsed, err := yaml.ParseEnvOverrides(buf)
 			assert.NoError(t, err)
 
-			got, err := ConvertOverrides(*parsed)
-			assert.NoError(t, err)
+			got := ConvertOverrides("previews.yml", *parsed)
 
 			assert.Equal(t, result, got)
 		})

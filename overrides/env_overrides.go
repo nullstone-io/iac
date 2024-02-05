@@ -7,6 +7,8 @@ import (
 )
 
 type EnvOverrides struct {
+	RepoName          string
+	Filename          string
 	Applications      map[string]AppOverrides
 	Subdomains        map[string]SubdomainOverrides
 	Datastores        map[string]DatastoreOverrides
@@ -18,8 +20,8 @@ type EnvOverrides struct {
 	Blocks            map[string]BlockOverrides
 }
 
-func ConvertOverrides(parsed yaml.EnvOverrides) (*EnvOverrides, error) {
-	result := &EnvOverrides{}
+func ConvertOverrides(repoName, filename string, parsed yaml.EnvOverrides) EnvOverrides {
+	result := EnvOverrides{RepoName: repoName, Filename: filename}
 	result.Applications = convertAppOverrides(parsed.Applications)
 	result.Datastores = convertDatastoreOverrides(parsed.Datastores)
 	result.Subdomains = convertSubdomainOverrides(parsed.Subdomains)
@@ -29,7 +31,7 @@ func ConvertOverrides(parsed yaml.EnvOverrides) (*EnvOverrides, error) {
 	result.Clusters = convertClusterOverrides(parsed.Clusters)
 	result.Networks = convertNetworkOverrides(parsed.Networks)
 	result.Blocks = convertBlockOverrides(parsed.Blocks)
-	return result, nil
+	return result
 }
 
 func (c *EnvOverrides) Validate(resolver *find.ResourceResolver) (errors.ValidationErrors, error) {

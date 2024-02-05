@@ -26,6 +26,7 @@ func convertClusterConfigurations(parsed map[string]yaml.ClusterConfiguration) m
 				ModuleSourceVersion: moduleVersion,
 				Variables:           clusterValue.Variables,
 				Connections:         convertConnections(clusterValue.Connections),
+				IsShared:            clusterValue.IsShared,
 			},
 		}
 		result[clusterName] = cluster
@@ -33,8 +34,8 @@ func convertClusterConfigurations(parsed map[string]yaml.ClusterConfiguration) m
 	return result
 }
 
-func (c ClusterConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
+func (c ClusterConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("clusters.%s", c.Name)
 	contract := fmt.Sprintf("cluster/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, c.ModuleSource, c.ModuleSourceVersion, c.Variables, c.Connections, nil)
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, c.ModuleSource, c.ModuleSourceVersion, c.Variables, c.Connections, nil, nil)
 }

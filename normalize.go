@@ -6,16 +6,18 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
-func Normalize(config *config.EnvConfiguration, overrides *overrides.EnvOverrides, resolver *find.ResourceResolver) error {
+func Normalize(config *config.EnvConfiguration, overrides map[string]overrides.EnvOverrides, resolver *find.ResourceResolver) error {
 	if config != nil {
 		if err := config.Normalize(resolver); err != nil {
 			return err
 		}
 	}
-	if overrides != nil {
-		if err := overrides.Normalize(resolver); err != nil {
+
+	for _, envOverrides := range overrides {
+		if err := envOverrides.Normalize(resolver); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }

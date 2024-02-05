@@ -29,6 +29,7 @@ type BlockConfiguration struct {
 	ModuleSourceVersion string
 	Variables           map[string]any
 	Connections         types.ConnectionTargets
+	IsShared            bool
 }
 
 func convertConnections(parsed map[string]yaml.ConnectionTarget) map[string]types.ConnectionTarget {
@@ -61,16 +62,17 @@ func convertBlockConfigurations(parsed map[string]yaml.BlockConfiguration) map[s
 			ModuleSourceVersion: moduleVersion,
 			Variables:           blockValue.Variables,
 			Connections:         convertConnections(blockValue.Connections),
+			IsShared:            blockValue.IsShared,
 		}
 		result[blockName] = block
 	}
 	return result
 }
 
-func (b BlockConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
+func (b BlockConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("blocks.%s", b.Name)
 	contract := fmt.Sprintf("block/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, b.ModuleSource, b.ModuleSourceVersion, b.Variables, b.Connections, nil)
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, b.ModuleSource, b.ModuleSourceVersion, b.Variables, b.Connections, nil, nil)
 }
 
 func (b *BlockConfiguration) Normalize(resolver *find.ResourceResolver) error {

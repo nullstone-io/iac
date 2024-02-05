@@ -8,6 +8,8 @@ import (
 )
 
 type EnvConfiguration struct {
+	RepoName          string
+	Filename          string
 	Applications      map[string]AppConfiguration
 	Datastores        map[string]DatastoreConfiguration
 	Subdomains        map[string]SubdomainConfiguration
@@ -19,8 +21,8 @@ type EnvConfiguration struct {
 	Blocks            map[string]BlockConfiguration
 }
 
-func ConvertConfiguration(parsed yaml.EnvConfiguration) (*EnvConfiguration, error) {
-	result := &EnvConfiguration{}
+func ConvertConfiguration(repoName, filename string, parsed yaml.EnvConfiguration) EnvConfiguration {
+	result := EnvConfiguration{RepoName: repoName, Filename: filename}
 	result.Applications = convertAppConfigurations(parsed.Applications)
 	result.Datastores = convertDatastoreConfigurations(parsed.Datastores)
 	result.Subdomains = convertSubdomainConfigurations(parsed.Subdomains)
@@ -30,46 +32,13 @@ func ConvertConfiguration(parsed yaml.EnvConfiguration) (*EnvConfiguration, erro
 	result.Clusters = convertClusterConfigurations(parsed.Clusters)
 	result.Networks = convertNetworkConfigurations(parsed.Networks)
 	result.Blocks = convertBlockConfigurations(parsed.Blocks)
-	return result, nil
-}
-
-func (e EnvConfiguration) getBlocks() []BlockConfiguration {
-	var blocks []BlockConfiguration
-	for _, block := range e.Applications {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Datastores {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Subdomains {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Domains {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Ingresses {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.ClusterNamespaces {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Clusters {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Networks {
-		blocks = append(blocks, block.BlockConfiguration)
-	}
-	for _, block := range e.Blocks {
-		blocks = append(blocks, block)
-	}
-	return blocks
+	return result
 }
 
 func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
-	blocks := e.getBlocks()
 	ve := errors.ValidationErrors{}
 	for _, app := range e.Applications {
-		err := app.Validate(resolver, blocks)
+		err := app.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -78,7 +47,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, ds := range e.Datastores {
-		err := ds.Validate(resolver, blocks)
+		err := ds.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -87,7 +56,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, sub := range e.Subdomains {
-		err := sub.Validate(resolver, blocks)
+		err := sub.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -96,7 +65,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, domain := range e.Domains {
-		err := domain.Validate(resolver, blocks)
+		err := domain.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -105,7 +74,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, ingress := range e.Ingresses {
-		err := ingress.Validate(resolver, blocks)
+		err := ingress.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -114,7 +83,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
-		err := clusterNamespace.Validate(resolver, blocks)
+		err := clusterNamespace.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -123,7 +92,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, cluster := range e.Clusters {
-		err := cluster.Validate(resolver, blocks)
+		err := cluster.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -132,7 +101,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, network := range e.Networks {
-		err := network.Validate(resolver, blocks)
+		err := network.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {
@@ -141,7 +110,7 @@ func (e EnvConfiguration) Validate(resolver *find.ResourceResolver) error {
 		}
 	}
 	for _, block := range e.Blocks {
-		err := block.Validate(resolver, blocks)
+		err := block.Validate(resolver, e.RepoName, e.Filename)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {

@@ -26,6 +26,7 @@ func convertNetworkConfigurations(parsed map[string]yaml.NetworkConfiguration) m
 				ModuleSourceVersion: moduleVersion,
 				Variables:           networkValue.Variables,
 				Connections:         convertConnections(networkValue.Connections),
+				IsShared:            networkValue.IsShared,
 			},
 		}
 		result[networkName] = network
@@ -33,8 +34,8 @@ func convertNetworkConfigurations(parsed map[string]yaml.NetworkConfiguration) m
 	return result
 }
 
-func (n NetworkConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
+func (n NetworkConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("networks.%s", n.Name)
 	contract := fmt.Sprintf("network/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, n.ModuleSource, n.ModuleSourceVersion, n.Variables, n.Connections, nil)
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, n.ModuleSource, n.ModuleSourceVersion, n.Variables, n.Connections, nil, nil)
 }

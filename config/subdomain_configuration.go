@@ -28,6 +28,7 @@ func convertSubdomainConfigurations(parsed map[string]yaml.SubdomainConfiguratio
 				ModuleSourceVersion: moduleVersion,
 				Variables:           subValue.Variables,
 				Connections:         convertConnections(subValue.Connections),
+				IsShared:            subValue.IsShared,
 			},
 			DnsName: subValue.DnsName,
 		}
@@ -36,8 +37,8 @@ func convertSubdomainConfigurations(parsed map[string]yaml.SubdomainConfiguratio
 	return result
 }
 
-func (s SubdomainConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
+func (s SubdomainConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("subdomains.%s", s.Name)
 	contract := fmt.Sprintf("subdomain/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, s.ModuleSource, s.ModuleSourceVersion, s.Variables, s.Connections, nil)
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, s.ModuleSource, s.ModuleSourceVersion, s.Variables, s.Connections, nil, nil)
 }

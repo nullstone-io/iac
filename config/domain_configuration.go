@@ -28,6 +28,7 @@ func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map
 				ModuleSourceVersion: moduleVersion,
 				Variables:           domainValue.Variables,
 				Connections:         convertConnections(domainValue.Connections),
+				IsShared:            domainValue.IsShared,
 			},
 			DnsName: domainValue.DnsName,
 		}
@@ -36,8 +37,8 @@ func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map
 	return result
 }
 
-func (d DomainConfiguration) Validate(resolver *find.ResourceResolver, configBlocks []BlockConfiguration) error {
+func (d DomainConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("domains.%s", d.Name)
 	contract := fmt.Sprintf("domain/*/*")
-	return ValidateBlock(resolver, configBlocks, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil)
+	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil, nil)
 }

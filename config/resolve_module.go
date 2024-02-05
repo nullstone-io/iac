@@ -10,14 +10,14 @@ import (
 	"strings"
 )
 
-func ResolveModule(resolver *find.ResourceResolver, iacPath, moduleSource, moduleSourceVersion, contract string) (*types.Module, *types.ModuleVersion, error) {
+func ResolveModule(resolver *find.ResourceResolver, repoName, filename, iacPath, moduleSource, moduleSourceVersion, contract string) (*types.Module, *types.ModuleVersion, error) {
 	if moduleSource == "" {
-		return nil, nil, errors.ValidationErrors{{Context: iacPath, Message: "module is required"}}
+		return nil, nil, errors.ValidationErrors{core.RequiredModuleError(repoName, filename, iacPath)}
 	}
 
 	ms, err := artifacts.ParseSource(moduleSource)
 	if err != nil {
-		return nil, nil, errors.ValidationErrors{core.InvalidModuleFormatError(fmt.Sprintf("%s.module", iacPath), moduleSource, err)}
+		return nil, nil, errors.ValidationErrors{core.InvalidModuleFormatError(repoName, filename, fmt.Sprintf("%s.module", iacPath), moduleSource)}
 	}
 	// TODO: Add support for ms.Host
 	m, err := resolver.ApiClient.Modules().Get(ms.OrgName, ms.ModuleName)
@@ -25,7 +25,7 @@ func ResolveModule(resolver *find.ResourceResolver, iacPath, moduleSource, modul
 		return nil, nil, fmt.Errorf("unable to validate module (%s): module lookup failed: %w", moduleSource, err)
 	}
 	if m == nil {
-		return nil, nil, errors.ValidationErrors{core.MissingModuleError(iacPath, moduleSource)}
+		return nil, nil, errors.ValidationErrors{core.MissingModuleError(repoName, filename, iacPath, moduleSource)}
 	}
 	mcn1, err := types.ParseModuleContractName(contract)
 	if err != nil {
@@ -39,7 +39,7 @@ func ResolveModule(resolver *find.ResourceResolver, iacPath, moduleSource, modul
 		Subplatform: m.Subplatform,
 	}
 	if ok := mcn1.Match(mcn2); !ok {
-		return nil, nil, errors.ValidationErrors{core.InvalidModuleContractError(iacPath, moduleSource, mcn1, mcn2)}
+		return nil, nil, errors.ValidationErrors{core.InvalidModuleContractError(repoName, filename, iacPath, moduleSource, mcn1, mcn2)}
 	}
 
 	var mv *types.ModuleVersion
@@ -52,7 +52,7 @@ func ResolveModule(resolver *find.ResourceResolver, iacPath, moduleSource, modul
 		}
 	}
 	if mv == nil {
-		return nil, nil, errors.ValidationErrors{core.MissingModuleVersionError(iacPath, ms.String(), moduleSourceVersion)}
+		return nil, nil, errors.ValidationErrors{core.MissingModuleVersionError(repoName, filename, iacPath, ms.String(), moduleSourceVersion)}
 	}
 
 	return m, mv, nil

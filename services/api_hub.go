@@ -83,6 +83,6 @@ func (h ApiHub) Enigma(orgName string) *api.Client {
 	return h.EnigmaFactory.Client(orgName)
 }
 
-func (h ApiHub) GetClaims(orgName string) (*auth.Claims, error) {
-	return auth.GetCustomClaims(h.MainFactory.AccessTokenSource, orgName)
+func (h ApiHub) GetClaims(ctx context.Context, orgName string) (*auth.Claims, error) {
+	return auth.GetCustomClaims(ctx, h.MainFactory.AccessTokenSource, orgName)
 }

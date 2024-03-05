@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
@@ -69,12 +70,12 @@ func convertBlockConfigurations(parsed map[string]yaml.BlockConfiguration) map[s
 	return result
 }
 
-func (b BlockConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
+func (b BlockConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("blocks.%s", b.Name)
 	contract := fmt.Sprintf("block/*/*")
-	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, b.ModuleSource, b.ModuleSourceVersion, b.Variables, b.Connections, nil, nil)
+	return ValidateBlock(ctx, resolver, repoName, filename, yamlPath, contract, b.ModuleSource, b.ModuleSourceVersion, b.Variables, b.Connections, nil, nil)
 }
 
-func (b *BlockConfiguration) Normalize(resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(b.Connections, resolver)
+func (b *BlockConfiguration) Normalize(ctx context.Context, resolver *find.ResourceResolver) error {
+	return core.NormalizeConnectionTargets(ctx, b.Connections, resolver)
 }

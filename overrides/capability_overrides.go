@@ -1,6 +1,7 @@
 package overrides
 
 import (
+	"context"
 	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -8,9 +9,9 @@ import (
 
 type CapabilityOverrides []CapabilityOverride
 
-func (s CapabilityOverrides) Normalize(resolver *find.ResourceResolver) error {
+func (s CapabilityOverrides) Normalize(ctx context.Context, resolver *find.ResourceResolver) error {
 	for i, iacCap := range s {
-		resolved, err := iacCap.Normalize(resolver)
+		resolved, err := iacCap.Normalize(ctx, resolver)
 		if err != nil {
 			return err
 		}
@@ -27,8 +28,8 @@ type CapabilityOverride struct {
 	Namespace           *string
 }
 
-func (c CapabilityOverride) Normalize(resolver *find.ResourceResolver) (CapabilityOverride, error) {
-	if err := core.NormalizeConnectionTargets(c.Connections, resolver); err != nil {
+func (c CapabilityOverride) Normalize(ctx context.Context, resolver *find.ResourceResolver) (CapabilityOverride, error) {
+	if err := core.NormalizeConnectionTargets(ctx, c.Connections, resolver); err != nil {
 		return c, err
 	}
 	return c, nil

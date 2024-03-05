@@ -1,6 +1,7 @@
 package overrides
 
 import (
+	"context"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -62,6 +63,6 @@ func convertAppOverrides(parsed map[string]yaml.AppOverrides) map[string]AppOver
 	return apps
 }
 
-func (a *AppOverrides) Normalize(resolver *find.ResourceResolver) error {
-	return a.Capabilities.Normalize(resolver)
+func (a *AppOverrides) Normalize(ctx context.Context, resolver *find.ResourceResolver) error {
+	return a.Capabilities.Normalize(ctx, resolver)
 }

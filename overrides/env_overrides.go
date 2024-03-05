@@ -1,6 +1,7 @@
 package overrides
 
 import (
+	"context"
 	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
@@ -102,57 +103,57 @@ func (c *EnvOverrides) Validate(resolver *find.ResourceResolver) (errors.Validat
 	return ve, nil
 }
 
-func (c *EnvOverrides) Normalize(resolver *find.ResourceResolver) error {
+func (c *EnvOverrides) Normalize(ctx context.Context, resolver *find.ResourceResolver) error {
 	for key, block := range c.Blocks {
-		if err := block.Normalize(resolver); err != nil {
+		if err := block.Normalize(ctx, resolver); err != nil {
 			return err
 		}
 		c.Blocks[key] = block
 	}
 	for key, network := range c.Networks {
-		if err := network.Normalize(resolver); err != nil {
+		if err := network.Normalize(ctx, resolver); err != nil {
 			return err
 		}
 		c.Networks[key] = network
 	}
 	for key, cluster := range c.Clusters {
-		if err := cluster.Normalize(resolver); err != nil {
+		if err := cluster.Normalize(ctx, resolver); err != nil {
 			return err
 		}
 		c.Clusters[key] = cluster
 	}
 	for key, clusterNamespace := range c.ClusterNamespaces {
-		if err := clusterNamespace.Normalize(resolver); err != nil {
+		if err := clusterNamespace.Normalize(ctx, resolver); err != nil {
 			return err
 		}
 		c.ClusterNamespaces[key] = clusterNamespace
 	}
 	for key, ingress := range c.Ingresses {
-		if err := ingress.Normalize(resolver); err != nil {
+		if err := ingress.Normalize(ctx, resolver); err != nil {
 			return err
 		}
 		c.Ingresses[key] = ingress
 	}
 	for key, domain := range c.Domains {
-		if err := domain.Normalize(resolver); err != nil {
+		if err := domain.Normalize(ctx, resolver); err != nil {
 			return err
 		}
 		c.Domains[key] = domain
 	}
 	for key, subdomain := range c.Subdomains {
-		if err := subdomain.Normalize(resolver); err != nil {
+		if err := subdomain.Normalize(ctx, resolver); err != nil {
 			return err
 		}
 		c.Subdomains[key] = subdomain
 	}
 	for key, datastore := range c.Datastores {
-		if err := datastore.Normalize(resolver); err != nil {
+		if err := datastore.Normalize(ctx, resolver); err != nil {
 			return err
 		}
 		c.Datastores[key] = datastore
 	}
 	for key, app := range c.Applications {
-		if err := app.Normalize(resolver); err != nil {
+		if err := app.Normalize(ctx, resolver); err != nil {
 			return err
 		}
 		c.Applications[key] = app

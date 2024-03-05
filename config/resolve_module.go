@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
@@ -10,7 +11,7 @@ import (
 	"strings"
 )
 
-func ResolveModule(resolver *find.ResourceResolver, repoName, filename, iacPath, moduleSource, moduleSourceVersion, contract string) (*types.Module, *types.ModuleVersion, error) {
+func ResolveModule(ctx context.Context, resolver *find.ResourceResolver, repoName, filename, iacPath, moduleSource, moduleSourceVersion, contract string) (*types.Module, *types.ModuleVersion, error) {
 	if moduleSource == "" {
 		return nil, nil, errors.ValidationErrors{core.RequiredModuleError(repoName, filename, iacPath)}
 	}
@@ -20,7 +21,7 @@ func ResolveModule(resolver *find.ResourceResolver, repoName, filename, iacPath,
 		return nil, nil, errors.ValidationErrors{core.InvalidModuleFormatError(repoName, filename, fmt.Sprintf("%s.module", iacPath), moduleSource)}
 	}
 	// TODO: Add support for ms.Host
-	m, err := resolver.ApiClient.Modules().Get(ms.OrgName, ms.ModuleName)
+	m, err := resolver.ApiClient.Modules().Get(ctx, ms.OrgName, ms.ModuleName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to validate module (%s): module lookup failed: %w", moduleSource, err)
 	}
@@ -46,7 +47,7 @@ func ResolveModule(resolver *find.ResourceResolver, repoName, filename, iacPath,
 	if moduleSourceVersion == "latest" {
 		mv = m.LatestVersion
 	} else {
-		mv, err = resolver.ApiClient.ModuleVersions().Get(ms.OrgName, ms.ModuleName, moduleSourceVersion)
+		mv, err = resolver.ApiClient.ModuleVersions().Get(ctx, ms.OrgName, ms.ModuleName, moduleSourceVersion)
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to validate module@version (%s@%s): module version lookup failed: %w", moduleSource, moduleSourceVersion, err)
 		}

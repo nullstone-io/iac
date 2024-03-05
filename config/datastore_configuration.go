@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
@@ -34,8 +35,8 @@ func convertDatastoreConfigurations(parsed map[string]yaml.DatastoreConfiguratio
 	return result
 }
 
-func (d DatastoreConfiguration) Validate(resolver *find.ResourceResolver, repoName, filename string) error {
+func (d DatastoreConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, repoName, filename string) error {
 	yamlPath := fmt.Sprintf("datastores.%s", d.Name)
 	contract := fmt.Sprintf("datastore/*/*")
-	return ValidateBlock(resolver, repoName, filename, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil, nil)
+	return ValidateBlock(ctx, resolver, repoName, filename, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil, nil)
 }

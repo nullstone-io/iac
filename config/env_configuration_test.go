@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"github.com/BSick7/go-api/errors"
 	"github.com/gorilla/mux"
 	"github.com/nullstone-io/iac/services"
@@ -479,7 +480,7 @@ func TestConvertConfiguration(t *testing.T) {
 				StacksByName: map[string]*find.StackResolver{"core": sr},
 			}
 
-			err = got.Validate(resolver)
+			err = got.Validate(context.Background(), resolver)
 			assert.Equal(t, test.validationErrors, err)
 		})
 	}

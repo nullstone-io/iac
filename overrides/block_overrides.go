@@ -1,6 +1,7 @@
 package overrides
 
 import (
+	"context"
 	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
@@ -28,6 +29,6 @@ func (b *BlockOverrides) Validate(resolver *find.ResourceResolver) (errors.Valid
 	return errors.ValidationErrors{}, nil
 }
 
-func (b *BlockOverrides) Normalize(resolver *find.ResourceResolver) error {
+func (b *BlockOverrides) Normalize(ctx context.Context, resolver *find.ResourceResolver) error {
 	return nil
 }

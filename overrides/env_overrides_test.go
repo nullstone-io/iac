@@ -4,7 +4,7 @@ import (
 	"github.com/nullstone-io/iac/yaml"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -66,13 +66,13 @@ func TestParseEnvOverrides(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			buf, err := ioutil.ReadFile(test.filename)
+			buf, err := os.ReadFile(test.filename)
 			assert.NoError(t, err)
 
 			parsed, err := yaml.ParseEnvOverrides(buf)
 			assert.NoError(t, err)
 
-			got := ConvertOverrides("previews.yml", *parsed)
+			got := ConvertOverrides("", "previews.yml", *parsed)
 
 			assert.Equal(t, result, got)
 		})

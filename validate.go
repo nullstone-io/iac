@@ -1,6 +1,7 @@
 package iac
 
 import (
+	"context"
 	errs "errors"
 	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/config"
@@ -8,10 +9,10 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
-func Validate(config *config.EnvConfiguration, overrides map[string]overrides.EnvOverrides, resolver *find.ResourceResolver) error {
+func Validate(ctx context.Context, config *config.EnvConfiguration, overrides map[string]overrides.EnvOverrides, resolver *find.ResourceResolver) error {
 	ve := errors.ValidationErrors{}
 	if config != nil {
-		err := config.Validate(resolver)
+		err := config.Validate(ctx, resolver)
 		if err != nil {
 			var verrs errors.ValidationErrors
 			if errs.As(err, &verrs) {

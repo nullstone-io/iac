@@ -51,23 +51,26 @@ func convertConnections(parsed map[string]yaml.ConnectionTarget) map[string]type
 func convertBlockConfigurations(parsed map[string]yaml.BlockConfiguration) map[string]BlockConfiguration {
 	result := map[string]BlockConfiguration{}
 	for blockName, blockValue := range parsed {
-		// set a default module version if not provided
-		moduleVersion := "latest"
-		if blockValue.ModuleSourceVersion != nil {
-			moduleVersion = *blockValue.ModuleSourceVersion
-		}
-		block := BlockConfiguration{
-			Type:                BlockTypeBlock,
-			Name:                blockName,
-			ModuleSource:        blockValue.ModuleSource,
-			ModuleSourceVersion: moduleVersion,
-			Variables:           blockValue.Variables,
-			Connections:         convertConnections(blockValue.Connections),
-			IsShared:            blockValue.IsShared,
-		}
-		result[blockName] = block
+		result[blockName] = blockConfigFromYaml(blockName, blockValue, BlockTypeBlock)
 	}
 	return result
+}
+
+func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType BlockType) BlockConfiguration {
+	// set a default module version if not provided
+	moduleVersion := "latest"
+	if value.ModuleSourceVersion != nil {
+		moduleVersion = *value.ModuleSourceVersion
+	}
+	return BlockConfiguration{
+		Type:                blockType,
+		Name:                name,
+		ModuleSource:        value.ModuleSource,
+		ModuleSourceVersion: moduleVersion,
+		Variables:           value.Variables,
+		Connections:         convertConnections(value.Connections),
+		IsShared:            value.IsShared,
+	}
 }
 
 func (b BlockConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, repoName, filename string) error {

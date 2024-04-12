@@ -36,23 +36,10 @@ func convertCapabilities(parsed yaml.CapabilityConfigurations) []CapabilityConfi
 func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[string]AppConfiguration {
 	apps := make(map[string]AppConfiguration)
 	for appName, appValue := range parsed {
-		// set a default module version if not provided
-		moduleVersion := "latest"
-		if appValue.ModuleSourceVersion != nil {
-			moduleVersion = *appValue.ModuleSourceVersion
-		}
 		app := AppConfiguration{
-			BlockConfiguration: BlockConfiguration{
-				Type:                BlockTypeApplication,
-				Name:                appName,
-				ModuleSource:        appValue.ModuleSource,
-				ModuleSourceVersion: moduleVersion,
-				Variables:           appValue.Variables,
-				Connections:         convertConnections(appValue.Connections),
-				IsShared:            appValue.IsShared,
-			},
-			EnvVariables: appValue.EnvVariables,
-			Capabilities: convertCapabilities(appValue.Capabilities),
+			BlockConfiguration: blockConfigFromYaml(appName, appValue.BlockConfiguration, BlockTypeApplication),
+			EnvVariables:       appValue.EnvVariables,
+			Capabilities:       convertCapabilities(appValue.Capabilities),
 		}
 		apps[appName] = app
 	}

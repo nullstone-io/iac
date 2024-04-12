@@ -11,11 +11,7 @@ type CapabilityConfiguration struct {
 }
 
 type AppConfiguration struct {
-	ModuleSource        string            `yaml:"module" json:"module"`
-	ModuleSourceVersion *string           `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any    `yaml:"vars" json:"vars"`
-	Connections         ConnectionTargets `yaml:"connections" json:"connections"`
-	IsShared            bool              `yaml:"is_shared" json:"isShared"`
+	BlockConfiguration `yaml:",inline" json:",inline"`
 
 	EnvVariables map[string]string        `yaml:"environment" json:"envVars"`
 	Capabilities CapabilityConfigurations `yaml:"capabilities" json:"capabilities"`

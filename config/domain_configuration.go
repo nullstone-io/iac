@@ -16,22 +16,9 @@ type DomainConfiguration struct {
 func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map[string]DomainConfiguration {
 	result := make(map[string]DomainConfiguration)
 	for domainName, domainValue := range parsed {
-		// set a default module version if not provided
-		moduleVersion := "latest"
-		if domainValue.ModuleSourceVersion != nil {
-			moduleVersion = *domainValue.ModuleSourceVersion
-		}
 		domain := DomainConfiguration{
-			BlockConfiguration: BlockConfiguration{
-				Type:                BlockTypeDomain,
-				Name:                domainName,
-				ModuleSource:        domainValue.ModuleSource,
-				ModuleSourceVersion: moduleVersion,
-				Variables:           domainValue.Variables,
-				Connections:         convertConnections(domainValue.Connections),
-				IsShared:            domainValue.IsShared,
-			},
-			DnsName: domainValue.DnsName,
+			BlockConfiguration: blockConfigFromYaml(domainName, domainValue.BlockConfiguration, BlockTypeDomain),
+			DnsName:            domainValue.DnsName,
 		}
 		result[domainName] = domain
 	}

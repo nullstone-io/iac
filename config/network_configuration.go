@@ -14,21 +14,8 @@ type NetworkConfiguration struct {
 func convertNetworkConfigurations(parsed map[string]yaml.NetworkConfiguration) map[string]NetworkConfiguration {
 	result := make(map[string]NetworkConfiguration)
 	for networkName, networkValue := range parsed {
-		// set a default module version if not provided
-		moduleVersion := "latest"
-		if networkValue.ModuleSourceVersion != nil {
-			moduleVersion = *networkValue.ModuleSourceVersion
-		}
 		network := NetworkConfiguration{
-			BlockConfiguration: BlockConfiguration{
-				Type:                BlockTypeNetwork,
-				Name:                networkName,
-				ModuleSource:        networkValue.ModuleSource,
-				ModuleSourceVersion: moduleVersion,
-				Variables:           networkValue.Variables,
-				Connections:         convertConnections(networkValue.Connections),
-				IsShared:            networkValue.IsShared,
-			},
+			BlockConfiguration: blockConfigFromYaml(networkName, networkValue.BlockConfiguration, BlockTypeNetwork),
 		}
 		result[networkName] = network
 	}

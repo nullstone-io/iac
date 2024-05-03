@@ -21,11 +21,11 @@ func (c CapabilityConfigurations) Normalize(ctx context.Context, resolver *find.
 }
 
 type CapabilityConfiguration struct {
-	ModuleSource        string
-	ModuleSourceVersion string
-	Variables           map[string]any
-	Connections         types.ConnectionTargets
-	Namespace           *string
+	ModuleSource        string                  `json:"moduleSource"`
+	ModuleSourceVersion string                  `json:"moduleSourceVersion"`
+	Variables           map[string]any          `json:"vars"`
+	Connections         types.ConnectionTargets `json:"connections"`
+	Namespace           *string                 `json:"namespace"`
 }
 
 func (c CapabilityConfiguration) Normalize(ctx context.Context, resolver *find.ResourceResolver) (CapabilityConfiguration, error) {

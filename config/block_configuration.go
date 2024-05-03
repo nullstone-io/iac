@@ -24,13 +24,13 @@ const (
 )
 
 type BlockConfiguration struct {
-	Type                BlockType
-	Name                string
-	ModuleSource        string
-	ModuleSourceVersion string
-	Variables           map[string]any
-	Connections         types.ConnectionTargets
-	IsShared            bool
+	Type                BlockType               `json:"type"`
+	Name                string                  `json:"name"`
+	ModuleSource        string                  `json:"moduleSource"`
+	ModuleSourceVersion string                  `json:"moduleSourceVersion"`
+	Variables           map[string]any          `json:"vars"`
+	Connections         types.ConnectionTargets `json:"connections"`
+	IsShared            bool                    `json:"isShared"`
 }
 
 func convertConnections(parsed map[string]yaml.ConnectionTarget) map[string]types.ConnectionTarget {

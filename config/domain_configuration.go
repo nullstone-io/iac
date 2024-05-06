@@ -10,7 +10,7 @@ import (
 type DomainConfiguration struct {
 	BlockConfiguration
 
-	DnsName string
+	DnsName string `json:"dnsName"`
 }
 
 func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map[string]DomainConfiguration {

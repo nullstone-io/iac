@@ -9,17 +9,17 @@ import (
 )
 
 type EnvConfiguration struct {
-	RepoName          string
-	Filename          string
-	Applications      map[string]AppConfiguration
-	Datastores        map[string]DatastoreConfiguration
-	Subdomains        map[string]SubdomainConfiguration
-	Domains           map[string]DomainConfiguration
-	Ingresses         map[string]IngressConfiguration
-	ClusterNamespaces map[string]ClusterNamespaceConfiguration
-	Clusters          map[string]ClusterConfiguration
-	Networks          map[string]NetworkConfiguration
-	Blocks            map[string]BlockConfiguration
+	RepoName          string                                   `json:"repoName"`
+	Filename          string                                   `json:"filename"`
+	Applications      map[string]AppConfiguration              `json:"applications"`
+	Datastores        map[string]DatastoreConfiguration        `json:"datastores"`
+	Subdomains        map[string]SubdomainConfiguration        `json:"subdomains"`
+	Domains           map[string]DomainConfiguration           `json:"domains"`
+	Ingresses         map[string]IngressConfiguration          `json:"ingresses"`
+	ClusterNamespaces map[string]ClusterNamespaceConfiguration `json:"clusterNamespaces"`
+	Clusters          map[string]ClusterConfiguration          `json:"clusters"`
+	Networks          map[string]NetworkConfiguration          `json:"networks"`
+	Blocks            map[string]BlockConfiguration            `json:"blocks"`
 }
 
 func ConvertConfiguration(repoName, filename string, parsed yaml.EnvConfiguration) EnvConfiguration {

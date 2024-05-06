@@ -11,8 +11,8 @@ import (
 type AppConfiguration struct {
 	BlockConfiguration
 
-	EnvVariables map[string]string
-	Capabilities CapabilityConfigurations
+	EnvVariables map[string]string        `json:"envVars"`
+	Capabilities CapabilityConfigurations `json:"capabilities"`
 }
 
 func convertCapabilities(parsed yaml.CapabilityConfigurations) []CapabilityConfiguration {

@@ -14,21 +14,8 @@ type IngressConfiguration struct {
 func convertIngressConfigurations(parsed map[string]yaml.IngressConfiguration) map[string]IngressConfiguration {
 	result := make(map[string]IngressConfiguration)
 	for ingressName, ingressValue := range parsed {
-		// set a default module version if not provided
-		moduleVersion := "latest"
-		if ingressValue.ModuleSourceVersion != nil {
-			moduleVersion = *ingressValue.ModuleSourceVersion
-		}
 		ingress := IngressConfiguration{
-			BlockConfiguration: BlockConfiguration{
-				Type:                BlockTypeIngress,
-				Name:                ingressName,
-				ModuleSource:        ingressValue.ModuleSource,
-				ModuleSourceVersion: moduleVersion,
-				Variables:           ingressValue.Variables,
-				Connections:         convertConnections(ingressValue.Connections),
-				IsShared:            ingressValue.IsShared,
-			},
+			BlockConfiguration: blockConfigFromYaml(ingressName, ingressValue.BlockConfiguration, BlockTypeIngress),
 		}
 		result[ingressName] = ingress
 	}

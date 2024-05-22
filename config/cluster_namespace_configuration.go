@@ -14,21 +14,8 @@ type ClusterNamespaceConfiguration struct {
 func convertClusterNamespaceConfigurations(parsed map[string]yaml.ClusterNamespaceConfiguration) map[string]ClusterNamespaceConfiguration {
 	result := make(map[string]ClusterNamespaceConfiguration)
 	for clusterNamespaceName, clusterNamespaceValue := range parsed {
-		// set a default module version if not provided
-		moduleVersion := "latest"
-		if clusterNamespaceValue.ModuleSourceVersion != nil {
-			moduleVersion = *clusterNamespaceValue.ModuleSourceVersion
-		}
 		cn := ClusterNamespaceConfiguration{
-			BlockConfiguration: BlockConfiguration{
-				Type:                BlockTypeClusterNamespace,
-				Name:                clusterNamespaceName,
-				ModuleSource:        clusterNamespaceValue.ModuleSource,
-				ModuleSourceVersion: moduleVersion,
-				Variables:           clusterNamespaceValue.Variables,
-				Connections:         convertConnections(clusterNamespaceValue.Connections),
-				IsShared:            clusterNamespaceValue.IsShared,
-			},
+			BlockConfiguration: blockConfigFromYaml(clusterNamespaceName, clusterNamespaceValue.BlockConfiguration, BlockTypeClusterNamespace),
 		}
 		result[clusterNamespaceName] = cn
 	}

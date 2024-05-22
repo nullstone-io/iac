@@ -14,21 +14,8 @@ type ClusterConfiguration struct {
 func convertClusterConfigurations(parsed map[string]yaml.ClusterConfiguration) map[string]ClusterConfiguration {
 	result := make(map[string]ClusterConfiguration)
 	for clusterName, clusterValue := range parsed {
-		// set a default module version if not provided
-		moduleVersion := "latest"
-		if clusterValue.ModuleSourceVersion != nil {
-			moduleVersion = *clusterValue.ModuleSourceVersion
-		}
 		cluster := ClusterConfiguration{
-			BlockConfiguration: BlockConfiguration{
-				Type:                BlockTypeCluster,
-				Name:                clusterName,
-				ModuleSource:        clusterValue.ModuleSource,
-				ModuleSourceVersion: moduleVersion,
-				Variables:           clusterValue.Variables,
-				Connections:         convertConnections(clusterValue.Connections),
-				IsShared:            clusterValue.IsShared,
-			},
+			BlockConfiguration: blockConfigFromYaml(clusterName, clusterValue.BlockConfiguration, BlockTypeCluster),
 		}
 		result[clusterName] = cluster
 	}

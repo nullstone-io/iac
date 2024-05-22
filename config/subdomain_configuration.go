@@ -16,22 +16,9 @@ type SubdomainConfiguration struct {
 func convertSubdomainConfigurations(parsed map[string]yaml.SubdomainConfiguration) map[string]SubdomainConfiguration {
 	result := make(map[string]SubdomainConfiguration)
 	for subName, subValue := range parsed {
-		// set a default module version if not provided
-		moduleVersion := "latest"
-		if subValue.ModuleSourceVersion != nil {
-			moduleVersion = *subValue.ModuleSourceVersion
-		}
 		sub := SubdomainConfiguration{
-			BlockConfiguration: BlockConfiguration{
-				Type:                BlockTypeSubdomain,
-				Name:                subName,
-				ModuleSource:        subValue.ModuleSource,
-				ModuleSourceVersion: moduleVersion,
-				Variables:           subValue.Variables,
-				Connections:         convertConnections(subValue.Connections),
-				IsShared:            subValue.IsShared,
-			},
-			DnsName: subValue.DnsName,
+			BlockConfiguration: blockConfigFromYaml(subName, subValue.BlockConfiguration, BlockTypeSubdomain),
+			DnsName:            subValue.DnsName,
 		}
 		result[subName] = sub
 	}

@@ -14,21 +14,8 @@ type DatastoreConfiguration struct {
 func convertDatastoreConfigurations(parsed map[string]yaml.DatastoreConfiguration) map[string]DatastoreConfiguration {
 	result := make(map[string]DatastoreConfiguration)
 	for datastoreName, datastoreValue := range parsed {
-		// set a default module version if not provided
-		moduleVersion := "latest"
-		if datastoreValue.ModuleSourceVersion != nil {
-			moduleVersion = *datastoreValue.ModuleSourceVersion
-		}
 		ds := DatastoreConfiguration{
-			BlockConfiguration: BlockConfiguration{
-				Type:                BlockTypeDatastore,
-				Name:                datastoreName,
-				ModuleSource:        datastoreValue.ModuleSource,
-				ModuleSourceVersion: moduleVersion,
-				Variables:           datastoreValue.Variables,
-				Connections:         convertConnections(datastoreValue.Connections),
-				IsShared:            datastoreValue.IsShared,
-			},
+			BlockConfiguration: blockConfigFromYaml(datastoreName, datastoreValue.BlockConfiguration, BlockTypeDatastore),
 		}
 		result[datastoreName] = ds
 	}

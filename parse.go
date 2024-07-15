@@ -31,26 +31,34 @@ func (e InvalidYamlError) Unwrap() error {
 	return e.Err
 }
 
-func ParseMap(parseContext string, files map[string][]byte) (config.EnvConfiguration, map[string]overrides.EnvOverrides, error) {
-	ec := config.EnvConfiguration{}
-	eos := map[string]overrides.EnvOverrides{}
+type ParseMapResult struct {
+	Config    *config.EnvConfiguration
+	Overrides map[string]overrides.EnvOverrides
+}
+
+func ParseMap(parseContext string, files map[string][]byte) (ParseMapResult, error) {
+	result := ParseMapResult{
+		Config:    nil,
+		Overrides: map[string]overrides.EnvOverrides{},
+	}
 
 	for filepath, raw := range files {
 		desc := getConfigFileDescription(filepath)
 		if desc == "config" {
-			var err error
-			if ec, err = ParseConfig(parseContext, filepath, bytes.NewReader(raw)); err != nil {
-				return ec, eos, err
+			parsed, err := ParseConfig(parseContext, filepath, bytes.NewReader(raw))
+			if err != nil {
+				return result, err
 			}
+			result.Config = &parsed
 		} else {
-			if eo, err := ParseOverrides(parseContext, filepath, bytes.NewReader(raw)); err != nil {
-				return ec, eos, err
-			} else {
-				eos[desc] = eo
+			eo, err := ParseOverrides(parseContext, filepath, bytes.NewReader(raw))
+			if err != nil {
+				return result, err
 			}
+			result.Overrides[desc] = eo
 		}
 	}
-	return ec, eos, nil
+	return result, nil
 }
 
 func getConfigFileDescription(filepath string) string {

@@ -36,7 +36,7 @@ type ParseMapResult struct {
 	Overrides map[string]overrides.EnvOverrides
 }
 
-func ParseMap(parseContext string, files map[string][]byte) (ParseMapResult, error) {
+func ParseMap(parseContext string, files map[string]string) (ParseMapResult, error) {
 	result := ParseMapResult{
 		Config:    nil,
 		Overrides: map[string]overrides.EnvOverrides{},
@@ -45,13 +45,13 @@ func ParseMap(parseContext string, files map[string][]byte) (ParseMapResult, err
 	for filepath, raw := range files {
 		desc := getConfigFileDescription(filepath)
 		if desc == "config" {
-			parsed, err := ParseConfig(parseContext, filepath, bytes.NewReader(raw))
+			parsed, err := ParseConfig(parseContext, filepath, bytes.NewBufferString(raw))
 			if err != nil {
 				return result, err
 			}
 			result.Config = &parsed
 		} else {
-			eo, err := ParseOverrides(parseContext, filepath, bytes.NewReader(raw))
+			eo, err := ParseOverrides(parseContext, filepath, bytes.NewBufferString(raw))
 			if err != nil {
 				return result, err
 			}

@@ -8,8 +8,8 @@ import (
 )
 
 type BlockOverrides struct {
-	Name      string
-	Variables map[string]any
+	Name      string         `json:"name"`
+	Variables map[string]any `json:"variables"`
 }
 
 func convertBlockOverrides(parsed map[string]yaml.BlockOverrides) map[string]BlockOverrides {

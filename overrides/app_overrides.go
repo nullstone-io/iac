@@ -10,8 +10,8 @@ import (
 type AppOverrides struct {
 	BlockOverrides
 
-	EnvVariables map[string]string
-	Capabilities CapabilityOverrides
+	EnvVariables map[string]string   `json:"envVars"`
+	Capabilities CapabilityOverrides `json:"capabilities"`
 }
 
 func convertConnections(parsed map[string]yaml.ConnectionTarget) map[string]types.ConnectionTarget {

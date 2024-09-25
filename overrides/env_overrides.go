@@ -8,17 +8,17 @@ import (
 )
 
 type EnvOverrides struct {
-	RepoName          string
-	Filename          string
-	Applications      map[string]AppOverrides
-	Subdomains        map[string]SubdomainOverrides
-	Datastores        map[string]DatastoreOverrides
-	Domains           map[string]DomainOverrides
-	Ingresses         map[string]IngressOverrides
-	ClusterNamespaces map[string]ClusterNamespaceOverrides
-	Clusters          map[string]ClusterOverrides
-	Networks          map[string]NetworkOverrides
-	Blocks            map[string]BlockOverrides
+	RepoName          string                               `json:"repo_name"`
+	Filename          string                               `json:"filename"`
+	Applications      map[string]AppOverrides              `json:"applications"`
+	Subdomains        map[string]SubdomainOverrides        `json:"subdomains"`
+	Datastores        map[string]DatastoreOverrides        `json:"datastores"`
+	Domains           map[string]DomainOverrides           `json:"domains"`
+	Ingresses         map[string]IngressOverrides          `json:"ingresses"`
+	ClusterNamespaces map[string]ClusterNamespaceOverrides `json:"clusterNamespaces"`
+	Clusters          map[string]ClusterOverrides          `json:"clusters"`
+	Networks          map[string]NetworkOverrides          `json:"networks"`
+	Blocks            map[string]BlockOverrides            `json:"blocks"`
 }
 
 func ConvertOverrides(repoName, filename string, parsed yaml.EnvOverrides) EnvOverrides {

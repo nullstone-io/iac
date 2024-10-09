@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
@@ -73,12 +74,12 @@ func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType B
 	}
 }
 
-func (b BlockConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, repoName, filename string) error {
-	yamlPath := fmt.Sprintf("blocks.%s", b.Name)
+func (b *BlockConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, ic core.IacContext) errors.ValidationErrors {
+	pc := core.NewYamlPathContext("blocks", b.Name)
 	contract := fmt.Sprintf("block/*/*")
-	return ValidateBlock(ctx, resolver, repoName, filename, yamlPath, contract, b.ModuleSource, b.ModuleSourceVersion, b.Variables, b.Connections, nil, nil)
+	return ValidateBlock(ctx, resolver, ic, pc, contract, b.ModuleSource, b.ModuleSourceVersion, b.Variables, b.Connections, nil, nil)
 }
 
 func (b *BlockConfiguration) Normalize(ctx context.Context, resolver *find.ResourceResolver) error {
-	return core.NormalizeConnectionTargets(ctx, b.Connections, resolver)
+	return NormalizeConnectionTargets(ctx, b.Connections, resolver)
 }

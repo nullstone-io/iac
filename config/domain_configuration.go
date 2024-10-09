@@ -3,6 +3,8 @@ package config
 import (
 	"context"
 	"fmt"
+	"github.com/BSick7/go-api/errors"
+	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
@@ -25,8 +27,8 @@ func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map
 	return result
 }
 
-func (d DomainConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, repoName, filename string) error {
-	yamlPath := fmt.Sprintf("domains.%s", d.Name)
+func (d *DomainConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, ic core.IacContext) errors.ValidationErrors {
+	pc := core.NewYamlPathContext("domains", d.Name)
 	contract := fmt.Sprintf("domain/*/*")
-	return ValidateBlock(ctx, resolver, repoName, filename, yamlPath, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil, nil)
+	return ValidateBlock(ctx, resolver, ic, pc, contract, d.ModuleSource, d.ModuleSourceVersion, d.Variables, d.Connections, nil, nil)
 }

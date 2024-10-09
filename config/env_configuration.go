@@ -2,15 +2,14 @@ package config
 
 import (
 	"context"
-	errs "errors"
 	"github.com/BSick7/go-api/errors"
+	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
 type EnvConfiguration struct {
-	RepoName          string                                   `json:"repoName"`
-	Filename          string                                   `json:"filename"`
+	IacContext        core.IacContext                          `json:"iacContext"`
 	Applications      map[string]AppConfiguration              `json:"applications"`
 	Datastores        map[string]DatastoreConfiguration        `json:"datastores"`
 	Subdomains        map[string]SubdomainConfiguration        `json:"subdomains"`
@@ -23,7 +22,9 @@ type EnvConfiguration struct {
 }
 
 func ConvertConfiguration(repoName, filename string, parsed yaml.EnvConfiguration) EnvConfiguration {
-	result := EnvConfiguration{RepoName: repoName, Filename: filename}
+	result := EnvConfiguration{
+		IacContext: core.IacContext{RepoName: repoName, Filename: filename},
+	}
 	result.Applications = convertAppConfigurations(parsed.Applications)
 	result.Datastores = convertDatastoreConfigurations(parsed.Datastores)
 	result.Subdomains = convertSubdomainConfigurations(parsed.Subdomains)
@@ -36,90 +37,34 @@ func ConvertConfiguration(repoName, filename string, parsed yaml.EnvConfiguratio
 	return result
 }
 
-func (e EnvConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver) error {
+func (e *EnvConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver) errors.ValidationErrors {
 	ve := errors.ValidationErrors{}
 	for _, app := range e.Applications {
-		err := app.Validate(ctx, resolver, e.RepoName, e.Filename)
-		if err != nil {
-			var verrs errors.ValidationErrors
-			if errs.As(err, &verrs) {
-				ve = append(ve, verrs...)
-			}
-		}
+		ve = append(ve, app.Validate(ctx, resolver, e.IacContext)...)
 	}
 	for _, ds := range e.Datastores {
-		err := ds.Validate(ctx, resolver, e.RepoName, e.Filename)
-		if err != nil {
-			var verrs errors.ValidationErrors
-			if errs.As(err, &verrs) {
-				ve = append(ve, verrs...)
-			}
-		}
+		ve = append(ve, ds.Validate(ctx, resolver, e.IacContext)...)
 	}
 	for _, sub := range e.Subdomains {
-		err := sub.Validate(ctx, resolver, e.RepoName, e.Filename)
-		if err != nil {
-			var verrs errors.ValidationErrors
-			if errs.As(err, &verrs) {
-				ve = append(ve, verrs...)
-			}
-		}
+		ve = append(ve, sub.Validate(ctx, resolver, e.IacContext)...)
 	}
 	for _, domain := range e.Domains {
-		err := domain.Validate(ctx, resolver, e.RepoName, e.Filename)
-		if err != nil {
-			var verrs errors.ValidationErrors
-			if errs.As(err, &verrs) {
-				ve = append(ve, verrs...)
-			}
-		}
+		ve = append(ve, domain.Validate(ctx, resolver, e.IacContext)...)
 	}
 	for _, ingress := range e.Ingresses {
-		err := ingress.Validate(ctx, resolver, e.RepoName, e.Filename)
-		if err != nil {
-			var verrs errors.ValidationErrors
-			if errs.As(err, &verrs) {
-				ve = append(ve, verrs...)
-			}
-		}
+		ve = append(ve, ingress.Validate(ctx, resolver, e.IacContext)...)
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
-		err := clusterNamespace.Validate(ctx, resolver, e.RepoName, e.Filename)
-		if err != nil {
-			var verrs errors.ValidationErrors
-			if errs.As(err, &verrs) {
-				ve = append(ve, verrs...)
-			}
-		}
+		ve = append(ve, clusterNamespace.Validate(ctx, resolver, e.IacContext)...)
 	}
 	for _, cluster := range e.Clusters {
-		err := cluster.Validate(ctx, resolver, e.RepoName, e.Filename)
-		if err != nil {
-			var verrs errors.ValidationErrors
-			if errs.As(err, &verrs) {
-				ve = append(ve, verrs...)
-			}
-		}
+		ve = append(ve, cluster.Validate(ctx, resolver, e.IacContext)...)
 	}
 	for _, network := range e.Networks {
-		err := network.Validate(ctx, resolver, e.RepoName, e.Filename)
-		if err != nil {
-			var verrs errors.ValidationErrors
-			if errs.As(err, &verrs) {
-				ve = append(ve, verrs...)
-			}
-		}
+		ve = append(ve, network.Validate(ctx, resolver, e.IacContext)...)
 	}
 	for _, block := range e.Blocks {
-		err := block.Validate(ctx, resolver, e.RepoName, e.Filename)
-		if err != nil {
-			var verrs errors.ValidationErrors
-			if errs.As(err, &verrs) {
-				ve = append(ve, verrs...)
-			} else {
-				return err
-			}
-		}
+		ve = append(ve, block.Validate(ctx, resolver, e.IacContext)...)
 	}
 
 	if len(ve) > 0 {

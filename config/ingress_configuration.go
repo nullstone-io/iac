@@ -3,6 +3,8 @@ package config
 import (
 	"context"
 	"fmt"
+	"github.com/BSick7/go-api/errors"
+	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
@@ -22,8 +24,8 @@ func convertIngressConfigurations(parsed map[string]yaml.IngressConfiguration) m
 	return result
 }
 
-func (i IngressConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, repoName, filename string) error {
-	yamlPath := fmt.Sprintf("ingresses.%s", i.Name)
+func (i IngressConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, ic core.IacContext) errors.ValidationErrors {
+	pc := core.NewYamlPathContext("ingresses", i.Name)
 	contract := fmt.Sprintf("ingress/*/*")
-	return ValidateBlock(ctx, resolver, repoName, filename, yamlPath, contract, i.ModuleSource, i.ModuleSourceVersion, i.Variables, i.Connections, nil, nil)
+	return ValidateBlock(ctx, resolver, ic, pc, contract, i.ModuleSource, i.ModuleSourceVersion, i.Variables, i.Connections, nil, nil)
 }

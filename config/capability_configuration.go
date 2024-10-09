@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
@@ -29,7 +28,7 @@ type CapabilityConfiguration struct {
 }
 
 func (c CapabilityConfiguration) Normalize(ctx context.Context, resolver *find.ResourceResolver) (CapabilityConfiguration, error) {
-	if err := core.NormalizeConnectionTargets(ctx, c.Connections, resolver); err != nil {
+	if err := NormalizeConnectionTargets(ctx, c.Connections, resolver); err != nil {
 		return c, err
 	}
 	return c, nil

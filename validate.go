@@ -10,14 +10,10 @@ import (
 func Validate(ctx context.Context, config *config.EnvConfiguration, overrides map[string]config.EnvConfiguration, resolver *find.ResourceResolver) errors.ValidationErrors {
 	ve := errors.ValidationErrors{}
 	if config != nil {
-		if verrs := config.Validate(ctx, resolver); verrs != nil {
-			ve = append(ve, verrs...)
-		}
+		ve = append(ve, config.Validate(ctx, resolver)...)
 	}
 	for _, envOverrides := range overrides {
-		if verrs := envOverrides.Validate(ctx, resolver); verrs != nil {
-			ve = append(ve, verrs...)
-		}
+		ve = append(ve, envOverrides.Validate(ctx, resolver)...)
 	}
 	if len(ve) > 0 {
 		return ve

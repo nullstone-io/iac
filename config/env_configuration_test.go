@@ -23,6 +23,10 @@ type FactoryDefaults struct {
 	EnvId   int64
 }
 
+func ptr[T any](t T) *T {
+	return &t
+}
+
 func TestConvertConfiguration(t *testing.T) {
 	providerType := "aws"
 	defaults := FactoryDefaults{
@@ -255,6 +259,7 @@ func TestConvertConfiguration(t *testing.T) {
 	tests := []struct {
 		name             string
 		filename         string
+		isOverrides      bool
 		want             *EnvConfiguration
 		validationErrors error
 	}{
@@ -446,6 +451,61 @@ func TestConvertConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "valid previews.yml",
+			filename:    "test-fixtures/previews.yml",
+			isOverrides: true,
+			want: &EnvConfiguration{
+				IacContext: core.IacContext{
+					RepoName:    "acme/api",
+					Filename:    "config.yml",
+					IsOverrides: true,
+				},
+				Applications: map[string]AppConfiguration{
+					"acme-api": {
+						BlockConfiguration: BlockConfiguration{
+							Type: BlockTypeApplication,
+							Name: "acme-api",
+							Variables: map[string]any{
+								"enable_versioned_assets": false,
+							},
+							Connections: types.ConnectionTargets{},
+						},
+						EnvVariables: map[string]string{
+							"TESTING": "abc123",
+							"BLAH":    "blahblahblah",
+						},
+						Capabilities: CapabilityConfigurations{
+							{
+								ModuleSource:        "nullstone/aws-s3-cdn",
+								ModuleSourceVersion: "latest",
+								Variables:           map[string]any{"enable_www": true},
+								Namespace:           ptr("secondary"),
+								Connections: map[string]types.ConnectionTarget{
+									"subdomain": {
+										StackId:   0,
+										StackName: "",
+										BlockId:   0,
+										BlockName: "ns-sub-for-acme-docs",
+										EnvId:     nil,
+										EnvName:   "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Blocks:            map[string]BlockConfiguration{},
+				ClusterNamespaces: map[string]ClusterNamespaceConfiguration{},
+				Clusters:          map[string]ClusterConfiguration{},
+				Datastores:        map[string]DatastoreConfiguration{},
+				Domains:           map[string]DomainConfiguration{},
+				Ingresses:         map[string]IngressConfiguration{},
+				Networks:          map[string]NetworkConfiguration{},
+				Subdomains:        map[string]SubdomainConfiguration{},
+			},
+			validationErrors: errors.ValidationErrors(nil),
+		},
 	}
 
 	router := mux.NewRouter()
@@ -460,7 +520,7 @@ func TestConvertConfiguration(t *testing.T) {
 			parsed, err := config2.ParseEnvConfiguration(buf)
 			assert.NoError(t, err)
 
-			got := ConvertConfiguration("acme/api", "config.yml", *parsed)
+			got := ConvertConfiguration("acme/api", "config.yml", test.isOverrides, *parsed)
 
 			if test.want != nil {
 				assert.Equal(t, *test.want, got)

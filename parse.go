@@ -44,13 +44,13 @@ func ParseMap(parseContext string, files map[string]string) (ParseMapResult, err
 	for filepath, raw := range files {
 		desc := getConfigFileDescription(filepath)
 		if desc == "config" {
-			parsed, err := ParseConfig(parseContext, filepath, bytes.NewBufferString(raw))
+			parsed, err := ParseConfig(parseContext, filepath, false, bytes.NewBufferString(raw))
 			if err != nil {
 				return result, err
 			}
 			result.Config = &parsed
 		} else {
-			eo, err := ParseConfig(parseContext, filepath, bytes.NewBufferString(raw))
+			eo, err := ParseConfig(parseContext, filepath, true, bytes.NewBufferString(raw))
 			if err != nil {
 				return result, err
 			}
@@ -66,11 +66,11 @@ func getConfigFileDescription(filepath string) string {
 	return woExt
 }
 
-func ParseConfig(parseContext, filename string, r io.Reader) (config.EnvConfiguration, error) {
+func ParseConfig(parseContext, filename string, isOverrides bool, r io.Reader) (config.EnvConfiguration, error) {
 	decoder := yaml.NewDecoder(r)
 	var obj yaml2.EnvConfiguration
 	if err := decoder.Decode(&obj); err != nil {
 		return config.EnvConfiguration{}, InvalidYamlError{ParseContext: parseContext, FileName: filename, Err: err}
 	}
-	return config.ConvertConfiguration(parseContext, filename, obj), nil
+	return config.ConvertConfiguration(parseContext, filename, isOverrides, obj), nil
 }

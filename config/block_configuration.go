@@ -59,9 +59,11 @@ func convertBlockConfigurations(parsed map[string]yaml.BlockConfiguration) map[s
 
 func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType BlockType) BlockConfiguration {
 	// set a default module version if not provided
-	moduleVersion := "latest"
+	moduleVersion := ""
 	if value.ModuleSourceVersion != nil {
 		moduleVersion = *value.ModuleSourceVersion
+	} else if value.ModuleSource != "" {
+		moduleVersion = "latest"
 	}
 	return BlockConfiguration{
 		Type:                blockType,

@@ -27,6 +27,11 @@ func ValidateCapabilities(ctx context.Context, resolver *find.ResourceResolver, 
 }
 
 func ValidateCapability(ctx context.Context, resolver *find.ResourceResolver, ic core.IacContext, pc core.YamlPathContext, iacCap CapabilityConfiguration, subcategory string) errors.ValidationErrors {
+	if ic.IsOverrides && iacCap.ModuleSource == "" {
+		// TODO: Add support for validating variables and connections in an overrides file
+		return nil
+	}
+
 	// ensure the module is a capability module and supports the provider type (e.g. aws, gcp, azure)
 	providerType, err := resolver.ResolveCurProviderType(ctx)
 	if err != nil {
@@ -41,7 +46,9 @@ func ValidateCapability(ctx context.Context, resolver *find.ResourceResolver, ic
 	ve := errors.ValidationErrors{}
 	// check to make sure the capability module supports the subcategory
 	// examples are "container", "serverless", "static-site", "server"
-	if m != nil {
+	skipAppCategoryCheck := ic.IsOverrides && subcategory == ""
+	// TODO: Add support for validating app category
+	if m != nil && !skipAppCategoryCheck {
 		found := false
 		for _, cat := range m.AppCategories {
 			if cat == subcategory {

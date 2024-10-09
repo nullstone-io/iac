@@ -7,8 +7,9 @@ import (
 )
 
 type IacContext struct {
-	RepoName string
-	Filename string
+	RepoName    string
+	Filename    string
+	IsOverrides bool
 }
 
 func (c IacContext) Context(sub YamlPathContext) string {

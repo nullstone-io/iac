@@ -21,9 +21,13 @@ type EnvConfiguration struct {
 	Blocks            map[string]BlockConfiguration            `json:"blocks"`
 }
 
-func ConvertConfiguration(repoName, filename string, parsed yaml.EnvConfiguration) EnvConfiguration {
+func ConvertConfiguration(repoName, filename string, isOverrides bool, parsed yaml.EnvConfiguration) EnvConfiguration {
 	result := EnvConfiguration{
-		IacContext: core.IacContext{RepoName: repoName, Filename: filename},
+		IacContext: core.IacContext{
+			RepoName:    repoName,
+			Filename:    filename,
+			IsOverrides: isOverrides,
+		},
 	}
 	result.Applications = convertAppConfigurations(parsed.Applications)
 	result.Datastores = convertDatastoreConfigurations(parsed.Datastores)

@@ -1,5 +1,5 @@
 package yaml
 
 type ClusterOverrides struct {
-	Variables map[string]any `yaml:"vars"`
+	BlockOverrides `yaml:",inline" json:",inline"`
 }

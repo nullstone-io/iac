@@ -11,7 +11,7 @@ type CapabilityOverride struct {
 }
 
 type AppOverrides struct {
-	Variables map[string]any `yaml:"vars"`
+	BlockOverrides `yaml:",inline" json:",inline"`
 
 	EnvVariables map[string]string   `yaml:"environment"`
 	Capabilities CapabilityOverrides `yaml:"capabilities"`

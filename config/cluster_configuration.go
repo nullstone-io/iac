@@ -9,13 +9,11 @@ type ClusterConfiguration struct {
 	BlockConfiguration
 }
 
-func convertClusterConfigurations(parsed map[string]yaml.ClusterConfiguration) map[string]ClusterConfiguration {
-	result := make(map[string]ClusterConfiguration)
-	for clusterName, clusterValue := range parsed {
-		cluster := ClusterConfiguration{
-			BlockConfiguration: blockConfigFromYaml(clusterName, clusterValue.BlockConfiguration, BlockTypeCluster, types.CategoryCluster),
-		}
-		result[clusterName] = cluster
+func convertClusterConfigurations(parsed map[string]yaml.ClusterConfiguration) map[string]*ClusterConfiguration {
+	result := make(map[string]*ClusterConfiguration)
+	for name, value := range parsed {
+		bc := blockConfigFromYaml(name, value.BlockConfiguration, BlockTypeCluster, types.CategoryCluster)
+		result[name] = &ClusterConfiguration{BlockConfiguration: *bc}
 	}
 	return result
 }

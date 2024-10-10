@@ -52,15 +52,15 @@ func convertConnections(parsed map[string]yaml.ConnectionTarget) map[string]type
 	return result
 }
 
-func convertBlockConfigurations(parsed map[string]yaml.BlockConfiguration) map[string]BlockConfiguration {
-	result := map[string]BlockConfiguration{}
+func convertBlockConfigurations(parsed map[string]yaml.BlockConfiguration) map[string]*BlockConfiguration {
+	result := map[string]*BlockConfiguration{}
 	for blockName, blockValue := range parsed {
 		result[blockName] = blockConfigFromYaml(blockName, blockValue, BlockTypeBlock, types.CategoryBlock)
 	}
 	return result
 }
 
-func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType BlockType, blockCategory types.CategoryName) BlockConfiguration {
+func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType BlockType, blockCategory types.CategoryName) *BlockConfiguration {
 	// set a default module version if not provided
 	moduleVersion := ""
 	if value.ModuleSourceVersion != nil {
@@ -68,7 +68,7 @@ func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType B
 	} else if value.ModuleSource != "" {
 		moduleVersion = "latest"
 	}
-	return BlockConfiguration{
+	return &BlockConfiguration{
 		Type:                blockType,
 		Category:            blockCategory,
 		Name:                name,
@@ -80,24 +80,31 @@ func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType B
 	}
 }
 
-func (b *BlockConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
+func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ModuleVersionResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	if ic.IsOverrides && b.ModuleSource == "" {
 		// TODO: Add support for validating variables and connections in an overrides file that has no module source
 		return nil
 	}
 
 	contract := types.ModuleContractName{Category: string(b.Category), Provider: "*", Platform: "*"}
-	m, mv, err := ResolveModule(ctx, resolver, ic, pc, b.ModuleSource, b.ModuleSourceVersion, contract)
+	m, mv, err := core.ResolveModule(ctx, resolver, pc, b.ModuleSource, b.ModuleSourceVersion, contract)
 	if err != nil {
-		return errors.ValidationErrors{*err}
+		return core.ResolveErrors{*err}
 	}
 	b.Module = m
 	b.ModuleVersion = mv
+	return nil
+}
+
+func (b *BlockConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
+	if b.Module == nil {
+		// TODO: Add support for validating variables and connections in an overrides file that has no module source
+		return nil
+	}
 
 	ve := errors.ValidationErrors{}
 	ve = append(ve, b.ValidateVariables(ic, pc)...)
 	ve = append(ve, b.ValidateConnections(ctx, resolver, ic, pc, b.Connections)...)
-
 	if len(ve) > 0 {
 		return ve
 	}

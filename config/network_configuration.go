@@ -9,13 +9,11 @@ type NetworkConfiguration struct {
 	BlockConfiguration
 }
 
-func convertNetworkConfigurations(parsed map[string]yaml.NetworkConfiguration) map[string]NetworkConfiguration {
-	result := make(map[string]NetworkConfiguration)
+func convertNetworkConfigurations(parsed map[string]yaml.NetworkConfiguration) map[string]*NetworkConfiguration {
+	result := make(map[string]*NetworkConfiguration)
 	for networkName, networkValue := range parsed {
-		network := NetworkConfiguration{
-			BlockConfiguration: blockConfigFromYaml(networkName, networkValue.BlockConfiguration, BlockTypeNetwork, types.CategoryNetwork),
-		}
-		result[networkName] = network
+		bc := blockConfigFromYaml(networkName, networkValue.BlockConfiguration, BlockTypeNetwork, types.CategoryNetwork)
+		result[networkName] = &NetworkConfiguration{BlockConfiguration: *bc}
 	}
 	return result
 }

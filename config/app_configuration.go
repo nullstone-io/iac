@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
@@ -35,94 +34,72 @@ func convertCapabilities(parsed yaml.CapabilityConfigurations) []CapabilityConfi
 	return result
 }
 
-func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[string]AppConfiguration {
-	apps := make(map[string]AppConfiguration)
-	for appName, appValue := range parsed {
-		app := AppConfiguration{
-			BlockConfiguration: blockConfigFromYaml(appName, appValue.BlockConfiguration, BlockTypeApplication, types.CategoryApp),
-			EnvVariables:       appValue.EnvVariables,
-			Capabilities:       convertCapabilities(appValue.Capabilities),
+func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[string]*AppConfiguration {
+	apps := make(map[string]*AppConfiguration)
+	for name, value := range parsed {
+		bc := blockConfigFromYaml(name, value.BlockConfiguration, BlockTypeApplication, types.CategoryApp)
+		apps[name] = &AppConfiguration{
+			BlockConfiguration: *bc,
+			EnvVariables:       value.EnvVariables,
+			Capabilities:       convertCapabilities(value.Capabilities),
 		}
-		apps[appName] = app
 	}
 	return apps
+}
+
+func (a *AppConfiguration) Resolve(ctx context.Context, resolver core.ModuleVersionResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+	errs := a.BlockConfiguration.Resolve(ctx, resolver, ic, pc)
+	errs = append(errs, a.ResolveCapabilities(ctx, resolver, ic, pc)...)
+	return errs
+}
+
+func (a *AppConfiguration) ResolveCapabilities(ctx context.Context, resolver core.ModuleVersionResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+	if len(a.Capabilities) == 0 {
+		return nil
+	}
+	errs := core.ResolveErrors{}
+	for i, iacCap := range a.Capabilities {
+		curpc := pc.SubIndex("capabilities", i)
+		var err *core.ResolveError
+		if a.Capabilities[i], err = a.ResolveCapability(ctx, resolver, ic, curpc, iacCap); err != nil {
+			errs = append(errs, *err)
+		}
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
+
+func (a *AppConfiguration) ResolveCapability(ctx context.Context, resolver core.ModuleVersionResolver, ic core.IacContext, pc core.ObjectPathContext, iacCap CapabilityConfiguration) (CapabilityConfiguration, *core.ResolveError) {
+	if ic.IsOverrides && iacCap.ModuleSource == "" {
+		// TODO: Add support for loading module in overrides file
+		return iacCap, nil
+	}
+
+	contract := types.ModuleContractName{
+		Category: string(types.CategoryCapability),
+		Provider: "*",
+		Platform: "*",
+	}
+	if a.Module != nil {
+		contract.Provider = strings.Join(a.Module.ProviderTypes, ",")
+	}
+	m, mv, err := core.ResolveModule(ctx, resolver, pc, iacCap.ModuleSource, iacCap.ModuleSourceVersion, contract)
+	if err != nil {
+		return iacCap, err
+	}
+	iacCap.Module = m
+	iacCap.ModuleVersion = mv
+	return iacCap, nil
 }
 
 func (a *AppConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
 	ve := a.BlockConfiguration.Validate(ctx, resolver, ic, pc)
 	ve = append(ve, a.ValidateEnvVariables(ic, pc)...)
-	ve = append(ve, a.ValidateCapabilities(ctx, resolver, ic, pc)...)
+	ve = append(ve, a.Capabilities.Validate(ctx, resolver, ic, pc, a.Module)...)
 	return ve
-}
-
-// ValidateCapabilities performs validation on all IaC capabilities within an application
-func (a *AppConfiguration) ValidateCapabilities(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
-	if len(a.Capabilities) == 0 {
-		return nil
-	}
-	ve := errors.ValidationErrors{}
-	for i, iacCap := range a.Capabilities {
-		curpc := pc.SubIndex("capabilities", i)
-		ve = append(ve, a.ValidateCapability(ctx, resolver, ic, curpc, iacCap)...)
-	}
-
-	if len(ve) > 0 {
-		return ve
-	}
-	return nil
-}
-
-func (a *AppConfiguration) ValidateCapability(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext, iacCap CapabilityConfiguration) errors.ValidationErrors {
-	if ic.IsOverrides && iacCap.ModuleSource == "" {
-		// TODO: Add support for validating variables and connections in an overrides file
-		return nil
-	}
-	if a.Module == nil {
-		// The app module isn't loaded, we can't perform validation on this capability
-		return nil
-	}
-
-	contract := types.ModuleContractName{
-		Category: string(types.CategoryCapability),
-		Provider: strings.Join(a.Module.ProviderTypes, ","),
-		Platform: "*",
-	}
-	m, mv, verr := ResolveModule(ctx, resolver, ic, pc, iacCap.ModuleSource, iacCap.ModuleSourceVersion, contract)
-	if verr != nil {
-		return errors.ValidationErrors{*verr}
-	}
-
-	ve := errors.ValidationErrors{}
-	// check to make sure the capability module supports the subcategory
-	// examples are "container", "serverless", "static-site", "server"
-	skipAppCategoryCheck := ic.IsOverrides && a.Module.Subcategory == ""
-	// TODO: Add support for validating app category
-	if m != nil && !skipAppCategoryCheck {
-		found := false
-		for _, cat := range m.AppCategories {
-			if cat == string(a.Module.Subcategory) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			ve = append(ve, UnsupportedAppCategoryError(ic, pc.SubField("module"), iacCap.ModuleSource, string(a.Module.Subcategory)))
-		}
-	}
-
-	// if we were able to find the module version
-	//   1. validate each of the variables to ensure the module supports them
-	//   2. validate each of the connections to ensure the block matches the connection contract
-	if mv != nil {
-		moduleName := fmt.Sprintf("%s@%s", iacCap.ModuleSource, iacCap.ModuleSourceVersion)
-		ve = append(ve, ValidateVariables(ic, pc, iacCap.Variables, mv.Manifest.Variables, moduleName)...)
-		ve = append(ve, ValidateConnections(ctx, resolver, ic, pc, iacCap.Connections, mv.Manifest.Connections, moduleName)...)
-	}
-
-	if len(ve) > 0 {
-		return ve
-	}
-	return nil
 }
 
 func hasInvalidChars(r rune) bool {

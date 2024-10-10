@@ -8,13 +8,11 @@ type IngressConfiguration struct {
 	BlockConfiguration
 }
 
-func convertIngressConfigurations(parsed map[string]yaml.IngressConfiguration) map[string]IngressConfiguration {
-	result := make(map[string]IngressConfiguration)
-	for ingressName, ingressValue := range parsed {
-		ingress := IngressConfiguration{
-			BlockConfiguration: blockConfigFromYaml(ingressName, ingressValue.BlockConfiguration, BlockTypeIngress, "ingress"),
-		}
-		result[ingressName] = ingress
+func convertIngressConfigurations(parsed map[string]yaml.IngressConfiguration) map[string]*IngressConfiguration {
+	result := make(map[string]*IngressConfiguration)
+	for name, value := range parsed {
+		bc := blockConfigFromYaml(name, value.BlockConfiguration, BlockTypeIngress, "ingress")
+		result[name] = &IngressConfiguration{BlockConfiguration: *bc}
 	}
 	return result
 }

@@ -8,20 +8,20 @@ import (
 )
 
 type EnvConfiguration struct {
-	IacContext        core.IacContext                          `json:"iacContext"`
-	Applications      map[string]AppConfiguration              `json:"applications"`
-	Datastores        map[string]DatastoreConfiguration        `json:"datastores"`
-	Subdomains        map[string]SubdomainConfiguration        `json:"subdomains"`
-	Domains           map[string]DomainConfiguration           `json:"domains"`
-	Ingresses         map[string]IngressConfiguration          `json:"ingresses"`
-	ClusterNamespaces map[string]ClusterNamespaceConfiguration `json:"clusterNamespaces"`
-	Clusters          map[string]ClusterConfiguration          `json:"clusters"`
-	Networks          map[string]NetworkConfiguration          `json:"networks"`
-	Blocks            map[string]BlockConfiguration            `json:"blocks"`
+	IacContext        core.IacContext                           `json:"iacContext"`
+	Applications      map[string]*AppConfiguration              `json:"applications"`
+	Datastores        map[string]*DatastoreConfiguration        `json:"datastores"`
+	Subdomains        map[string]*SubdomainConfiguration        `json:"subdomains"`
+	Domains           map[string]*DomainConfiguration           `json:"domains"`
+	Ingresses         map[string]*IngressConfiguration          `json:"ingresses"`
+	ClusterNamespaces map[string]*ClusterNamespaceConfiguration `json:"clusterNamespaces"`
+	Clusters          map[string]*ClusterConfiguration          `json:"clusters"`
+	Networks          map[string]*NetworkConfiguration          `json:"networks"`
+	Blocks            map[string]*BlockConfiguration            `json:"blocks"`
 }
 
-func ConvertConfiguration(repoName, filename string, isOverrides bool, parsed yaml.EnvConfiguration) EnvConfiguration {
-	result := EnvConfiguration{
+func ConvertConfiguration(repoName, filename string, isOverrides bool, parsed yaml.EnvConfiguration) *EnvConfiguration {
+	result := &EnvConfiguration{
 		IacContext: core.IacContext{
 			RepoName:    repoName,
 			Filename:    filename,
@@ -29,19 +29,66 @@ func ConvertConfiguration(repoName, filename string, isOverrides bool, parsed ya
 		},
 	}
 	result.Applications = convertAppConfigurations(parsed.Applications)
+	result.Blocks = convertBlockConfigurations(parsed.Blocks)
+	result.Clusters = convertClusterConfigurations(parsed.Clusters)
+	result.ClusterNamespaces = convertClusterNamespaceConfigurations(parsed.ClusterNamespaces)
 	result.Datastores = convertDatastoreConfigurations(parsed.Datastores)
-	result.Subdomains = convertSubdomainConfigurations(parsed.Subdomains)
 	result.Domains = convertDomainConfigurations(parsed.Domains)
 	result.Ingresses = convertIngressConfigurations(parsed.Ingresses)
-	result.ClusterNamespaces = convertClusterNamespaceConfigurations(parsed.ClusterNamespaces)
-	result.Clusters = convertClusterConfigurations(parsed.Clusters)
 	result.Networks = convertNetworkConfigurations(parsed.Networks)
-	result.Blocks = convertBlockConfigurations(parsed.Blocks)
+	result.Subdomains = convertSubdomainConfigurations(parsed.Subdomains)
 	return result
+}
+
+func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ModuleVersionResolver) core.ResolveErrors {
+	errs := core.ResolveErrors{}
+
+	for _, app := range e.Applications {
+		pc := core.NewObjectPathContext("apps", app.Name)
+		errs = append(errs, app.Resolve(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, ds := range e.Datastores {
+		pc := core.NewObjectPathContext("networks", ds.Name)
+		errs = append(errs, ds.Resolve(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, sub := range e.Subdomains {
+		pc := core.NewObjectPathContext("subdomains", sub.Name)
+		errs = append(errs, sub.Resolve(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, domain := range e.Domains {
+		pc := core.NewObjectPathContext("domains", domain.Name)
+		errs = append(errs, domain.Resolve(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, ingress := range e.Ingresses {
+		pc := core.NewObjectPathContext("ingresses", ingress.Name)
+		errs = append(errs, ingress.Resolve(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, clusterNamespace := range e.ClusterNamespaces {
+		pc := core.NewObjectPathContext("cluster_namespaces", clusterNamespace.Name)
+		errs = append(errs, clusterNamespace.Resolve(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, cluster := range e.Clusters {
+		pc := core.NewObjectPathContext("clusters", cluster.Name)
+		errs = append(errs, cluster.Resolve(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, network := range e.Networks {
+		pc := core.NewObjectPathContext("networks", network.Name)
+		errs = append(errs, network.Resolve(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, block := range e.Blocks {
+		pc := core.NewObjectPathContext("blocks", block.Name)
+		errs = append(errs, block.Resolve(ctx, resolver, e.IacContext, pc)...)
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func (e *EnvConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver) errors.ValidationErrors {
 	ve := errors.ValidationErrors{}
+
 	for _, app := range e.Applications {
 		pc := core.NewObjectPathContext("apps", app.Name)
 		ve = append(ve, app.Validate(ctx, resolver, e.IacContext, pc)...)
@@ -86,59 +133,50 @@ func (e *EnvConfiguration) Validate(ctx context.Context, resolver core.ValidateR
 }
 
 func (e *EnvConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
-	for key, block := range e.Blocks {
+	for _, block := range e.Blocks {
 		if err := block.Normalize(ctx, resolver); err != nil {
 			return err
 		}
-		e.Blocks[key] = block
 	}
-	for key, network := range e.Networks {
+	for _, network := range e.Networks {
 		if err := network.Normalize(ctx, resolver); err != nil {
 			return err
 		}
-		e.Networks[key] = network
 	}
-	for key, cluster := range e.Clusters {
+	for _, cluster := range e.Clusters {
 		if err := cluster.Normalize(ctx, resolver); err != nil {
 			return err
 		}
-		e.Clusters[key] = cluster
 	}
-	for key, clusterNamespace := range e.ClusterNamespaces {
+	for _, clusterNamespace := range e.ClusterNamespaces {
 		if err := clusterNamespace.Normalize(ctx, resolver); err != nil {
 			return err
 		}
-		e.ClusterNamespaces[key] = clusterNamespace
 	}
-	for key, ingress := range e.Ingresses {
+	for _, ingress := range e.Ingresses {
 		if err := ingress.Normalize(ctx, resolver); err != nil {
 			return err
 		}
-		e.Ingresses[key] = ingress
 	}
-	for key, domain := range e.Domains {
+	for _, domain := range e.Domains {
 		if err := domain.Normalize(ctx, resolver); err != nil {
 			return err
 		}
-		e.Domains[key] = domain
 	}
-	for key, subdomain := range e.Subdomains {
+	for _, subdomain := range e.Subdomains {
 		if err := subdomain.Normalize(ctx, resolver); err != nil {
 			return err
 		}
-		e.Subdomains[key] = subdomain
 	}
-	for key, datastore := range e.Datastores {
+	for _, datastore := range e.Datastores {
 		if err := datastore.Normalize(ctx, resolver); err != nil {
 			return err
 		}
-		e.Datastores[key] = datastore
 	}
-	for key, app := range e.Applications {
+	for _, app := range e.Applications {
 		if err := app.Normalize(ctx, resolver); err != nil {
 			return err
 		}
-		e.Applications[key] = app
 	}
 	return nil
 }

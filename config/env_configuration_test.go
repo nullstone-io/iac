@@ -262,6 +262,7 @@ func TestConvertConfiguration(t *testing.T) {
 		filename         string
 		isOverrides      bool
 		want             *EnvConfiguration
+		resolveErrors    core.ResolveErrors
 		validationErrors error
 	}{
 		{
@@ -272,7 +273,7 @@ func TestConvertConfiguration(t *testing.T) {
 					RepoName: "acme/api",
 					Filename: "config.yml",
 				},
-				Applications: map[string]AppConfiguration{
+				Applications: map[string]*AppConfiguration{
 					"acme-docs": {
 						BlockConfiguration: BlockConfiguration{
 							Type:                BlockTypeApplication,
@@ -310,54 +311,59 @@ func TestConvertConfiguration(t *testing.T) {
 						},
 					},
 				},
-				Datastores:        map[string]DatastoreConfiguration{},
-				Subdomains:        map[string]SubdomainConfiguration{},
-				Domains:           map[string]DomainConfiguration{},
-				Ingresses:         map[string]IngressConfiguration{},
-				ClusterNamespaces: map[string]ClusterNamespaceConfiguration{},
-				Clusters:          map[string]ClusterConfiguration{},
-				Networks:          map[string]NetworkConfiguration{},
-				Blocks:            map[string]BlockConfiguration{},
+				Datastores:        map[string]*DatastoreConfiguration{},
+				Subdomains:        map[string]*SubdomainConfiguration{},
+				Domains:           map[string]*DomainConfiguration{},
+				Ingresses:         map[string]*IngressConfiguration{},
+				ClusterNamespaces: map[string]*ClusterNamespaceConfiguration{},
+				Clusters:          map[string]*ClusterConfiguration{},
+				Networks:          map[string]*NetworkConfiguration{},
+				Blocks:            map[string]*BlockConfiguration{},
 			},
+			resolveErrors:    core.ResolveErrors(nil),
 			validationErrors: errors.ValidationErrors(nil),
 		},
 		{
 			name:     "app module missing",
 			filename: "test-fixtures/config.invalid1.yml",
 			want:     nil,
-			validationErrors: errors.ValidationErrors{
+			resolveErrors: core.ResolveErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs)",
-					Message: "Module is required",
+					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs"},
+					ErrorMessage:      "Module is required",
 				},
 			},
+			validationErrors: errors.ValidationErrors(nil),
 		},
 		{
 			name:     "invalid app module",
 			filename: "test-fixtures/config.invalid2.yml",
 			want:     nil,
-			validationErrors: errors.ValidationErrors{
+			resolveErrors: core.ResolveErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.module)",
-					Message: "Module (nullstone/aws-invalid-module) does not exist",
+					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs", Field: "module"},
+					ErrorMessage:      "Module (nullstone/aws-invalid-module) does not exist",
 				},
 			},
+			validationErrors: errors.ValidationErrors(nil),
 		},
 		{
 			name:     "not an app module",
 			filename: "test-fixtures/config.invalid3.yml",
 			want:     nil,
-			validationErrors: errors.ValidationErrors{
+			resolveErrors: core.ResolveErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.module)",
-					Message: "Module (nullstone/aws-s3-cdn) must be app module and match the contract (app/*/*), it is defined as capability/aws/",
+					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs", Field: "module"},
+					ErrorMessage:      "Module (nullstone/aws-s3-cdn) must be app module and match the contract (app/*/*), it is defined as capability/aws/",
 				},
 			},
+			validationErrors: errors.ValidationErrors(nil),
 		},
 		{
-			name:     "invalid app variable",
-			filename: "test-fixtures/config.invalid4.yml",
-			want:     nil,
+			name:          "invalid app variable",
+			filename:      "test-fixtures/config.invalid4.yml",
+			want:          nil,
+			resolveErrors: core.ResolveErrors(nil),
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "acme/api#config.yml (apps.acme-docs.vars.service_count)",
@@ -369,39 +375,43 @@ func TestConvertConfiguration(t *testing.T) {
 			name:     "capability module missing",
 			filename: "test-fixtures/config.invalid5.yml",
 			want:     nil,
-			validationErrors: errors.ValidationErrors{
+			resolveErrors: core.ResolveErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0])",
-					Message: "Module is required",
+					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs", Field: "capabilities", Index: ptr(0)},
+					ErrorMessage:      "Module is required",
 				},
 			},
+			validationErrors: errors.ValidationErrors(nil),
 		},
 		{
 			name:     "invalid capability module",
 			filename: "test-fixtures/config.invalid6.yml",
 			want:     nil,
-			validationErrors: errors.ValidationErrors{
+			resolveErrors: core.ResolveErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].module)",
-					Message: "Module (nullstone/aws-invalid-module) does not exist",
+					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs.capabilities[0]", Field: "module"},
+					ErrorMessage:      "Module (nullstone/aws-invalid-module) does not exist",
 				},
 			},
+			validationErrors: errors.ValidationErrors(nil),
 		},
 		{
 			name:     "not a capability module",
 			filename: "test-fixtures/config.invalid7.yml",
 			want:     nil,
-			validationErrors: errors.ValidationErrors{
+			resolveErrors: core.ResolveErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].module)",
-					Message: "Module (nullstone/aws-s3-site) must be capability module and match the contract (capability/aws/*), it is defined as app:static-site/aws/s3",
+					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs.capabilities[0]", Field: "module"},
+					ErrorMessage:      "Module (nullstone/aws-s3-site) must be capability module and match the contract (capability/aws/*), it is defined as app:static-site/aws/s3",
 				},
 			},
+			validationErrors: errors.ValidationErrors(nil),
 		},
 		{
-			name:     "capability does not match app subcategory",
-			filename: "test-fixtures/config.invalid8.yml",
-			want:     nil,
+			name:          "capability does not match app subcategory",
+			filename:      "test-fixtures/config.invalid8.yml",
+			want:          nil,
+			resolveErrors: core.ResolveErrors(nil),
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].module)",
@@ -410,9 +420,10 @@ func TestConvertConfiguration(t *testing.T) {
 			},
 		},
 		{
-			name:     "invalid capability variable",
-			filename: "test-fixtures/config.invalid9.yml",
-			want:     nil,
+			name:          "invalid capability variable",
+			filename:      "test-fixtures/config.invalid9.yml",
+			want:          nil,
+			resolveErrors: core.ResolveErrors(nil),
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].vars.database_name)",
@@ -421,9 +432,10 @@ func TestConvertConfiguration(t *testing.T) {
 			},
 		},
 		{
-			name:     "capability block doesn't exist",
-			filename: "test-fixtures/config.invalid10.yml",
-			want:     nil,
+			name:          "capability block doesn't exist",
+			filename:      "test-fixtures/config.invalid10.yml",
+			want:          nil,
+			resolveErrors: core.ResolveErrors(nil),
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].connections.subdomain)",
@@ -432,9 +444,10 @@ func TestConvertConfiguration(t *testing.T) {
 			},
 		},
 		{
-			name:     "block doesn't match contract for capability connection",
-			filename: "test-fixtures/config.invalid11.yml",
-			want:     nil,
+			name:          "block doesn't match contract for capability connection",
+			filename:      "test-fixtures/config.invalid11.yml",
+			want:          nil,
+			resolveErrors: core.ResolveErrors(nil),
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].connections.subdomain)",
@@ -443,9 +456,10 @@ func TestConvertConfiguration(t *testing.T) {
 			},
 		},
 		{
-			name:     "blockName is required",
-			filename: "test-fixtures/config.invalid12.yml",
-			want:     nil,
+			name:          "blockName is required",
+			filename:      "test-fixtures/config.invalid12.yml",
+			want:          nil,
+			resolveErrors: core.ResolveErrors(nil),
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
 					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].connections.subdomain)",
@@ -463,7 +477,7 @@ func TestConvertConfiguration(t *testing.T) {
 					Filename:    "config.yml",
 					IsOverrides: true,
 				},
-				Applications: map[string]AppConfiguration{
+				Applications: map[string]*AppConfiguration{
 					"acme-api": {
 						BlockConfiguration: BlockConfiguration{
 							Type:     BlockTypeApplication,
@@ -498,15 +512,16 @@ func TestConvertConfiguration(t *testing.T) {
 						},
 					},
 				},
-				Blocks:            map[string]BlockConfiguration{},
-				ClusterNamespaces: map[string]ClusterNamespaceConfiguration{},
-				Clusters:          map[string]ClusterConfiguration{},
-				Datastores:        map[string]DatastoreConfiguration{},
-				Domains:           map[string]DomainConfiguration{},
-				Ingresses:         map[string]IngressConfiguration{},
-				Networks:          map[string]NetworkConfiguration{},
-				Subdomains:        map[string]SubdomainConfiguration{},
+				Blocks:            map[string]*BlockConfiguration{},
+				ClusterNamespaces: map[string]*ClusterNamespaceConfiguration{},
+				Clusters:          map[string]*ClusterConfiguration{},
+				Datastores:        map[string]*DatastoreConfiguration{},
+				Domains:           map[string]*DomainConfiguration{},
+				Ingresses:         map[string]*IngressConfiguration{},
+				Networks:          map[string]*NetworkConfiguration{},
+				Subdomains:        map[string]*SubdomainConfiguration{},
 			},
+			resolveErrors:    core.ResolveErrors(nil),
 			validationErrors: errors.ValidationErrors(nil),
 		},
 	}
@@ -526,7 +541,7 @@ func TestConvertConfiguration(t *testing.T) {
 			got := ConvertConfiguration("acme/api", "config.yml", test.isOverrides, *parsed)
 
 			if test.want != nil {
-				if diff := cmp.Diff(*test.want, got); diff != "" {
+				if diff := cmp.Diff(test.want, got); diff != "" {
 					t.Errorf("(-want, +got): %s", diff)
 				}
 			}
@@ -544,8 +559,11 @@ func TestConvertConfiguration(t *testing.T) {
 			resolver.ResourceResolver.StacksById[defaults.StackId] = sr
 			resolver.ResourceResolver.StacksByName["core"] = sr
 
-			err = got.Validate(context.Background(), resolver)
-			assert.Equal(t, test.validationErrors, err)
+			ctx := context.Background()
+			err1 := got.Resolve(ctx, resolver)
+			assert.Equal(t, test.resolveErrors, err1)
+			err2 := got.Validate(ctx, resolver)
+			assert.Equal(t, test.validationErrors, err2)
 		})
 	}
 }

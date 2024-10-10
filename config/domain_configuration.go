@@ -11,14 +11,11 @@ type DomainConfiguration struct {
 	DnsName string `json:"dnsName"`
 }
 
-func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map[string]DomainConfiguration {
-	result := make(map[string]DomainConfiguration)
-	for domainName, domainValue := range parsed {
-		domain := DomainConfiguration{
-			BlockConfiguration: blockConfigFromYaml(domainName, domainValue.BlockConfiguration, BlockTypeDomain, types.CategoryDomain),
-			DnsName:            domainValue.DnsName,
-		}
-		result[domainName] = domain
+func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map[string]*DomainConfiguration {
+	result := make(map[string]*DomainConfiguration)
+	for name, value := range parsed {
+		bc := blockConfigFromYaml(name, value.BlockConfiguration, BlockTypeDomain, types.CategoryDomain)
+		result[name] = &DomainConfiguration{BlockConfiguration: *bc, DnsName: value.DnsName}
 	}
 	return result
 }

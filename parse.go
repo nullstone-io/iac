@@ -32,13 +32,13 @@ func (e InvalidYamlError) Unwrap() error {
 
 type ParseMapResult struct {
 	Config    *config.EnvConfiguration
-	Overrides map[string]config.EnvConfiguration
+	Overrides map[string]*config.EnvConfiguration
 }
 
 func ParseMap(parseContext string, files map[string]string) (ParseMapResult, error) {
 	result := ParseMapResult{
 		Config:    nil,
-		Overrides: map[string]config.EnvConfiguration{},
+		Overrides: map[string]*config.EnvConfiguration{},
 	}
 
 	for filepath, raw := range files {
@@ -48,7 +48,7 @@ func ParseMap(parseContext string, files map[string]string) (ParseMapResult, err
 			if err != nil {
 				return result, err
 			}
-			result.Config = &parsed
+			result.Config = parsed
 		} else {
 			eo, err := ParseConfig(parseContext, filepath, true, bytes.NewBufferString(raw))
 			if err != nil {
@@ -66,11 +66,11 @@ func getConfigFileDescription(filepath string) string {
 	return woExt
 }
 
-func ParseConfig(parseContext, filename string, isOverrides bool, r io.Reader) (config.EnvConfiguration, error) {
+func ParseConfig(parseContext, filename string, isOverrides bool, r io.Reader) (*config.EnvConfiguration, error) {
 	decoder := yaml.NewDecoder(r)
 	var obj yaml2.EnvConfiguration
 	if err := decoder.Decode(&obj); err != nil {
-		return config.EnvConfiguration{}, InvalidYamlError{ParseContext: parseContext, FileName: filename, Err: err}
+		return nil, InvalidYamlError{ParseContext: parseContext, FileName: filename, Err: err}
 	}
 	return config.ConvertConfiguration(parseContext, filename, isOverrides, obj), nil
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
-	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
 func NewValidationError(ic core.IacContext, ipc core.ObjectPathContext, msg string) *errors.ValidationError {
@@ -47,36 +46,16 @@ func LookupConnectionTargetFailedError(ic core.IacContext, pc core.ObjectPathCon
 	return NewValidationError(ic, pc, fmt.Sprintf("Failed to validate connection, error when looking up connection target: %s", err))
 }
 
-func InvalidModuleFormatError(ic core.IacContext, pc core.ObjectPathContext, moduleSource string) *errors.ValidationError {
-	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Invalid module format (%s) - must be in the format \"<module-org>/<module-name>\"", moduleSource))
-}
-
-func RequiredModuleError(ic core.IacContext, pc core.ObjectPathContext) *errors.ValidationError {
-	return NewValidationError(ic, pc, "Module is required")
-}
-
-func MissingModuleError(ic core.IacContext, pc core.ObjectPathContext, moduleSource string) *errors.ValidationError {
-	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Module (%s) does not exist", moduleSource))
-}
-
 func ModuleLookupFailedError(ic core.IacContext, pc core.ObjectPathContext, moduleSource string, err error) *errors.ValidationError {
 	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Module (%s) lookup failed: %s", moduleSource, err))
 }
 
+func InvalidModuleFormatError(ic core.IacContext, pc core.ObjectPathContext, moduleSource string) *errors.ValidationError {
+	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Invalid module format (%s) - must be in the format \"<module-org>/<module-name>\"", moduleSource))
+}
+
 func InvalidModuleContractParserError(ic core.IacContext, pc core.ObjectPathContext, moduleSource, contract string, err error) *errors.ValidationError {
 	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Invalid module (%s) contract (%s), parse failed: %s", moduleSource, contract, err))
-}
-
-func InvalidModuleContractError(ic core.IacContext, pc core.ObjectPathContext, moduleSource string, want, got types.ModuleContractName) *errors.ValidationError {
-	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Module (%s) must be %s module and match the contract (%s), it is defined as %s", moduleSource, want.Category, want, got))
-}
-
-func ModuleVersionLookupFailedError(ic core.IacContext, pc core.ObjectPathContext, source, version string, err error) *errors.ValidationError {
-	return NewValidationError(ic, pc.SubField("module_version"), fmt.Sprintf("Module version (%s@%s) lookup failed: %s", source, version, err))
-}
-
-func MissingModuleVersionError(ic core.IacContext, pc core.ObjectPathContext, source, version string) *errors.ValidationError {
-	return NewValidationError(ic, pc.SubField("module_version"), fmt.Sprintf("Module version (%s@%s) does not exist", source, version))
 }
 
 func InvalidConnectionContractError(ic core.IacContext, pc core.ObjectPathContext, contract, moduleName string) *errors.ValidationError {

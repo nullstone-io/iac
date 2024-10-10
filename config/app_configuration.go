@@ -48,7 +48,7 @@ func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[strin
 	return apps
 }
 
-func (a *AppConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.YamlPathContext) errors.ValidationErrors {
+func (a *AppConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
 	ve := a.BlockConfiguration.Validate(ctx, resolver, ic, pc)
 	ve = append(ve, a.ValidateEnvVariables(ic, pc)...)
 	ve = append(ve, a.ValidateCapabilities(ctx, resolver, ic, pc)...)
@@ -56,7 +56,7 @@ func (a *AppConfiguration) Validate(ctx context.Context, resolver core.ValidateR
 }
 
 // ValidateCapabilities performs validation on all IaC capabilities within an application
-func (a *AppConfiguration) ValidateCapabilities(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.YamlPathContext) errors.ValidationErrors {
+func (a *AppConfiguration) ValidateCapabilities(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
 	if len(a.Capabilities) == 0 {
 		return nil
 	}
@@ -72,7 +72,7 @@ func (a *AppConfiguration) ValidateCapabilities(ctx context.Context, resolver co
 	return nil
 }
 
-func (a *AppConfiguration) ValidateCapability(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.YamlPathContext, iacCap CapabilityConfiguration) errors.ValidationErrors {
+func (a *AppConfiguration) ValidateCapability(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext, iacCap CapabilityConfiguration) errors.ValidationErrors {
 	if ic.IsOverrides && iacCap.ModuleSource == "" {
 		// TODO: Add support for validating variables and connections in an overrides file
 		return nil
@@ -133,7 +133,7 @@ func startsWithNumber(s string) bool {
 	return s[0] >= '0' && s[0] <= '9'
 }
 
-func (a *AppConfiguration) ValidateEnvVariables(ic core.IacContext, pc core.YamlPathContext) errors.ValidationErrors {
+func (a *AppConfiguration) ValidateEnvVariables(ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
 	if len(a.EnvVariables) == 0 {
 		return nil
 	}

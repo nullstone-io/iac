@@ -80,7 +80,7 @@ func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType B
 	}
 }
 
-func (b *BlockConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.YamlPathContext) errors.ValidationErrors {
+func (b *BlockConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
 	if ic.IsOverrides && b.ModuleSource == "" {
 		// TODO: Add support for validating variables and connections in an overrides file that has no module source
 		return nil
@@ -104,14 +104,14 @@ func (b *BlockConfiguration) Validate(ctx context.Context, resolver core.Validat
 	return nil
 }
 
-func (b *BlockConfiguration) ValidateVariables(ic core.IacContext, pc core.YamlPathContext) errors.ValidationErrors {
+func (b *BlockConfiguration) ValidateVariables(ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
 	moduleName := fmt.Sprintf("%s/%s@%s", b.Module.OrgName, b.Module.Name, b.ModuleVersion.Version)
 	return ValidateVariables(ic, pc, b.Variables, b.ModuleVersion.Manifest.Variables, moduleName)
 }
 
 // ValidateConnections performs validation on all IaC connections by matching them against connections in the module
 func (b *BlockConfiguration) ValidateConnections(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext,
-	pc core.YamlPathContext, connections types.ConnectionTargets) errors.ValidationErrors {
+	pc core.ObjectPathContext, connections types.ConnectionTargets) errors.ValidationErrors {
 	moduleName := fmt.Sprintf("%s/%s@%s", b.Module.OrgName, b.Module.Name, b.ModuleVersion.Version)
 	return ValidateConnections(ctx, resolver, ic, pc, connections, b.ModuleVersion.Manifest.Connections, moduleName)
 }

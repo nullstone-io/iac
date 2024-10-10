@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func ResolveModule(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.YamlPathContext,
+func ResolveModule(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext,
 	source, version string, contract types.ModuleContractName) (*types.Module, *types.ModuleVersion, *errors.ValidationError) {
 
 	if source == "" {

@@ -8,91 +8,91 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
-func NewValidationError(ic core.IacContext, ipc core.YamlPathContext, msg string) *errors.ValidationError {
+func NewValidationError(ic core.IacContext, ipc core.ObjectPathContext, msg string) *errors.ValidationError {
 	return &errors.ValidationError{
 		Context: ic.Context(ipc),
 		Message: msg,
 	}
 }
 
-func VariableDoesNotExistError(ic core.IacContext, ipc core.YamlPathContext, moduleName string) errors.ValidationError {
+func VariableDoesNotExistError(ic core.IacContext, ipc core.ObjectPathContext, moduleName string) errors.ValidationError {
 	err := NewValidationError(ic, ipc, fmt.Sprintf("Variable does not exist on the module (%s)", moduleName))
 	return *err
 }
 
-func EnvVariableKeyStartsWithNumberError(ic core.IacContext, pc core.YamlPathContext) errors.ValidationError {
+func EnvVariableKeyStartsWithNumberError(ic core.IacContext, pc core.ObjectPathContext) errors.ValidationError {
 	err := NewValidationError(ic, pc, "Invalid environment variable, key must not start with a number")
 	return *err
 }
 
-func EnvVariableKeyInvalidCharsError(ic core.IacContext, pc core.YamlPathContext) errors.ValidationError {
+func EnvVariableKeyInvalidCharsError(ic core.IacContext, pc core.ObjectPathContext) errors.ValidationError {
 	err := NewValidationError(ic, pc, "Invalid environment variable, key must contain only letters, numbers, and underscores")
 	return *err
 }
 
-func ConnectionDoesNotExistError(ic core.IacContext, pc core.YamlPathContext, moduleName string) errors.ValidationError {
+func ConnectionDoesNotExistError(ic core.IacContext, pc core.ObjectPathContext, moduleName string) errors.ValidationError {
 	err := NewValidationError(ic, pc, fmt.Sprintf("Connection does not exist on the module (%s)", moduleName))
 	return *err
 }
 
-func MissingConnectionBlockError(ic core.IacContext, pc core.YamlPathContext) *errors.ValidationError {
+func MissingConnectionBlockError(ic core.IacContext, pc core.ObjectPathContext) *errors.ValidationError {
 	return NewValidationError(ic, pc, fmt.Sprintf("Connection must have a block_name to identify which block it is connected to"))
 }
 
-func MissingConnectionTargetError(ic core.IacContext, pc core.YamlPathContext, err error) *errors.ValidationError {
+func MissingConnectionTargetError(ic core.IacContext, pc core.ObjectPathContext, err error) *errors.ValidationError {
 	return NewValidationError(ic, pc, fmt.Sprintf("Connection is invalid, %s", err))
 }
 
-func LookupConnectionTargetFailedError(ic core.IacContext, pc core.YamlPathContext, err error) *errors.ValidationError {
+func LookupConnectionTargetFailedError(ic core.IacContext, pc core.ObjectPathContext, err error) *errors.ValidationError {
 	return NewValidationError(ic, pc, fmt.Sprintf("Failed to validate connection, error when looking up connection target: %s", err))
 }
 
-func InvalidModuleFormatError(ic core.IacContext, pc core.YamlPathContext, moduleSource string) *errors.ValidationError {
+func InvalidModuleFormatError(ic core.IacContext, pc core.ObjectPathContext, moduleSource string) *errors.ValidationError {
 	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Invalid module format (%s) - must be in the format \"<module-org>/<module-name>\"", moduleSource))
 }
 
-func RequiredModuleError(ic core.IacContext, pc core.YamlPathContext) *errors.ValidationError {
+func RequiredModuleError(ic core.IacContext, pc core.ObjectPathContext) *errors.ValidationError {
 	return NewValidationError(ic, pc, "Module is required")
 }
 
-func MissingModuleError(ic core.IacContext, pc core.YamlPathContext, moduleSource string) *errors.ValidationError {
+func MissingModuleError(ic core.IacContext, pc core.ObjectPathContext, moduleSource string) *errors.ValidationError {
 	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Module (%s) does not exist", moduleSource))
 }
 
-func ModuleLookupFailedError(ic core.IacContext, pc core.YamlPathContext, moduleSource string, err error) *errors.ValidationError {
+func ModuleLookupFailedError(ic core.IacContext, pc core.ObjectPathContext, moduleSource string, err error) *errors.ValidationError {
 	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Module (%s) lookup failed: %s", moduleSource, err))
 }
 
-func InvalidModuleContractParserError(ic core.IacContext, pc core.YamlPathContext, moduleSource, contract string, err error) *errors.ValidationError {
+func InvalidModuleContractParserError(ic core.IacContext, pc core.ObjectPathContext, moduleSource, contract string, err error) *errors.ValidationError {
 	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Invalid module (%s) contract (%s), parse failed: %s", moduleSource, contract, err))
 }
 
-func InvalidModuleContractError(ic core.IacContext, pc core.YamlPathContext, moduleSource string, want, got types.ModuleContractName) *errors.ValidationError {
+func InvalidModuleContractError(ic core.IacContext, pc core.ObjectPathContext, moduleSource string, want, got types.ModuleContractName) *errors.ValidationError {
 	return NewValidationError(ic, pc.SubField("module"), fmt.Sprintf("Module (%s) must be %s module and match the contract (%s), it is defined as %s", moduleSource, want.Category, want, got))
 }
 
-func ModuleVersionLookupFailedError(ic core.IacContext, pc core.YamlPathContext, source, version string, err error) *errors.ValidationError {
+func ModuleVersionLookupFailedError(ic core.IacContext, pc core.ObjectPathContext, source, version string, err error) *errors.ValidationError {
 	return NewValidationError(ic, pc.SubField("module_version"), fmt.Sprintf("Module version (%s@%s) lookup failed: %s", source, version, err))
 }
 
-func MissingModuleVersionError(ic core.IacContext, pc core.YamlPathContext, source, version string) *errors.ValidationError {
+func MissingModuleVersionError(ic core.IacContext, pc core.ObjectPathContext, source, version string) *errors.ValidationError {
 	return NewValidationError(ic, pc.SubField("module_version"), fmt.Sprintf("Module version (%s@%s) does not exist", source, version))
 }
 
-func InvalidConnectionContractError(ic core.IacContext, pc core.YamlPathContext, contract, moduleName string) *errors.ValidationError {
+func InvalidConnectionContractError(ic core.IacContext, pc core.ObjectPathContext, contract, moduleName string) *errors.ValidationError {
 	return NewValidationError(ic, pc, fmt.Sprintf("Connection contract (contract=%s) in module (%s) is invalid", contract, moduleName))
 }
 
-func MismatchedConnectionContractError(ic core.IacContext, pc core.YamlPathContext, blockName, connectionContract string) *errors.ValidationError {
+func MismatchedConnectionContractError(ic core.IacContext, pc core.ObjectPathContext, blockName, connectionContract string) *errors.ValidationError {
 	return NewValidationError(ic, pc, fmt.Sprintf("Block (%s) does not match the required contract (%s) for the capability connection", blockName, connectionContract))
 }
 
-func LookupProviderTypeFailedError(ic core.IacContext, pc core.YamlPathContext, err error) errors.ValidationError {
+func LookupProviderTypeFailedError(ic core.IacContext, pc core.ObjectPathContext, err error) errors.ValidationError {
 	verr := NewValidationError(ic, pc, fmt.Sprintf("Lookup for capability provider type failed: %s", err))
 	return *verr
 }
 
-func UnsupportedAppCategoryError(ic core.IacContext, pc core.YamlPathContext, moduleSource, subcategory string) errors.ValidationError {
+func UnsupportedAppCategoryError(ic core.IacContext, pc core.ObjectPathContext, moduleSource, subcategory string) errors.ValidationError {
 	err := NewValidationError(ic, pc, fmt.Sprintf("Module (%s) does not support application category (%s)", moduleSource, subcategory))
 	return *err
 }

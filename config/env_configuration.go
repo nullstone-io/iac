@@ -43,39 +43,39 @@ func ConvertConfiguration(repoName, filename string, isOverrides bool, parsed ya
 func (e *EnvConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver) errors.ValidationErrors {
 	ve := errors.ValidationErrors{}
 	for _, app := range e.Applications {
-		pc := core.NewYamlPathContext("apps", app.Name)
+		pc := core.NewObjectPathContext("apps", app.Name)
 		ve = append(ve, app.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, ds := range e.Datastores {
-		pc := core.NewYamlPathContext("networks", ds.Name)
+		pc := core.NewObjectPathContext("networks", ds.Name)
 		ve = append(ve, ds.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, sub := range e.Subdomains {
-		pc := core.NewYamlPathContext("subdomains", sub.Name)
+		pc := core.NewObjectPathContext("subdomains", sub.Name)
 		ve = append(ve, sub.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, domain := range e.Domains {
-		pc := core.NewYamlPathContext("domains", domain.Name)
+		pc := core.NewObjectPathContext("domains", domain.Name)
 		ve = append(ve, domain.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, ingress := range e.Ingresses {
-		pc := core.NewYamlPathContext("ingresses", ingress.Name)
+		pc := core.NewObjectPathContext("ingresses", ingress.Name)
 		ve = append(ve, ingress.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
-		pc := core.NewYamlPathContext("cluster_namespaces", clusterNamespace.Name)
+		pc := core.NewObjectPathContext("cluster_namespaces", clusterNamespace.Name)
 		ve = append(ve, clusterNamespace.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, cluster := range e.Clusters {
-		pc := core.NewYamlPathContext("clusters", cluster.Name)
+		pc := core.NewObjectPathContext("clusters", cluster.Name)
 		ve = append(ve, cluster.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, network := range e.Networks {
-		pc := core.NewYamlPathContext("networks", network.Name)
+		pc := core.NewObjectPathContext("networks", network.Name)
 		ve = append(ve, network.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, block := range e.Blocks {
-		pc := core.NewYamlPathContext("blocks", block.Name)
+		pc := core.NewObjectPathContext("blocks", block.Name)
 		ve = append(ve, block.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 

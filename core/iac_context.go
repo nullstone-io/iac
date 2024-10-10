@@ -12,57 +12,57 @@ type IacContext struct {
 	IsOverrides bool
 }
 
-func (c IacContext) Context(sub YamlPathContext) string {
+func (c IacContext) Context(sub ObjectPathContext) string {
 	return fmt.Sprintf("%s#%s (%s)", c.RepoName, c.Filename, sub.Context())
 }
 
-func NewYamlPathContext(field string, index string) YamlPathContext {
-	return YamlPathContext{Field: field, Key: index}.SubField("")
+func NewObjectPathContext(field string, index string) ObjectPathContext {
+	return ObjectPathContext{Field: field, Key: index}.SubField("")
 }
 
-type YamlPathContext struct {
+type ObjectPathContext struct {
 	Path  string
 	Field string
 	Index *int
 	Key   string
 }
 
-func (c YamlPathContext) SubField(field string) YamlPathContext {
+func (c ObjectPathContext) SubField(field string) ObjectPathContext {
 	path := c.Path
 	if c.Field != "" {
 		path = c.Context()
 	}
-	return YamlPathContext{
+	return ObjectPathContext{
 		Path:  path,
 		Field: field,
 	}
 }
 
-func (c YamlPathContext) SubKey(field string, key string) YamlPathContext {
+func (c ObjectPathContext) SubKey(field string, key string) ObjectPathContext {
 	path := c.Path
 	if c.Field != "" {
 		path = c.Context()
 	}
-	return YamlPathContext{
+	return ObjectPathContext{
 		Path:  path,
 		Field: field,
 		Key:   key,
 	}
 }
 
-func (c YamlPathContext) SubIndex(field string, index int) YamlPathContext {
+func (c ObjectPathContext) SubIndex(field string, index int) ObjectPathContext {
 	path := c.Path
 	if c.Field != "" {
 		path = c.Context()
 	}
-	return YamlPathContext{
+	return ObjectPathContext{
 		Path:  path,
 		Field: field,
 		Index: &index,
 	}
 }
 
-func (c YamlPathContext) Context() string {
+func (c ObjectPathContext) Context() string {
 	started := false
 	sb := strings.Builder{}
 	if c.Path != "" {

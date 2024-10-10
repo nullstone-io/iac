@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func ValidateVariables(ic core.IacContext, pc core.YamlPathContext, variables map[string]any, expectedVariables map[string]config.Variable, moduleName string) errors.ValidationErrors {
+func ValidateVariables(ic core.IacContext, pc core.ObjectPathContext, variables map[string]any, expectedVariables map[string]config.Variable, moduleName string) errors.ValidationErrors {
 	if len(variables) == 0 {
 		return nil
 	}
@@ -28,7 +28,7 @@ func ValidateVariables(ic core.IacContext, pc core.YamlPathContext, variables ma
 }
 
 // ValidateConnections performs validation on all IaC connections by matching them against connections in the module
-func ValidateConnections(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.YamlPathContext,
+func ValidateConnections(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext,
 	connections types.ConnectionTargets, expectedConnections map[string]config.Connection, moduleName string) errors.ValidationErrors {
 	if len(connections) == 0 {
 		return nil
@@ -56,7 +56,7 @@ func ValidateConnections(ctx context.Context, resolver core.ValidateResolver, ic
 //  1. Verifies that a connection specified in IaC exists in the module
 //  2. Resolves the connection's target (i.e. block)
 //  3. Verifies the block matches the connection contract
-func ValidateConnection(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.YamlPathContext, connection types.ConnectionTarget, manifestConnection config.Connection, moduleName string) *errors.ValidationError {
+func ValidateConnection(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext, connection types.ConnectionTarget, manifestConnection config.Connection, moduleName string) *errors.ValidationError {
 	if connection.BlockName == "" {
 		return MissingConnectionBlockError(ic, pc)
 	}

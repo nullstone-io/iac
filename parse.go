@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/nullstone-io/iac/config"
-	"github.com/nullstone-io/iac/overrides"
 	yaml2 "github.com/nullstone-io/iac/yaml"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -33,25 +32,25 @@ func (e InvalidYamlError) Unwrap() error {
 
 type ParseMapResult struct {
 	Config    *config.EnvConfiguration
-	Overrides map[string]overrides.EnvOverrides
+	Overrides map[string]config.EnvConfiguration
 }
 
 func ParseMap(parseContext string, files map[string]string) (ParseMapResult, error) {
 	result := ParseMapResult{
 		Config:    nil,
-		Overrides: map[string]overrides.EnvOverrides{},
+		Overrides: map[string]config.EnvConfiguration{},
 	}
 
 	for filepath, raw := range files {
 		desc := getConfigFileDescription(filepath)
 		if desc == "config" {
-			parsed, err := ParseConfig(parseContext, filepath, bytes.NewBufferString(raw))
+			parsed, err := ParseConfig(parseContext, filepath, false, bytes.NewBufferString(raw))
 			if err != nil {
 				return result, err
 			}
 			result.Config = &parsed
 		} else {
-			eo, err := ParseOverrides(parseContext, filepath, bytes.NewBufferString(raw))
+			eo, err := ParseConfig(parseContext, filepath, true, bytes.NewBufferString(raw))
 			if err != nil {
 				return result, err
 			}
@@ -67,20 +66,11 @@ func getConfigFileDescription(filepath string) string {
 	return woExt
 }
 
-func ParseConfig(parseContext, filename string, r io.Reader) (config.EnvConfiguration, error) {
+func ParseConfig(parseContext, filename string, isOverrides bool, r io.Reader) (config.EnvConfiguration, error) {
 	decoder := yaml.NewDecoder(r)
 	var obj yaml2.EnvConfiguration
 	if err := decoder.Decode(&obj); err != nil {
 		return config.EnvConfiguration{}, InvalidYamlError{ParseContext: parseContext, FileName: filename, Err: err}
 	}
-	return config.ConvertConfiguration(parseContext, filename, obj), nil
-}
-
-func ParseOverrides(parseContext, filename string, r io.Reader) (overrides.EnvOverrides, error) {
-	decoder := yaml.NewDecoder(r)
-	var obj yaml2.EnvOverrides
-	if err := decoder.Decode(&obj); err != nil {
-		return overrides.EnvOverrides{}, InvalidYamlError{ParseContext: parseContext, FileName: filename, Err: err}
-	}
-	return overrides.ConvertOverrides(parseContext, filename, obj), nil
+	return config.ConvertConfiguration(parseContext, filename, isOverrides, obj), nil
 }

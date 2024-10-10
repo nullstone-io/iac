@@ -3,7 +3,9 @@ package config
 import (
 	"context"
 	"github.com/BSick7/go-api/errors"
+	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
+	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/services"
 	"github.com/nullstone-io/iac/services/oracle"
 	config2 "github.com/nullstone-io/iac/yaml"
@@ -20,6 +22,10 @@ type FactoryDefaults struct {
 	StackId int64
 	BlockId int64
 	EnvId   int64
+}
+
+func ptr[T any](t T) *T {
+	return &t
 }
 
 func TestConvertConfiguration(t *testing.T) {
@@ -254,6 +260,7 @@ func TestConvertConfiguration(t *testing.T) {
 	tests := []struct {
 		name             string
 		filename         string
+		isOverrides      bool
 		want             *EnvConfiguration
 		validationErrors error
 	}{
@@ -261,12 +268,15 @@ func TestConvertConfiguration(t *testing.T) {
 			name:     "valid configuration",
 			filename: "test-fixtures/config.yml",
 			want: &EnvConfiguration{
-				RepoName: "acme/api",
-				Filename: "config.yml",
+				IacContext: core.IacContext{
+					RepoName: "acme/api",
+					Filename: "config.yml",
+				},
 				Applications: map[string]AppConfiguration{
 					"acme-docs": {
 						BlockConfiguration: BlockConfiguration{
 							Type:                BlockTypeApplication,
+							Category:            types.CategoryApp,
 							Name:                "acme-docs",
 							ModuleSource:        "nullstone/aws-fargate-service",
 							ModuleSourceVersion: latest,
@@ -309,7 +319,7 @@ func TestConvertConfiguration(t *testing.T) {
 				Networks:          map[string]NetworkConfiguration{},
 				Blocks:            map[string]BlockConfiguration{},
 			},
-			validationErrors: nil,
+			validationErrors: errors.ValidationErrors(nil),
 		},
 		{
 			name:     "app module missing",
@@ -317,7 +327,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.module)\n",
+					Context: "acme/api#config.yml (apps.acme-docs)",
 					Message: "Module is required",
 				},
 			},
@@ -328,7 +338,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.module)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.module)",
 					Message: "Module (nullstone/aws-invalid-module) does not exist",
 				},
 			},
@@ -339,7 +349,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.module)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.module)",
 					Message: "Module (nullstone/aws-s3-cdn) must be app module and match the contract (app/*/*), it is defined as capability/aws/",
 				},
 			},
@@ -350,7 +360,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
-					Context: "acme/api#config.yml (apps.acme-docs.vars.service_count)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.vars.service_count)",
 					Message: "Variable does not exist on the module (nullstone/aws-fargate-service@0.0.1)",
 				},
 			},
@@ -361,7 +371,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].module)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0])",
 					Message: "Module is required",
 				},
 			},
@@ -372,7 +382,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].module)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].module)",
 					Message: "Module (nullstone/aws-invalid-module) does not exist",
 				},
 			},
@@ -383,7 +393,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].module)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].module)",
 					Message: "Module (nullstone/aws-s3-site) must be capability module and match the contract (capability/aws/*), it is defined as app:static-site/aws/s3",
 				},
 			},
@@ -394,7 +404,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].module)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].module)",
 					Message: "Module (nullstone/aws-postgres-access) does not support application category (static-site)",
 				},
 			},
@@ -405,7 +415,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].vars.database_name)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].vars.database_name)",
 					Message: "Variable does not exist on the module (nullstone/aws-load-balancer@latest)",
 				},
 			},
@@ -416,7 +426,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].connections.subdomain)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].connections.subdomain)",
 					Message: "Connection is invalid, block core/ns-sub-for-blah does not exist",
 				},
 			},
@@ -427,7 +437,7 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].connections.subdomain)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].connections.subdomain)",
 					Message: "Block (postgres) does not match the required contract (subdomain/aws/route53) for the capability connection",
 				},
 			},
@@ -438,10 +448,66 @@ func TestConvertConfiguration(t *testing.T) {
 			want:     nil,
 			validationErrors: errors.ValidationErrors{
 				errors.ValidationError{
-					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].connections.subdomain.block_name)\n",
+					Context: "acme/api#config.yml (apps.acme-docs.capabilities[0].connections.subdomain)",
 					Message: "Connection must have a block_name to identify which block it is connected to",
 				},
 			},
+		},
+		{
+			name:        "valid previews.yml",
+			filename:    "test-fixtures/previews.yml",
+			isOverrides: true,
+			want: &EnvConfiguration{
+				IacContext: core.IacContext{
+					RepoName:    "acme/api",
+					Filename:    "config.yml",
+					IsOverrides: true,
+				},
+				Applications: map[string]AppConfiguration{
+					"acme-api": {
+						BlockConfiguration: BlockConfiguration{
+							Type:     BlockTypeApplication,
+							Category: types.CategoryApp,
+							Name:     "acme-api",
+							Variables: map[string]any{
+								"enable_versioned_assets": false,
+							},
+							Connections: types.ConnectionTargets{},
+						},
+						EnvVariables: map[string]string{
+							"TESTING": "abc123",
+							"BLAH":    "blahblahblah",
+						},
+						Capabilities: CapabilityConfigurations{
+							{
+								ModuleSource:        "nullstone/aws-s3-cdn",
+								ModuleSourceVersion: "latest",
+								Variables:           map[string]any{"enable_www": true},
+								Namespace:           ptr("secondary"),
+								Connections: map[string]types.ConnectionTarget{
+									"subdomain": {
+										StackId:   0,
+										StackName: "",
+										BlockId:   0,
+										BlockName: "ns-sub-for-acme-docs",
+										EnvId:     nil,
+										EnvName:   "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Blocks:            map[string]BlockConfiguration{},
+				ClusterNamespaces: map[string]ClusterNamespaceConfiguration{},
+				Clusters:          map[string]ClusterConfiguration{},
+				Datastores:        map[string]DatastoreConfiguration{},
+				Domains:           map[string]DomainConfiguration{},
+				Ingresses:         map[string]IngressConfiguration{},
+				Networks:          map[string]NetworkConfiguration{},
+				Subdomains:        map[string]SubdomainConfiguration{},
+			},
+			validationErrors: errors.ValidationErrors(nil),
 		},
 	}
 
@@ -457,10 +523,12 @@ func TestConvertConfiguration(t *testing.T) {
 			parsed, err := config2.ParseEnvConfiguration(buf)
 			assert.NoError(t, err)
 
-			got := ConvertConfiguration("acme/api", "config.yml", *parsed)
+			got := ConvertConfiguration("acme/api", "config.yml", test.isOverrides, *parsed)
 
 			if test.want != nil {
-				assert.Equal(t, *test.want, got)
+				if diff := cmp.Diff(*test.want, got); diff != "" {
+					t.Errorf("(-want, +got): %s", diff)
+				}
 			}
 
 			sr := &find.StackResolver{
@@ -472,13 +540,9 @@ func TestConvertConfiguration(t *testing.T) {
 				BlocksById:          blocksById,
 				BlocksByName:        blocksByName,
 			}
-			resolver := &find.ResourceResolver{
-				ApiClient:    apiHub.Client(defaults.OrgName),
-				CurStackId:   defaults.StackId,
-				CurEnvId:     defaults.EnvId,
-				StacksById:   map[int64]*find.StackResolver{defaults.StackId: sr},
-				StacksByName: map[string]*find.StackResolver{"core": sr},
-			}
+			resolver := core.NewApiResolver(apiHub.Client(defaults.OrgName), defaults.StackId, defaults.EnvId)
+			resolver.ResourceResolver.StacksById[defaults.StackId] = sr
+			resolver.ResourceResolver.StacksByName["core"] = sr
 
 			err = got.Validate(context.Background(), resolver)
 			assert.Equal(t, test.validationErrors, err)

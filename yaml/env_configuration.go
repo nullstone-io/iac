@@ -7,14 +7,14 @@ import (
 type EnvConfiguration struct {
 	Version           string                                   `yaml:"version" json:"version"`
 	Applications      map[string]AppConfiguration              `yaml:"apps,omitempty" json:"apps"`
-	Subdomains        map[string]SubdomainConfiguration        `yaml:"subdomains,omitempty" json:"subdomains"`
+	Blocks            map[string]BlockConfiguration            `yaml:"blocks,omitempty" json:"blocks"`
+	Clusters          map[string]ClusterConfiguration          `yaml:"clusters,omitempty" json:"clusters"`
+	ClusterNamespaces map[string]ClusterNamespaceConfiguration `yaml:"cluster_namespaces,omitempty" json:"clusterNamespaces"`
 	Datastores        map[string]DatastoreConfiguration        `yaml:"datastores,omitempty" json:"datastores"`
 	Domains           map[string]DomainConfiguration           `yaml:"domains,omitempty" json:"domains"`
 	Ingresses         map[string]IngressConfiguration          `yaml:"ingresses,omitempty" json:"ingresses"`
 	Networks          map[string]NetworkConfiguration          `yaml:"networks,omitempty" json:"networks"`
-	Clusters          map[string]ClusterConfiguration          `yaml:"clusters,omitempty" json:"clusters"`
-	ClusterNamespaces map[string]ClusterNamespaceConfiguration `yaml:"cluster_namespaces,omitempty" json:"clusterNamespaces"`
-	Blocks            map[string]BlockConfiguration            `yaml:"blocks,omitempty" json:"blocks"`
+	Subdomains        map[string]SubdomainConfiguration        `yaml:"subdomains,omitempty" json:"subdomains"`
 }
 
 func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {

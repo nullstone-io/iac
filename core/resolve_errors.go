@@ -7,26 +7,27 @@ import (
 )
 
 type ResolveError struct {
+	IacContext        IacContext
 	ObjectPathContext ObjectPathContext
 	ErrorMessage      string
 }
 
-func (e ResolveError) ToValidationError(ic IacContext) errors.ValidationError {
+func (e ResolveError) ToValidationError() errors.ValidationError {
 	return errors.ValidationError{
-		Context: ic.Context(e.ObjectPathContext),
+		Context: e.IacContext.Context(e.ObjectPathContext),
 		Message: e.ErrorMessage,
 	}
 }
 
 type ResolveErrors []ResolveError
 
-func (s ResolveErrors) ToValidationErrors(ic IacContext) errors.ValidationErrors {
+func (s ResolveErrors) ToValidationErrors() errors.ValidationErrors {
 	if len(s) == 0 {
 		return nil
 	}
 	ve := errors.ValidationErrors{}
 	for _, re := range s {
-		ve = append(ve, re.ToValidationError(ic))
+		ve = append(ve, re.ToValidationError())
 	}
 	return ve
 }

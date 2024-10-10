@@ -2,18 +2,17 @@ package iac
 
 import (
 	"context"
-	"github.com/nullstone-io/iac/config"
 	"github.com/nullstone-io/iac/core"
 )
 
-func Normalize(ctx context.Context, config *config.EnvConfiguration, overrides map[string]config.EnvConfiguration, resolver core.ConnectionResolver) error {
-	if config != nil {
-		if err := config.Normalize(ctx, resolver); err != nil {
+func Normalize(ctx context.Context, input ParseMapResult, resolver core.ConnectionResolver) error {
+	if input.Config != nil {
+		if err := input.Config.Normalize(ctx, resolver); err != nil {
 			return err
 		}
 	}
 
-	for _, envOverrides := range overrides {
+	for _, envOverrides := range input.Overrides {
 		if err := envOverrides.Normalize(ctx, resolver); err != nil {
 			return err
 		}

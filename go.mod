@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/BSick7/go-api v0.13.1
+	github.com/google/go-cmp v0.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/nullstone-io/module v0.2.9
 	github.com/stretchr/testify v1.8.4

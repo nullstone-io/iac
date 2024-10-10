@@ -2,13 +2,13 @@ package config
 
 import (
 	"context"
-	"gopkg.in/nullstone-io/go-api-client.v0/find"
+	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
 type CapabilityConfigurations []CapabilityConfiguration
 
-func (c CapabilityConfigurations) Normalize(ctx context.Context, resolver *find.ResourceResolver) error {
+func (c CapabilityConfigurations) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
 	for i, iacCap := range c {
 		resolved, err := iacCap.Normalize(ctx, resolver)
 		if err != nil {
@@ -27,7 +27,7 @@ type CapabilityConfiguration struct {
 	Namespace           *string                 `json:"namespace"`
 }
 
-func (c CapabilityConfiguration) Normalize(ctx context.Context, resolver *find.ResourceResolver) (CapabilityConfiguration, error) {
+func (c CapabilityConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) (CapabilityConfiguration, error) {
 	if err := NormalizeConnectionTargets(ctx, c.Connections, resolver); err != nil {
 		return c, err
 	}

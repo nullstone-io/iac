@@ -3,10 +3,10 @@ package iac
 import (
 	"context"
 	"github.com/nullstone-io/iac/config"
-	"gopkg.in/nullstone-io/go-api-client.v0/find"
+	"github.com/nullstone-io/iac/core"
 )
 
-func Normalize(ctx context.Context, config *config.EnvConfiguration, overrides map[string]config.EnvConfiguration, resolver *find.ResourceResolver) error {
+func Normalize(ctx context.Context, config *config.EnvConfiguration, overrides map[string]config.EnvConfiguration, resolver core.ConnectionResolver) error {
 	if config != nil {
 		if err := config.Normalize(ctx, resolver); err != nil {
 			return err

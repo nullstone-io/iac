@@ -5,7 +5,6 @@ import (
 	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
-	"gopkg.in/nullstone-io/go-api-client.v0/find"
 )
 
 type EnvConfiguration struct {
@@ -41,34 +40,43 @@ func ConvertConfiguration(repoName, filename string, isOverrides bool, parsed ya
 	return result
 }
 
-func (e *EnvConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver) errors.ValidationErrors {
+func (e *EnvConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver) errors.ValidationErrors {
 	ve := errors.ValidationErrors{}
 	for _, app := range e.Applications {
-		ve = append(ve, app.Validate(ctx, resolver, e.IacContext)...)
+		pc := core.NewYamlPathContext("apps", app.Name)
+		ve = append(ve, app.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, ds := range e.Datastores {
-		ve = append(ve, ds.Validate(ctx, resolver, e.IacContext)...)
+		pc := core.NewYamlPathContext("networks", ds.Name)
+		ve = append(ve, ds.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, sub := range e.Subdomains {
-		ve = append(ve, sub.Validate(ctx, resolver, e.IacContext)...)
+		pc := core.NewYamlPathContext("subdomains", sub.Name)
+		ve = append(ve, sub.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, domain := range e.Domains {
-		ve = append(ve, domain.Validate(ctx, resolver, e.IacContext)...)
+		pc := core.NewYamlPathContext("domains", domain.Name)
+		ve = append(ve, domain.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, ingress := range e.Ingresses {
-		ve = append(ve, ingress.Validate(ctx, resolver, e.IacContext)...)
+		pc := core.NewYamlPathContext("ingresses", ingress.Name)
+		ve = append(ve, ingress.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
-		ve = append(ve, clusterNamespace.Validate(ctx, resolver, e.IacContext)...)
+		pc := core.NewYamlPathContext("cluster_namespaces", clusterNamespace.Name)
+		ve = append(ve, clusterNamespace.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, cluster := range e.Clusters {
-		ve = append(ve, cluster.Validate(ctx, resolver, e.IacContext)...)
+		pc := core.NewYamlPathContext("clusters", cluster.Name)
+		ve = append(ve, cluster.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, network := range e.Networks {
-		ve = append(ve, network.Validate(ctx, resolver, e.IacContext)...)
+		pc := core.NewYamlPathContext("networks", network.Name)
+		ve = append(ve, network.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, block := range e.Blocks {
-		ve = append(ve, block.Validate(ctx, resolver, e.IacContext)...)
+		pc := core.NewYamlPathContext("blocks", block.Name)
+		ve = append(ve, block.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 
 	if len(ve) > 0 {
@@ -77,7 +85,7 @@ func (e *EnvConfiguration) Validate(ctx context.Context, resolver *find.Resource
 	return nil
 }
 
-func (e *EnvConfiguration) Normalize(ctx context.Context, resolver *find.ResourceResolver) error {
+func (e *EnvConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
 	for key, block := range e.Blocks {
 		if err := block.Normalize(ctx, resolver); err != nil {
 			return err

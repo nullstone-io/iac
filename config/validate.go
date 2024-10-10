@@ -28,14 +28,15 @@ func ValidateVariables(ic core.IacContext, pc core.YamlPathContext, variables ma
 }
 
 // ValidateConnections performs validation on all IaC connections by matching them against connections in the module
-func ValidateConnections(ctx context.Context, resolver *find.ResourceResolver, ic core.IacContext, pc core.YamlPathContext, connections types.ConnectionTargets, manifestConnections map[string]config.Connection, moduleName string) errors.ValidationErrors {
+func ValidateConnections(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.YamlPathContext,
+	connections types.ConnectionTargets, expectedConnections map[string]config.Connection, moduleName string) errors.ValidationErrors {
 	if len(connections) == 0 {
 		return nil
 	}
 	ve := errors.ValidationErrors{}
 	for key, conn := range connections {
 		curpc := pc.SubKey("connections", key)
-		manifestConnection, found := manifestConnections[key]
+		manifestConnection, found := expectedConnections[key]
 		if !found {
 			ve = append(ve, ConnectionDoesNotExistError(ic, curpc, moduleName))
 			continue
@@ -55,12 +56,12 @@ func ValidateConnections(ctx context.Context, resolver *find.ResourceResolver, i
 //  1. Verifies that a connection specified in IaC exists in the module
 //  2. Resolves the connection's target (i.e. block)
 //  3. Verifies the block matches the connection contract
-func ValidateConnection(ctx context.Context, resolver *find.ResourceResolver, ic core.IacContext, pc core.YamlPathContext, connection types.ConnectionTarget, manifestConnection config.Connection, moduleName string) *errors.ValidationError {
+func ValidateConnection(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.YamlPathContext, connection types.ConnectionTarget, manifestConnection config.Connection, moduleName string) *errors.ValidationError {
 	if connection.BlockName == "" {
 		return MissingConnectionBlockError(ic, pc)
 	}
 
-	found, err := resolver.FindBlock(ctx, connection)
+	found, err := resolver.ResolveBlock(ctx, connection)
 	if err != nil {
 		if find.IsMissingResource(err) {
 			return MissingConnectionTargetError(ic, pc, err)
@@ -76,7 +77,7 @@ func ValidateConnection(ctx context.Context, resolver *find.ResourceResolver, ic
 	if err != nil {
 		return InvalidModuleFormatError(ic, pc, found.ModuleSource)
 	}
-	m, mErr := resolver.ApiClient.Modules().Get(ctx, ms.OrgName, ms.ModuleName)
+	m, mErr := resolver.ResolveModule(ctx, *ms)
 	if mErr != nil {
 		return ModuleLookupFailedError(ic, pc, found.ModuleSource, mErr)
 	}
@@ -93,35 +94,5 @@ func ValidateConnection(ctx context.Context, resolver *find.ResourceResolver, ic
 		}
 	}
 
-	return nil
-}
-
-func hasInvalidChars(r rune) bool {
-	return (r < 'A' || r > 'z') && r != '_' && (r < '0' || r > '9')
-}
-
-func startsWithNumber(s string) bool {
-	return s[0] >= '0' && s[0] <= '9'
-}
-
-func ValidateEnvVariables(ic core.IacContext, pc core.YamlPathContext, envVariables map[string]string) errors.ValidationErrors {
-	if len(envVariables) == 0 {
-		return nil
-	}
-
-	ve := errors.ValidationErrors{}
-	for k, _ := range envVariables {
-		curpc := pc.SubKey("environment", k)
-		if startsWithNumber(k) {
-			ve = append(ve, EnvVariableKeyStartsWithNumberError(ic, curpc))
-		}
-		if strings.IndexFunc(k, hasInvalidChars) != -1 {
-			ve = append(ve, EnvVariableKeyInvalidCharsError(ic, curpc))
-		}
-	}
-
-	if len(ve) > 0 {
-		return ve
-	}
 	return nil
 }

@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"github.com/BSick7/go-api/errors"
+	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/services"
@@ -275,6 +276,7 @@ func TestConvertConfiguration(t *testing.T) {
 					"acme-docs": {
 						BlockConfiguration: BlockConfiguration{
 							Type:                BlockTypeApplication,
+							Category:            types.CategoryApp,
 							Name:                "acme-docs",
 							ModuleSource:        "nullstone/aws-fargate-service",
 							ModuleSourceVersion: latest,
@@ -464,8 +466,9 @@ func TestConvertConfiguration(t *testing.T) {
 				Applications: map[string]AppConfiguration{
 					"acme-api": {
 						BlockConfiguration: BlockConfiguration{
-							Type: BlockTypeApplication,
-							Name: "acme-api",
+							Type:     BlockTypeApplication,
+							Category: types.CategoryApp,
+							Name:     "acme-api",
 							Variables: map[string]any{
 								"enable_versioned_assets": false,
 							},
@@ -523,7 +526,9 @@ func TestConvertConfiguration(t *testing.T) {
 			got := ConvertConfiguration("acme/api", "config.yml", test.isOverrides, *parsed)
 
 			if test.want != nil {
-				assert.Equal(t, *test.want, got)
+				if diff := cmp.Diff(*test.want, got); diff != "" {
+					t.Errorf("(-want, +got): %s", diff)
+				}
 			}
 
 			sr := &find.StackResolver{
@@ -535,13 +540,9 @@ func TestConvertConfiguration(t *testing.T) {
 				BlocksById:          blocksById,
 				BlocksByName:        blocksByName,
 			}
-			resolver := &find.ResourceResolver{
-				ApiClient:    apiHub.Client(defaults.OrgName),
-				CurStackId:   defaults.StackId,
-				CurEnvId:     defaults.EnvId,
-				StacksById:   map[int64]*find.StackResolver{defaults.StackId: sr},
-				StacksByName: map[string]*find.StackResolver{"core": sr},
-			}
+			resolver := core.NewApiResolver(apiHub.Client(defaults.OrgName), defaults.StackId, defaults.EnvId)
+			resolver.ResourceResolver.StacksById[defaults.StackId] = sr
+			resolver.ResourceResolver.StacksByName["core"] = sr
 
 			err = got.Validate(context.Background(), resolver)
 			assert.Equal(t, test.validationErrors, err)

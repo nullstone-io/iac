@@ -33,8 +33,8 @@ type BlockConfiguration struct {
 	Connections         types.ConnectionTargets `json:"connections"`
 	IsShared            bool                    `json:"isShared"`
 
-	Module        types.Module        `json:"module"`
-	ModuleVersion types.ModuleVersion `json:"moduleVersion"`
+	Module        *types.Module        `json:"module"`
+	ModuleVersion *types.ModuleVersion `json:"moduleVersion"`
 }
 
 func convertConnections(parsed map[string]yaml.ConnectionTarget) map[string]types.ConnectionTarget {
@@ -91,8 +91,8 @@ func (b *BlockConfiguration) Validate(ctx context.Context, resolver core.Validat
 	if err != nil {
 		return errors.ValidationErrors{*err}
 	}
-	b.Module = *m
-	b.ModuleVersion = *mv
+	b.Module = m
+	b.ModuleVersion = mv
 
 	ve := errors.ValidationErrors{}
 	ve = append(ve, b.ValidateVariables(ic, pc)...)

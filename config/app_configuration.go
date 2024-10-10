@@ -77,7 +77,7 @@ func (a *AppConfiguration) ValidateCapability(ctx context.Context, resolver core
 		// TODO: Add support for validating variables and connections in an overrides file
 		return nil
 	}
-	if a.Module.Name == "" {
+	if a.Module == nil {
 		// The app module isn't loaded, we can't perform validation on this capability
 		return nil
 	}

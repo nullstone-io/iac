@@ -139,3 +139,9 @@ func (a *AppConfiguration) Normalize(ctx context.Context, resolver core.Connecti
 	}
 	return a.Capabilities.Normalize(ctx, resolver)
 }
+
+func (a *AppConfiguration) ToBlock(orgName string, stackId int64) types.Block {
+	block := a.BlockConfiguration.ToBlock(orgName, stackId)
+	block.Capabilities = a.Capabilities.ToCapabilities(stackId)
+	return block
+}

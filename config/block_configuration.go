@@ -126,3 +126,24 @@ func (b *BlockConfiguration) ValidateConnections(ctx context.Context, resolver c
 func (b *BlockConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
 	return NormalizeConnectionTargets(ctx, b.Connections, resolver)
 }
+
+func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block {
+	block := types.Block{
+		Type:                string(b.Type),
+		OrgName:             orgName,
+		StackId:             stackId,
+		Name:                b.Name,
+		IsShared:            b.IsShared,
+		DnsName:             "",
+		ModuleSource:        b.ModuleSource,
+		ModuleSourceVersion: b.ModuleSourceVersion,
+		Connections:         b.Connections,
+	}
+	for k, conn := range block.Connections {
+		if conn.StackId == 0 && conn.StackName == "" {
+			conn.StackId = stackId
+		}
+		block.Connections[k] = conn
+	}
+	return block
+}

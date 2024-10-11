@@ -11,6 +11,12 @@ type DomainConfiguration struct {
 	DnsName string `json:"dnsName"`
 }
 
+func (d *DomainConfiguration) ToBlock(orgName string, stackId int64) types.Block {
+	block := d.BlockConfiguration.ToBlock(orgName, stackId)
+	block.DnsName = d.DnsName
+	return block
+}
+
 func convertDomainConfigurations(parsed map[string]yaml.DomainConfiguration) map[string]*DomainConfiguration {
 	result := make(map[string]*DomainConfiguration)
 	for name, value := range parsed {

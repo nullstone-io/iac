@@ -39,6 +39,29 @@ func (c CapabilityConfigurations) Validate(ctx context.Context, resolver core.Va
 	return nil
 }
 
+func (c CapabilityConfigurations) ToCapabilities(stackId int64) []types.Capability {
+	var result []types.Capability
+	for _, c := range c {
+		capability := types.Capability{
+			ModuleSource:        c.ModuleSource,
+			ModuleSourceVersion: c.ModuleSourceVersion,
+			Connections:         map[string]types.ConnectionTarget{},
+		}
+		if c.Namespace != nil {
+			capability.Namespace = *c.Namespace
+		}
+		for key, conn := range c.Connections {
+			target := conn
+			if target.StackId == 0 {
+				target.StackId = stackId
+			}
+			capability.Connections[key] = target
+		}
+		result = append(result, capability)
+	}
+	return result
+}
+
 type CapabilityConfiguration struct {
 	ModuleSource        string                  `json:"moduleSource"`
 	ModuleSourceVersion string                  `json:"moduleSourceVersion"`

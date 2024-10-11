@@ -5,6 +5,7 @@ import (
 	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
+	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
 type EnvConfiguration struct {
@@ -179,4 +180,41 @@ func (e *EnvConfiguration) Normalize(ctx context.Context, resolver core.Connecti
 		}
 	}
 	return nil
+}
+
+func (e *EnvConfiguration) ToBlocks(orgName string, stackId int64) types.Blocks {
+	blocks := make([]types.Block, 0)
+	if e == nil {
+		return blocks
+	}
+
+	for _, app := range e.Applications {
+		blocks = append(blocks, app.ToBlock(orgName, stackId))
+	}
+	for _, ds := range e.Datastores {
+		blocks = append(blocks, ds.ToBlock(orgName, stackId))
+	}
+	for _, sub := range e.Subdomains {
+		blocks = append(blocks, sub.ToBlock(orgName, stackId))
+	}
+	for _, d := range e.Domains {
+		blocks = append(blocks, d.ToBlock(orgName, stackId))
+	}
+	for _, i := range e.Ingresses {
+		blocks = append(blocks, i.ToBlock(orgName, stackId))
+	}
+	for _, cn := range e.ClusterNamespaces {
+		blocks = append(blocks, cn.ToBlock(orgName, stackId))
+	}
+	for _, c := range e.Clusters {
+		blocks = append(blocks, c.ToBlock(orgName, stackId))
+	}
+	for _, n := range e.Networks {
+		blocks = append(blocks, n.ToBlock(orgName, stackId))
+	}
+	for _, b := range e.Blocks {
+		blocks = append(blocks, b.ToBlock(orgName, stackId))
+	}
+
+	return blocks
 }

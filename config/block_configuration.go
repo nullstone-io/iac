@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"fmt"
-	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -96,31 +95,31 @@ func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ModuleVe
 	return nil
 }
 
-func (b *BlockConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
+func (b *BlockConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
 	if b.Module == nil {
 		// TODO: Add support for validating variables and connections in an overrides file that has no module source
 		return nil
 	}
 
-	ve := errors.ValidationErrors{}
-	ve = append(ve, b.ValidateVariables(ic, pc)...)
-	ve = append(ve, b.ValidateConnections(ctx, resolver, ic, pc, b.Connections)...)
-	if len(ve) > 0 {
-		return ve
+	errs := core.ValidateErrors{}
+	errs = append(errs, b.ValidateVariables(ic, pc)...)
+	errs = append(errs, b.ValidateConnections(ctx, resolver, ic, pc, b.Connections)...)
+	if len(errs) > 0 {
+		return errs
 	}
 	return nil
 }
 
-func (b *BlockConfiguration) ValidateVariables(ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
+func (b *BlockConfiguration) ValidateVariables(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
 	moduleName := fmt.Sprintf("%s/%s@%s", b.Module.OrgName, b.Module.Name, b.ModuleVersion.Version)
-	return ValidateVariables(ic, pc, b.Variables, b.ModuleVersion.Manifest.Variables, moduleName)
+	return core.ValidateVariables(pc, b.Variables, b.ModuleVersion.Manifest.Variables, moduleName)
 }
 
 // ValidateConnections performs validation on all IaC connections by matching them against connections in the module
 func (b *BlockConfiguration) ValidateConnections(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext,
-	pc core.ObjectPathContext, connections types.ConnectionTargets) errors.ValidationErrors {
+	pc core.ObjectPathContext, connections types.ConnectionTargets) core.ValidateErrors {
 	moduleName := fmt.Sprintf("%s/%s@%s", b.Module.OrgName, b.Module.Name, b.ModuleVersion.Version)
-	return ValidateConnections(ctx, resolver, ic, pc, connections, b.ModuleVersion.Manifest.Connections, moduleName)
+	return core.ValidateConnections(ctx, resolver, pc, connections, b.ModuleVersion.Manifest.Connections, moduleName)
 }
 
 func (b *BlockConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {

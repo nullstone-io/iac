@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -87,48 +86,48 @@ func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ModuleVers
 	return nil
 }
 
-func (e *EnvConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver) errors.ValidationErrors {
-	ve := errors.ValidationErrors{}
+func (e *EnvConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver) core.ValidateErrors {
+	errs := core.ValidateErrors{}
 
 	for _, app := range e.Applications {
 		pc := core.NewObjectPathContext("apps", app.Name)
-		ve = append(ve, app.Validate(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, app.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, ds := range e.Datastores {
 		pc := core.NewObjectPathContext("networks", ds.Name)
-		ve = append(ve, ds.Validate(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, ds.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, sub := range e.Subdomains {
 		pc := core.NewObjectPathContext("subdomains", sub.Name)
-		ve = append(ve, sub.Validate(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, sub.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, domain := range e.Domains {
 		pc := core.NewObjectPathContext("domains", domain.Name)
-		ve = append(ve, domain.Validate(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, domain.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, ingress := range e.Ingresses {
 		pc := core.NewObjectPathContext("ingresses", ingress.Name)
-		ve = append(ve, ingress.Validate(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, ingress.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
 		pc := core.NewObjectPathContext("cluster_namespaces", clusterNamespace.Name)
-		ve = append(ve, clusterNamespace.Validate(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, clusterNamespace.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, cluster := range e.Clusters {
 		pc := core.NewObjectPathContext("clusters", cluster.Name)
-		ve = append(ve, cluster.Validate(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, cluster.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, network := range e.Networks {
 		pc := core.NewObjectPathContext("networks", network.Name)
-		ve = append(ve, network.Validate(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, network.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, block := range e.Blocks {
 		pc := core.NewObjectPathContext("blocks", block.Name)
-		ve = append(ve, block.Validate(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, block.Validate(ctx, resolver, e.IacContext, pc)...)
 	}
 
-	if len(ve) > 0 {
-		return ve
+	if len(errs) > 0 {
+		return errs
 	}
 	return nil
 }

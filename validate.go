@@ -2,20 +2,26 @@ package iac
 
 import (
 	"context"
-	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
 )
 
-func Validate(ctx context.Context, input ParseMapResult, resolver core.ValidateResolver) errors.ValidationErrors {
-	ve := errors.ValidationErrors{}
+func Validate(ctx context.Context, input ParseMapResult, resolver core.ValidateResolver) core.ValidateErrors {
+	errs := core.ValidateErrors{}
 	if input.Config != nil {
-		ve = append(ve, input.Config.Validate(ctx, resolver)...)
+		for _, err := range input.Config.Validate(ctx, resolver) {
+			err.IacContext = input.Config.IacContext
+			errs = append(errs, err)
+		}
 	}
-	for _, envOverrides := range input.Overrides {
-		ve = append(ve, envOverrides.Validate(ctx, resolver)...)
+
+	for _, cur := range input.Overrides {
+		for _, err := range cur.Validate(ctx, resolver) {
+			err.IacContext = cur.IacContext
+			errs = append(errs, err)
+		}
 	}
-	if len(ve) > 0 {
-		return ve
+	if len(errs) > 0 {
+		return errs
 	}
 	return nil
 }

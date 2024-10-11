@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"fmt"
-	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
@@ -23,18 +22,18 @@ func (c CapabilityConfigurations) Normalize(ctx context.Context, resolver core.C
 
 // Validate performs validation on all IaC capabilities
 func (c CapabilityConfigurations) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext,
-	pc core.ObjectPathContext, appModule *types.Module) errors.ValidationErrors {
+	pc core.ObjectPathContext, appModule *types.Module) core.ValidateErrors {
 	if len(c) == 0 {
 		return nil
 	}
-	ve := errors.ValidationErrors{}
+	errs := core.ValidateErrors{}
 	for i, iacCap := range c {
 		curpc := pc.SubIndex("capabilities", i)
-		ve = append(ve, iacCap.Validate(ctx, resolver, ic, curpc, appModule)...)
+		errs = append(errs, iacCap.Validate(ctx, resolver, ic, curpc, appModule)...)
 	}
 
-	if len(ve) > 0 {
-		return ve
+	if len(errs) > 0 {
+		return errs
 	}
 	return nil
 }
@@ -81,7 +80,7 @@ func (c CapabilityConfiguration) Normalize(ctx context.Context, resolver core.Co
 }
 
 func (c CapabilityConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext,
-	pc core.ObjectPathContext, appModule *types.Module) errors.ValidationErrors {
+	pc core.ObjectPathContext, appModule *types.Module) core.ValidateErrors {
 	if c.Module == nil {
 		// We can't perform validation if the module isn't loaded
 		return nil
@@ -91,7 +90,7 @@ func (c CapabilityConfiguration) Validate(ctx context.Context, resolver core.Val
 		return nil
 	}
 
-	ve := errors.ValidationErrors{}
+	errs := core.ValidateErrors{}
 	// check to make sure the capability module supports the subcategory
 	// examples are "container", "serverless", "static-site", "server"
 	// TODO: Add support for validating app category
@@ -104,7 +103,7 @@ func (c CapabilityConfiguration) Validate(ctx context.Context, resolver core.Val
 			}
 		}
 		if !found {
-			ve = append(ve, UnsupportedAppCategoryError(ic, pc.SubField("module"), c.ModuleSource, string(appModule.Subcategory)))
+			errs = append(errs, UnsupportedAppCategoryError(pc.SubField("module"), c.ModuleSource, string(appModule.Subcategory)))
 		}
 	}
 
@@ -113,11 +112,11 @@ func (c CapabilityConfiguration) Validate(ctx context.Context, resolver core.Val
 	//   2. validate each of the connections to ensure the block matches the connection contract
 	if mv := c.ModuleVersion; mv != nil {
 		moduleName := fmt.Sprintf("%s@%s", c.ModuleSource, c.ModuleSourceVersion)
-		ve = append(ve, ValidateVariables(ic, pc, c.Variables, mv.Manifest.Variables, moduleName)...)
-		ve = append(ve, ValidateConnections(ctx, resolver, ic, pc, c.Connections, mv.Manifest.Connections, moduleName)...)
+		errs = append(errs, core.ValidateVariables(pc, c.Variables, mv.Manifest.Variables, moduleName)...)
+		errs = append(errs, core.ValidateConnections(ctx, resolver, pc, c.Connections, mv.Manifest.Connections, moduleName)...)
 	}
-	if len(ve) > 0 {
-		return ve
+	if len(errs) > 0 {
+		return errs
 	}
 	return nil
 }

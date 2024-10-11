@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"github.com/BSick7/go-api/errors"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -95,11 +94,11 @@ func (a *AppConfiguration) ResolveCapability(ctx context.Context, resolver core.
 	return iacCap, nil
 }
 
-func (a *AppConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
-	ve := a.BlockConfiguration.Validate(ctx, resolver, ic, pc)
-	ve = append(ve, a.ValidateEnvVariables(ic, pc)...)
-	ve = append(ve, a.Capabilities.Validate(ctx, resolver, ic, pc, a.Module)...)
-	return ve
+func (a *AppConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
+	errs := a.BlockConfiguration.Validate(ctx, resolver, ic, pc)
+	errs = append(errs, a.ValidateEnvVariables(pc)...)
+	errs = append(errs, a.Capabilities.Validate(ctx, resolver, ic, pc, a.Module)...)
+	return errs
 }
 
 func hasInvalidChars(r rune) bool {
@@ -110,24 +109,24 @@ func startsWithNumber(s string) bool {
 	return s[0] >= '0' && s[0] <= '9'
 }
 
-func (a *AppConfiguration) ValidateEnvVariables(ic core.IacContext, pc core.ObjectPathContext) errors.ValidationErrors {
+func (a *AppConfiguration) ValidateEnvVariables(pc core.ObjectPathContext) core.ValidateErrors {
 	if len(a.EnvVariables) == 0 {
 		return nil
 	}
 
-	ve := errors.ValidationErrors{}
+	errs := core.ValidateErrors{}
 	for k, _ := range a.EnvVariables {
 		curpc := pc.SubKey("environment", k)
 		if startsWithNumber(k) {
-			ve = append(ve, EnvVariableKeyStartsWithNumberError(ic, curpc))
+			errs = append(errs, EnvVariableKeyStartsWithNumberError(curpc))
 		}
 		if strings.IndexFunc(k, hasInvalidChars) != -1 {
-			ve = append(ve, EnvVariableKeyInvalidCharsError(ic, curpc))
+			errs = append(errs, EnvVariableKeyInvalidCharsError(curpc))
 		}
 	}
 
-	if len(ve) > 0 {
-		return ve
+	if len(errs) > 0 {
+		return errs
 	}
 	return nil
 }

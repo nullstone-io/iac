@@ -11,11 +11,11 @@ func ApplyChangesTo(input ParseMapResult, block types.Block, env types.Environme
 			return err
 		}
 	}
-	overrides, _ := input.Overrides[env.Name]
+	name := env.Name
 	if env.Type == types.EnvTypePreview {
-		overrides, _ = input.Overrides["previews"]
+		name = "previews"
 	}
-	if overrides != nil {
+	if overrides, ok := input.Overrides[name]; ok && overrides != nil {
 		if err := overrides.ApplyChangesTo(block, updater); err != nil {
 			return err
 		}

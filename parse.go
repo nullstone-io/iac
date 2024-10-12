@@ -33,8 +33,13 @@ func (e InvalidYamlError) Unwrap() error {
 }
 
 type ParseMapResult struct {
-	Config    *config.EnvConfiguration
-	Overrides map[string]*config.EnvConfiguration
+	// Config contains `.nullstone/config.yml` validated and normalized as Nullstone objects
+	// This was added to the state since TemporalIacSync.IacSync Config is intentionally redacted from json
+	Config *config.EnvConfiguration `json:"config"`
+
+	// Overrides contains `.nullstone/<env|previews>.yml` validated and normalized as Nullstone objects
+	// This was added to the state since TemporalIacSync.IacSync Overrides is intentionally redacted from json
+	Overrides map[string]*config.EnvConfiguration `json:"overrides"`
 }
 
 func ParseMap(parseContext string, files map[string]string) (ParseMapResult, error) {

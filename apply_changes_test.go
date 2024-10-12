@@ -26,8 +26,10 @@ func TestApplyChanges(t *testing.T) {
 				Value:    512,
 			},
 		},
-		Connections:  types.Connections{},
-		EnvVariables: types.EnvVariables{},
+		Connections: types.Connections{},
+		EnvVariables: types.EnvVariables{
+			"KEY1": types.EnvVariable{Value: "value1"},
+		},
 		Capabilities: types.CapabilityConfigs{
 			types.CapabilityConfig{
 				Id:            3,
@@ -81,8 +83,11 @@ func TestApplyChanges(t *testing.T) {
 						Value:    float64(512),
 					},
 				},
-				Connections:  types.Connections{},
-				EnvVariables: types.EnvVariables{},
+				Connections: types.Connections{},
+				EnvVariables: types.EnvVariables{
+					"KEY1": types.EnvVariable{Value: "value1"},
+					"KEY3": types.EnvVariable{Value: "value3"},
+				},
 				Capabilities: types.CapabilityConfigs{
 					types.CapabilityConfig{
 						// changed by overrides
@@ -121,8 +126,11 @@ func TestApplyChanges(t *testing.T) {
 						Value:    2048,
 					},
 				},
-				Connections:  types.Connections{},
-				EnvVariables: types.EnvVariables{},
+				Connections: types.Connections{},
+				EnvVariables: types.EnvVariables{
+					"KEY2": types.EnvVariable{Value: "value2"},
+					"KEY3": types.EnvVariable{Value: "value3"},
+				},
 				Capabilities: types.CapabilityConfigs{
 					// cleared by config.yml
 				},
@@ -147,8 +155,10 @@ func TestApplyChanges(t *testing.T) {
 						Value:    float64(512),
 					},
 				},
-				Connections:  types.Connections{},
-				EnvVariables: types.EnvVariables{},
+				Connections: types.Connections{},
+				EnvVariables: types.EnvVariables{
+					"KEY2": types.EnvVariable{Value: "value2"},
+				},
 				Capabilities: types.CapabilityConfigs{
 					types.CapabilityConfig{
 						// preserved in config.yml

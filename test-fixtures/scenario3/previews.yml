@@ -4,3 +4,5 @@ apps:
   app1:
     vars:
       cpu: 512
+    environment:
+      KEY3: value3

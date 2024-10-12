@@ -4,6 +4,8 @@ apps:
   app1:
     vars:
       cpu: 512
+    environment:
+      KEY3: value3
     capabilities:
       - module: nullstone/fake-cap
         module_version: "0.1.2"

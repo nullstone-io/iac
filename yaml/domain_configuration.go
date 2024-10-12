@@ -9,9 +9,9 @@ type DomainConfiguration struct {
 	DnsName string `yaml:"dns_name,omitempty" json:"dnsName"`
 }
 
-func DomainConfigurationFromWorkspaceConfig(block types.Block, config types.WorkspaceConfig) DomainConfiguration {
+func DomainConfigurationFromWorkspaceConfig(stackId, envId int64, block types.Block, config types.WorkspaceConfig) DomainConfiguration {
 	return DomainConfiguration{
-		BlockConfiguration: BlockConfigurationFromWorkspaceConfig(config),
+		BlockConfiguration: BlockConfigurationFromWorkspaceConfig(stackId, envId, config),
 		DnsName:            block.DnsName,
 	}
 }

@@ -10,6 +10,7 @@ type IacContext struct {
 	RepoName    string
 	Filename    string
 	IsOverrides bool
+	Version     string
 }
 
 func (c IacContext) Context(sub ObjectPathContext) string {

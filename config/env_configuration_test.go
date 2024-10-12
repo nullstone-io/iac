@@ -271,6 +271,7 @@ func TestConvertConfiguration(t *testing.T) {
 				IacContext: core.IacContext{
 					RepoName: "acme/api",
 					Filename: "config.yml",
+					Version:  "0.1",
 				},
 				Applications: map[string]*AppConfiguration{
 					"acme-docs": {
@@ -475,6 +476,7 @@ func TestConvertConfiguration(t *testing.T) {
 					RepoName:    "acme/api",
 					Filename:    "config.yml",
 					IsOverrides: true,
+					Version:     "0.1",
 				},
 				Applications: map[string]*AppConfiguration{
 					"acme-api": {

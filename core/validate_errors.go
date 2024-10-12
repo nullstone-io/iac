@@ -6,9 +6,9 @@ import (
 )
 
 type ValidateError struct {
-	IacContext        IacContext
-	ObjectPathContext ObjectPathContext
-	ErrorMessage      string
+	IacContext        IacContext        `json:"iacContext"`
+	ObjectPathContext ObjectPathContext `json:"objectPathContext"`
+	ErrorMessage      string            `json:"errorMessage"`
 }
 
 func (e ValidateError) ToValidationError() errors.ValidationError {

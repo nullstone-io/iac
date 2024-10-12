@@ -1,0 +1,6 @@
+version: "0.1"
+
+apps:
+  app1:
+    vars:
+      cpu: 512

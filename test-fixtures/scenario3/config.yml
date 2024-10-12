@@ -1,0 +1,8 @@
+version: "0.1"
+
+apps:
+  app1:
+    vars:
+      memory: 2048
+    capabilities: []
+    

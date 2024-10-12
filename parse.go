@@ -86,16 +86,21 @@ func ParseConfigFile(parseContext, filename string, isOverrides bool) (*config.E
 }
 
 func ParseConfigDir(dir string) (*ParseMapResult, error) {
-	pmr := &ParseMapResult{}
+	pmr := &ParseMapResult{
+		Overrides: map[string]*config.EnvConfiguration{},
+	}
 	entries, err := os.ReadDir(dir)
-	if !os.IsNotExist(err) {
+	if os.IsNotExist(err) {
 		return pmr, nil
+	}
+	if err != nil {
+		return nil, err
 	}
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yml") {
 			continue
 		}
-		isOverrides := strings.HasSuffix(entry.Name(), fmt.Sprintf("config.yml"))
+		isOverrides := entry.Name() != "config.yml"
 		ec, err := ParseConfigFile("TestApplyChanges", filepath.Join(dir, entry.Name()), isOverrides)
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse config file: %w", err)

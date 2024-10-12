@@ -68,9 +68,9 @@ func (w ConfigUpdater) AddOrUpdateEnvVariable(name string, value string, sensiti
 }
 
 func (w ConfigUpdater) RemoveEnvVariablesNotIn(envVariables map[string]string) {
-	for k, _ := range w.Config.Variables {
+	for k, _ := range w.Config.EnvVariables {
 		if _, ok := envVariables[k]; !ok {
-			delete(w.Config.Variables, k)
+			delete(w.Config.EnvVariables, k)
 		}
 	}
 }

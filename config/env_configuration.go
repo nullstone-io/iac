@@ -26,6 +26,7 @@ func ConvertConfiguration(repoName, filename string, isOverrides bool, parsed ya
 			RepoName:    repoName,
 			Filename:    filename,
 			IsOverrides: isOverrides,
+			Version:     parsed.Version,
 		},
 	}
 	result.Applications = convertAppConfigurations(parsed.Applications)
@@ -216,4 +217,32 @@ func (e *EnvConfiguration) ToBlocks(orgName string, stackId int64) types.Blocks 
 	}
 
 	return blocks
+}
+
+func (e *EnvConfiguration) ApplyChangesTo(block types.Block, updater core.WorkspaceConfigUpdater) error {
+	var ca core.ChangeApplier
+	switch BlockType(block.Type) {
+	case BlockTypeApplication:
+		ca, _ = e.Applications[block.Name]
+	case BlockTypeDomain:
+		ca, _ = e.Domains[block.Name]
+	case BlockTypeSubdomain:
+		ca, _ = e.Subdomains[block.Name]
+	case BlockTypeIngress:
+		ca, _ = e.Ingresses[block.Name]
+	case BlockTypeDatastore:
+		ca, _ = e.Datastores[block.Name]
+	case BlockTypeClusterNamespace:
+		ca, _ = e.ClusterNamespaces[block.Name]
+	case BlockTypeCluster:
+		ca, _ = e.Clusters[block.Name]
+	case BlockTypeNetwork:
+		ca, _ = e.Networks[block.Name]
+	default:
+		ca, _ = e.Blocks[block.Name]
+	}
+	if ca == nil {
+		return nil
+	}
+	return ca.ApplyChangesTo(e.IacContext, updater)
 }

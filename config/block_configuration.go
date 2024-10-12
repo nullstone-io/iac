@@ -8,6 +8,10 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
+var (
+	_ core.ChangeApplier = &BlockConfiguration{}
+)
+
 type BlockType string
 
 const (
@@ -145,4 +149,15 @@ func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block 
 		block.Connections[k] = conn
 	}
 	return block
+}
+
+func (b *BlockConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
+	updater.UpdateSchema(b.ModuleSource, b.ModuleVersion)
+	for name, value := range b.Variables {
+		updater.UpdateVariableValue(name, value)
+	}
+	for name, value := range b.Connections {
+		updater.UpdateConnectionTarget(name, value)
+	}
+	return nil
 }

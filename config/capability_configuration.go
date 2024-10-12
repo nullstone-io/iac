@@ -7,7 +7,20 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
+var (
+	_ core.ChangeApplier = CapabilityConfigurations{}
+	_ core.ChangeApplier = CapabilityConfiguration{}
+)
+
 type CapabilityConfigurations []CapabilityConfiguration
+
+func (c CapabilityConfigurations) Identities() []core.CapabilityIdentity {
+	result := make([]core.CapabilityIdentity, 0)
+	for _, cur := range c {
+		result = append(result, cur.Identity())
+	}
+	return result
+}
 
 func (c CapabilityConfigurations) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
 	for i, iacCap := range c {
@@ -61,6 +74,25 @@ func (c CapabilityConfigurations) ToCapabilities(stackId int64) []types.Capabili
 	return result
 }
 
+func (c CapabilityConfigurations) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
+	if ic.IsOverrides {
+		for _, cur := range c {
+			if err := cur.ApplyChangesTo(ic, updater); err != nil {
+				return err
+			}
+		}
+	} else {
+		updater.RemoveCapabilitiesNotIn(c.Identities())
+		for _, cur := range c {
+			if err := cur.ApplyChangesTo(ic, updater); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 type CapabilityConfiguration struct {
 	ModuleSource        string                  `json:"moduleSource"`
 	ModuleSourceVersion string                  `json:"moduleSourceVersion"`
@@ -70,6 +102,13 @@ type CapabilityConfiguration struct {
 
 	Module        *types.Module        `json:"module"`
 	ModuleVersion *types.ModuleVersion `json:"moduleVersion"`
+}
+
+func (c CapabilityConfiguration) Identity() core.CapabilityIdentity {
+	return core.CapabilityIdentity{
+		ModuleSource:      c.ModuleSource,
+		ConnectionTargets: c.Connections,
+	}
 }
 
 func (c CapabilityConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) (CapabilityConfiguration, error) {
@@ -117,6 +156,23 @@ func (c CapabilityConfiguration) Validate(ctx context.Context, resolver core.Val
 	}
 	if len(errs) > 0 {
 		return errs
+	}
+	return nil
+}
+
+func (c CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
+	capUpdater := updater.GetCapabilityUpdater(c.Identity())
+	if capUpdater == nil {
+		return nil
+	}
+
+	capUpdater.UpdateSchema(c.ModuleSource, c.ModuleVersion)
+	capUpdater.UpdateNamespace(c.Namespace)
+	for name, value := range c.Variables {
+		capUpdater.UpdateVariableValue(name, value)
+	}
+	for name, value := range c.Connections {
+		capUpdater.UpdateConnectionTarget(name, value)
 	}
 	return nil
 }

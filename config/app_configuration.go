@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+var (
+	_ core.ChangeApplier = &AppConfiguration{}
+)
+
 type AppConfiguration struct {
 	BlockConfiguration
 
@@ -143,4 +147,23 @@ func (a *AppConfiguration) ToBlock(orgName string, stackId int64) types.Block {
 	block := a.BlockConfiguration.ToBlock(orgName, stackId)
 	block.Capabilities = a.Capabilities.ToCapabilities(stackId)
 	return block
+}
+
+func (a *AppConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
+	if err := a.BlockConfiguration.ApplyChangesTo(ic, updater); err != nil {
+		return err
+	}
+
+	if ic.IsOverrides {
+		for name, value := range a.EnvVariables {
+			updater.AddOrUpdateEnvVariable(name, value, false)
+		}
+	} else {
+		updater.RemoveEnvVariablesNotIn(a.EnvVariables)
+		for name, value := range a.EnvVariables {
+			updater.AddOrUpdateEnvVariable(name, value, false)
+		}
+	}
+
+	return a.Capabilities.ApplyChangesTo(ic, updater)
 }

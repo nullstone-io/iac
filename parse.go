@@ -7,7 +7,9 @@ import (
 	yaml2 "github.com/nullstone-io/iac/yaml"
 	"gopkg.in/yaml.v3"
 	"io"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -73,4 +75,36 @@ func ParseConfig(parseContext, filename string, isOverrides bool, r io.Reader) (
 		return nil, InvalidYamlError{ParseContext: parseContext, FileName: filename, Err: err}
 	}
 	return config.ConvertConfiguration(parseContext, filename, isOverrides, obj), nil
+}
+
+func ParseConfigFile(parseContext, filename string, isOverrides bool) (*config.EnvConfiguration, error) {
+	raw, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return ParseConfig(parseContext, filename, isOverrides, bytes.NewReader(raw))
+}
+
+func ParseConfigDir(dir string) (*ParseMapResult, error) {
+	pmr := &ParseMapResult{}
+	entries, err := os.ReadDir(dir)
+	if !os.IsNotExist(err) {
+		return pmr, nil
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yml") {
+			continue
+		}
+		isOverrides := strings.HasSuffix(entry.Name(), fmt.Sprintf("config.yml"))
+		ec, err := ParseConfigFile("TestApplyChanges", filepath.Join(dir, entry.Name()), isOverrides)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse config file: %w", err)
+		}
+		if !isOverrides {
+			pmr.Config = ec
+		} else {
+			pmr.Overrides[strings.TrimSuffix(entry.Name(), ".yml")] = ec
+		}
+	}
+	return pmr, nil
 }

@@ -8,7 +8,7 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
-var _ ValidateResolver = &ApiResolver{}
+var _ ResolveResolver = &ApiResolver{}
 
 type ApiResolver struct {
 	ApiClient        *api.Client

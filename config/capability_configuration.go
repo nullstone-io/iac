@@ -4,15 +4,17 @@ import (
 	"context"
 	"fmt"
 	"github.com/nullstone-io/iac/core"
+	"github.com/nullstone-io/module/config"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
+	"strings"
 )
 
 var (
 	_ core.ChangeApplier = CapabilityConfigurations{}
-	_ core.ChangeApplier = CapabilityConfiguration{}
+	_ core.ChangeApplier = &CapabilityConfiguration{}
 )
 
-type CapabilityConfigurations []CapabilityConfiguration
+type CapabilityConfigurations []*CapabilityConfiguration
 
 func (c CapabilityConfigurations) Identities() []core.CapabilityIdentity {
 	result := make([]core.CapabilityIdentity, 0)
@@ -23,26 +25,22 @@ func (c CapabilityConfigurations) Identities() []core.CapabilityIdentity {
 }
 
 func (c CapabilityConfigurations) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
-	for i, iacCap := range c {
-		resolved, err := iacCap.Normalize(ctx, resolver)
-		if err != nil {
+	for _, iacCap := range c {
+		if err := iacCap.Connections.Normalize(ctx, resolver); err != nil {
 			return err
 		}
-		c[i] = resolved
 	}
 	return nil
 }
 
 // Validate performs validation on all IaC capabilities
-func (c CapabilityConfigurations) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext,
-	pc core.ObjectPathContext, appModule *types.Module) core.ValidateErrors {
+func (c CapabilityConfigurations) Validate(ic core.IacContext, pc core.ObjectPathContext, appModule *types.Module) core.ValidateErrors {
 	if len(c) == 0 {
 		return nil
 	}
 	errs := core.ValidateErrors{}
 	for i, iacCap := range c {
-		curpc := pc.SubIndex("capabilities", i)
-		errs = append(errs, iacCap.Validate(ctx, resolver, ic, curpc, appModule)...)
+		errs = append(errs, iacCap.Validate(ic, pc.SubIndex("capabilities", i), appModule)...)
 	}
 
 	if len(errs) > 0 {
@@ -63,7 +61,7 @@ func (c CapabilityConfigurations) ToCapabilities(stackId int64) []types.Capabili
 			capability.Namespace = *cur.Namespace
 		}
 		for key, conn := range cur.Connections {
-			target := conn
+			target := conn.Target
 			if target.StackId == 0 && target.StackName == "" {
 				target.StackId = stackId
 			}
@@ -93,33 +91,79 @@ func (c CapabilityConfigurations) ApplyChangesTo(ic core.IacContext, updater cor
 	return nil
 }
 
+func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext,
+	pc core.ObjectPathContext, appModule *types.Module) core.ResolveErrors {
+	if len(c) == 0 {
+		return nil
+	}
+	errs := core.ResolveErrors{}
+	for i, iacCap := range c {
+		errs = append(errs, iacCap.Resolve(ctx, resolver, ic, pc.SubIndex("capabilities", i), appModule)...)
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
+
 type CapabilityConfiguration struct {
-	ModuleSource        string                  `json:"moduleSource"`
-	ModuleSourceVersion string                  `json:"moduleSourceVersion"`
-	Variables           map[string]any          `json:"vars"`
-	Connections         types.ConnectionTargets `json:"connections"`
-	Namespace           *string                 `json:"namespace"`
+	ModuleSource        string                   `json:"moduleSource"`
+	ModuleSourceVersion string                   `json:"moduleSourceVersion"`
+	Variables           VariableConfigurations   `json:"vars"`
+	Connections         ConnectionConfigurations `json:"connections"`
+	Namespace           *string                  `json:"namespace"`
 
 	Module        *types.Module        `json:"module"`
 	ModuleVersion *types.ModuleVersion `json:"moduleVersion"`
 }
 
-func (c CapabilityConfiguration) Identity() core.CapabilityIdentity {
+func (c *CapabilityConfiguration) Identity() core.CapabilityIdentity {
 	return core.CapabilityIdentity{
 		ModuleSource:      c.ModuleSource,
-		ConnectionTargets: c.Connections,
+		ConnectionTargets: c.Connections.Targets(),
 	}
 }
 
-func (c CapabilityConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) (CapabilityConfiguration, error) {
-	if err := NormalizeConnectionTargets(ctx, c.Connections, resolver); err != nil {
-		return c, err
+func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext,
+	pc core.ObjectPathContext, appModule *types.Module) core.ResolveErrors {
+	if c.Variables == nil {
+		c.Variables = VariableConfigurations{}
 	}
-	return c, nil
+	if c.Connections == nil {
+		c.Connections = ConnectionConfigurations{}
+	}
+	if ic.IsOverrides && c.ModuleSource == "" {
+		// TODO: Add support for loading module in overrides file
+		return nil
+	}
+
+	errs := core.ResolveErrors{}
+
+	contract := types.ModuleContractName{
+		Category: string(types.CategoryCapability),
+		Provider: "*",
+		Platform: "*",
+	}
+	if appModule != nil {
+		contract.Provider = strings.Join(appModule.ProviderTypes, ",")
+	}
+
+	manifest := config.Manifest{Variables: map[string]config.Variable{}, Connections: map[string]config.Connection{}}
+	m, mv, err := core.ResolveModule(ctx, resolver, pc, c.ModuleSource, c.ModuleSourceVersion, contract)
+	if err != nil {
+		errs = append(errs, *err)
+	} else {
+		c.Module = m
+		c.ModuleVersion = mv
+		manifest = mv.Manifest
+	}
+	errs = append(errs, c.Variables.Resolve(manifest)...)
+	errs = append(errs, c.Connections.Resolve(ctx, resolver, pc, manifest)...)
+	return errs
 }
 
-func (c CapabilityConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext,
-	pc core.ObjectPathContext, appModule *types.Module) core.ValidateErrors {
+func (c *CapabilityConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext, appModule *types.Module) core.ValidateErrors {
 	if c.Module == nil {
 		// We can't perform validation if the module isn't loaded
 		return nil
@@ -146,21 +190,18 @@ func (c CapabilityConfiguration) Validate(ctx context.Context, resolver core.Val
 		}
 	}
 
-	// if we were able to find the module version
 	//   1. validate each of the variables to ensure the module supports them
 	//   2. validate each of the connections to ensure the block matches the connection contract
-	if mv := c.ModuleVersion; mv != nil {
-		moduleName := fmt.Sprintf("%s@%s", c.ModuleSource, c.ModuleSourceVersion)
-		errs = append(errs, core.ValidateVariables(pc, c.Variables, mv.Manifest.Variables, moduleName)...)
-		errs = append(errs, core.ValidateConnections(ctx, resolver, pc, c.Connections, mv.Manifest.Connections, moduleName)...)
-	}
+	moduleName := fmt.Sprintf("%s@%s", c.ModuleSource, c.ModuleSourceVersion)
+	errs = append(errs, c.Variables.Validate(pc, moduleName)...)
+	errs = append(errs, c.Connections.Validate(pc, moduleName)...)
 	if len(errs) > 0 {
 		return errs
 	}
 	return nil
 }
 
-func (c CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
+func (c *CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
 	capUpdater := updater.GetCapabilityUpdater(c.Identity())
 	if capUpdater == nil {
 		return nil
@@ -168,11 +209,11 @@ func (c CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater core
 
 	capUpdater.UpdateSchema(c.ModuleSource, c.ModuleVersion)
 	capUpdater.UpdateNamespace(c.Namespace)
-	for name, value := range c.Variables {
-		capUpdater.UpdateVariableValue(name, value)
+	for name, vc := range c.Variables {
+		capUpdater.UpdateVariableValue(name, vc.Value)
 	}
-	for name, value := range c.Connections {
-		capUpdater.UpdateConnectionTarget(name, value)
+	for name, cc := range c.Connections {
+		capUpdater.UpdateConnectionTarget(name, cc.Target)
 	}
 	return nil
 }

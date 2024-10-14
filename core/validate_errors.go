@@ -31,15 +31,15 @@ func (s ValidateErrors) ToValidationErrors() errors.ValidationErrors {
 	return ve
 }
 
-func VariableDoesNotExistError(pc ObjectPathContext, moduleName string) ValidateError {
-	return ValidateError{
+func VariableDoesNotExistError(pc ObjectPathContext, moduleName string) *ValidateError {
+	return &ValidateError{
 		ObjectPathContext: pc,
 		ErrorMessage:      fmt.Sprintf("Variable does not exist on the module (%s)", moduleName),
 	}
 }
 
-func ConnectionDoesNotExistError(pc ObjectPathContext, moduleName string) ValidateError {
-	return ValidateError{
+func ConnectionDoesNotExistError(pc ObjectPathContext, moduleName string) *ValidateError {
+	return &ValidateError{
 		ObjectPathContext: pc,
 		ErrorMessage:      fmt.Sprintf("Connection does not exist on the module (%s)", moduleName),
 	}
@@ -49,34 +49,6 @@ func MissingConnectionBlockError(pc ObjectPathContext) *ValidateError {
 	return &ValidateError{
 		ObjectPathContext: pc,
 		ErrorMessage:      fmt.Sprintf("Connection must have a block_name to identify which block it is connected to"),
-	}
-}
-
-func MissingConnectionTargetError(pc ObjectPathContext, err error) *ValidateError {
-	return &ValidateError{
-		ObjectPathContext: pc,
-		ErrorMessage:      fmt.Sprintf("Connection is invalid, %s", err),
-	}
-}
-
-func LookupConnectionTargetFailedError(pc ObjectPathContext, err error) *ValidateError {
-	return &ValidateError{
-		ObjectPathContext: pc,
-		ErrorMessage:      fmt.Sprintf("Failed to validate connection, error when looking up connection target: %s", err),
-	}
-}
-
-func ModuleLookupFailedError(pc ObjectPathContext, moduleSource string, err error) *ValidateError {
-	return &ValidateError{
-		ObjectPathContext: pc.SubField("module"),
-		ErrorMessage:      fmt.Sprintf("Module (%s) lookup failed: %s", moduleSource, err),
-	}
-}
-
-func InvalidModuleFormatError(pc ObjectPathContext, moduleSource string) *ValidateError {
-	return &ValidateError{
-		ObjectPathContext: pc.SubField("module"),
-		ErrorMessage:      fmt.Sprintf("Invalid module format (%s) - must be in the format \"<module-org>/<module-name>\"", moduleSource),
 	}
 }
 

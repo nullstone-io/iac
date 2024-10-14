@@ -73,3 +73,31 @@ func MissingModuleVersionError(pc ObjectPathContext, source, version string) *Re
 		ErrorMessage:      fmt.Sprintf("Module version (%s@%s) does not exist", source, version),
 	}
 }
+
+func MissingConnectionTargetError(pc ObjectPathContext, err error) *ResolveError {
+	return &ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Connection is invalid, %s", err),
+	}
+}
+
+func LookupConnectionTargetFailedError(pc ObjectPathContext, err error) *ResolveError {
+	return &ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Failed to validate connection, error when looking up connection target: %s", err),
+	}
+}
+
+func InvalidModuleFormatError(pc ObjectPathContext, moduleSource string) *ResolveError {
+	return &ResolveError{
+		ObjectPathContext: pc.SubField("module"),
+		ErrorMessage:      fmt.Sprintf("Invalid module format (%s) - must be in the format \"<module-org>/<module-name>\"", moduleSource),
+	}
+}
+
+func ModuleLookupFailedError(pc ObjectPathContext, moduleSource string, err error) *ResolveError {
+	return &ResolveError{
+		ObjectPathContext: pc.SubField("module"),
+		ErrorMessage:      fmt.Sprintf("Module (%s) lookup failed: %s", moduleSource, err),
+	}
+}

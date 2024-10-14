@@ -142,8 +142,8 @@ func (b *BlockConfiguration) Validate(ic core.IacContext, pc core.ObjectPathCont
 	return nil
 }
 
-func (b *BlockConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
-	return b.Connections.Normalize(ctx, resolver)
+func (b *BlockConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) core.NormalizeErrors {
+	return b.Connections.Normalize(ctx, pc, resolver)
 }
 
 func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block {

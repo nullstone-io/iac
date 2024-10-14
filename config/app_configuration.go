@@ -93,11 +93,11 @@ func (a *AppConfiguration) ValidateEnvVariables(pc core.ObjectPathContext) core.
 	return nil
 }
 
-func (a *AppConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
-	if err := a.Connections.Normalize(ctx, resolver); err != nil {
-		return err
-	}
-	return a.Capabilities.Normalize(ctx, resolver)
+func (a *AppConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) core.NormalizeErrors {
+	errs := core.NormalizeErrors{}
+	errs = append(errs, a.Connections.Normalize(ctx, pc, resolver)...)
+	errs = append(errs, a.Capabilities.Normalize(ctx, pc, resolver)...)
+	return errs
 }
 
 func (a *AppConfiguration) ToBlock(orgName string, stackId int64) types.Block {

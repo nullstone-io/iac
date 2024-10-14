@@ -60,11 +60,15 @@ func (s ConnectionConfigurations) Validate(pc core.ObjectPathContext, moduleName
 // Normalize loops through all connections and does the following to Target:
 // 1. Fills all fields (Id+Name for Stack/Block/Env)
 // 2. If block.IsShared, resolves the Env to the previews-shared env
-func (s ConnectionConfigurations) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
+func (s ConnectionConfigurations) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) core.NormalizeErrors {
+	errs := core.NormalizeErrors{}
 	for _, connection := range s {
-		if err := connection.Normalize(ctx, resolver); err != nil {
-			return err
+		if err := connection.Normalize(ctx, pc, resolver); err != nil {
+			errs = append(errs, *err)
 		}
+	}
+	if len(errs) > 0 {
+		return errs
 	}
 	return nil
 }
@@ -134,10 +138,13 @@ func (c *ConnectionConfiguration) Validate(pc core.ObjectPathContext, moduleName
 	return nil
 }
 
-func (c *ConnectionConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
+func (c *ConnectionConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) *core.NormalizeError {
 	ct, err := resolver.ResolveConnection(ctx, c.Target)
 	if err != nil {
-		return err
+		return &core.NormalizeError{
+			ObjectPathContext: pc,
+			ErrorMessage:      err.Error(),
+		}
 	}
 	c.Target = ct
 	return nil

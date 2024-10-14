@@ -7,7 +7,7 @@ type CapabilityConfigurations []CapabilityConfiguration
 type CapabilityConfiguration struct {
 	ModuleSource        string            `yaml:"module,omitempty" json:"module"`
 	ModuleSourceVersion *string           `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any    `yaml:"vars" json:"vars"`
+	Variables           map[string]any    `yaml:"vars,omitempty" json:"vars"`
 	Connections         ConnectionTargets `yaml:"connections,omitempty" json:"connections"`
 	Namespace           *string           `yaml:"namespace,omitempty" json:"namespace"`
 }
@@ -15,8 +15,8 @@ type CapabilityConfiguration struct {
 type AppConfiguration struct {
 	BlockConfiguration `yaml:",inline" json:",inline"`
 
-	EnvVariables map[string]string        `yaml:"environment" json:"envVars"`
-	Capabilities CapabilityConfigurations `yaml:"capabilities" json:"capabilities"`
+	EnvVariables map[string]string        `yaml:"environment,omitempty" json:"envVars"`
+	Capabilities CapabilityConfigurations `yaml:"capabilities,omitempty" json:"capabilities"`
 }
 
 func AppConfigurationFromWorkspaceConfig(stackId, envId int64, config types.WorkspaceConfig) AppConfiguration {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/nullstone-io/iac/config"
 	yaml2 "github.com/nullstone-io/iac/yaml"
+	"gopkg.in/nullstone-io/go-api-client.v0/types"
 	"gopkg.in/yaml.v3"
 	"io"
 	"os"
@@ -40,6 +41,23 @@ type ParseMapResult struct {
 	// Overrides contains `.nullstone/<env|previews>.yml` validated and normalized as Nullstone objects
 	// This was added to the state since TemporalIacSync.IacSync Overrides is intentionally redacted from json
 	Overrides map[string]*config.EnvConfiguration `json:"overrides"`
+}
+
+func (r ParseMapResult) BlockNames(env types.Environment) map[string]bool {
+	blockNames := map[string]bool{}
+	if r.Config != nil {
+		blockNames = r.Config.BlockNames()
+	}
+	envName := env.Name
+	if env.Type == types.EnvTypePreview {
+		envName = "previews"
+	}
+	if cur, _ := r.Overrides[envName]; cur != nil {
+		for k := range cur.BlockNames() {
+			blockNames[k] = true
+		}
+	}
+	return blockNames
 }
 
 func ParseMap(parseContext string, files map[string]string) (ParseMapResult, error) {

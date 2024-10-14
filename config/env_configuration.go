@@ -244,3 +244,35 @@ func (e *EnvConfiguration) ApplyChangesTo(block types.Block, updater core.Worksp
 	}
 	return ca.ApplyChangesTo(e.IacContext, updater)
 }
+
+func (e *EnvConfiguration) BlockNames() map[string]bool {
+	names := map[string]bool{}
+	for _, cur := range e.Applications {
+		names[cur.Name] = true
+	}
+	for _, cur := range e.Blocks {
+		names[cur.Name] = true
+	}
+	for _, cur := range e.Clusters {
+		names[cur.Name] = true
+	}
+	for _, cur := range e.ClusterNamespaces {
+		names[cur.Name] = true
+	}
+	for _, cur := range e.Datastores {
+		names[cur.Name] = true
+	}
+	for _, cur := range e.Domains {
+		names[cur.Name] = true
+	}
+	for _, cur := range e.Ingresses {
+		names[cur.Name] = true
+	}
+	for _, cur := range e.Networks {
+		names[cur.Name] = true
+	}
+	for _, cur := range e.Subdomains {
+		names[cur.Name] = true
+	}
+	return names
+}

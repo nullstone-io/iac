@@ -1,6 +1,8 @@
 module github.com/nullstone-io/iac
 
-go 1.18
+go 1.22.0
+
+toolchain go1.22.8
 
 require (
 	github.com/BSick7/go-api v0.13.1
@@ -8,7 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/nullstone-io/module v0.2.9
 	github.com/stretchr/testify v1.8.4
-	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20241012162444-151ae21de43d
+	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20241014133021-30b0d9bd3fb8
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -32,6 +34,6 @@ require (
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
-	golang.org/x/mod v0.5.1 // indirect
+	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/text v0.3.2 // indirect
 )

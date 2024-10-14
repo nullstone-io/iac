@@ -6,10 +6,18 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
+var (
+	_ error = ResolveError{}
+)
+
 type ResolveError struct {
 	IacContext        IacContext        `json:"iacContext"`
 	ObjectPathContext ObjectPathContext `json:"objectPathContext"`
 	ErrorMessage      string            `json:"errorMessage"`
+}
+
+func (e ResolveError) Error() string {
+	return fmt.Sprintf("%s => %s", e.IacContext.Context(e.ObjectPathContext), e.ErrorMessage)
 }
 
 func (e ResolveError) ToValidationError() errors.ValidationError {

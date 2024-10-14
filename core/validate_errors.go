@@ -5,10 +5,18 @@ import (
 	"github.com/BSick7/go-api/errors"
 )
 
+var (
+	_ error = ValidateError{}
+)
+
 type ValidateError struct {
 	IacContext        IacContext        `json:"iacContext"`
 	ObjectPathContext ObjectPathContext `json:"objectPathContext"`
 	ErrorMessage      string            `json:"errorMessage"`
+}
+
+func (e ValidateError) Error() string {
+	return fmt.Sprintf("%s => %s", e.IacContext.Context(e.ObjectPathContext), e.ErrorMessage)
 }
 
 func (e ValidateError) ToValidationError() errors.ValidationError {

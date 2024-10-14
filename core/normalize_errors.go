@@ -1,11 +1,22 @@
 package core
 
-import "github.com/BSick7/go-api/errors"
+import (
+	"fmt"
+	"github.com/BSick7/go-api/errors"
+)
+
+var (
+	_ error = NormalizeError{}
+)
 
 type NormalizeError struct {
 	IacContext        IacContext        `json:"iacContext"`
 	ObjectPathContext ObjectPathContext `json:"objectPathContext"`
 	ErrorMessage      string            `json:"errorMessage"`
+}
+
+func (e NormalizeError) Error() string {
+	return fmt.Sprintf("%s => %s", e.IacContext.Context(e.ObjectPathContext), e.ErrorMessage)
 }
 
 func (e NormalizeError) ToValidationError() errors.ValidationError {

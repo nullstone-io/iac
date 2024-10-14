@@ -7,10 +7,10 @@ import (
 )
 
 type IacContext struct {
-	RepoName    string
-	Filename    string
-	IsOverrides bool
-	Version     string
+	RepoName    string `json:"repoName"`
+	Filename    string `json:"filename"`
+	IsOverrides bool   `json:"isOverrides"`
+	Version     string `json:"version"`
 }
 
 func (c IacContext) Context(sub ObjectPathContext) string {
@@ -22,10 +22,10 @@ func NewObjectPathContext(field string, index string) ObjectPathContext {
 }
 
 type ObjectPathContext struct {
-	Path  string
-	Field string
-	Index *int
-	Key   string
+	Path  string `json:"path"`
+	Field string `json:"field"`
+	Index *int   `json:"index,omitempty"`
+	Key   string `json:"key,omitempty"`
 }
 
 func (c ObjectPathContext) SubField(field string) ObjectPathContext {

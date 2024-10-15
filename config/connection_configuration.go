@@ -26,11 +26,11 @@ func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.Res
 		return nil
 	}
 	errs := core.ResolveErrors{}
-	for key, c := range s {
-		if schema, ok := blockManifest.Connections[key]; ok {
+	for name, c := range s {
+		if schema, ok := blockManifest.Connections[name]; ok {
 			c.Schema = &schema
 		}
-		if err := c.Resolve(ctx, resolver, pc.SubKey("connections", key)); err != nil {
+		if err := c.Resolve(ctx, resolver, pc.SubKey("connections", name)); err != nil {
 			errs = append(errs, *err)
 		}
 	}
@@ -46,8 +46,8 @@ func (s ConnectionConfigurations) Validate(pc core.ObjectPathContext, moduleName
 		return nil
 	}
 	errs := core.ValidateErrors{}
-	for key, cb := range s {
-		if err := cb.Validate(pc.SubKey("connections", key), moduleName); err != nil {
+	for name, cb := range s {
+		if err := cb.Validate(pc.SubKey("connections", name), moduleName); err != nil {
 			errs = append(errs, *err)
 		}
 	}
@@ -62,8 +62,8 @@ func (s ConnectionConfigurations) Validate(pc core.ObjectPathContext, moduleName
 // 2. If block.IsShared, resolves the Env to the previews-shared env
 func (s ConnectionConfigurations) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) core.NormalizeErrors {
 	errs := core.NormalizeErrors{}
-	for _, connection := range s {
-		if err := connection.Normalize(ctx, pc, resolver); err != nil {
+	for name, connection := range s {
+		if err := connection.Normalize(ctx, pc.SubKey("connections", name), resolver); err != nil {
 			errs = append(errs, *err)
 		}
 	}

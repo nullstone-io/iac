@@ -25,8 +25,8 @@ func (c CapabilityConfigurations) Identities() []core.CapabilityIdentity {
 }
 
 func (c CapabilityConfigurations) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) core.NormalizeErrors {
-	for _, iacCap := range c {
-		if err := iacCap.Connections.Normalize(ctx, pc, resolver); err != nil {
+	for i, iacCap := range c {
+		if err := iacCap.Connections.Normalize(ctx, pc.SubIndex("capabilities", i), resolver); err != nil {
 			return err
 		}
 	}

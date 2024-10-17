@@ -94,6 +94,10 @@
         {
           "type": "object",
           "properties": {
+            "framework": {
+              "type": "string",
+              "description": ""
+            },
             "environment": {
               "type": "object",
               "patternProperties": {

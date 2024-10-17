@@ -15,6 +15,7 @@ var (
 type AppConfiguration struct {
 	BlockConfiguration
 
+	Framework    string                   `json:"framework"`
 	EnvVariables map[string]string        `json:"envVars"`
 	Capabilities CapabilityConfigurations `json:"capabilities"`
 }
@@ -43,6 +44,7 @@ func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[strin
 		bc := blockConfigFromYaml(name, value.BlockConfiguration, BlockTypeApplication, types.CategoryApp)
 		apps[name] = &AppConfiguration{
 			BlockConfiguration: *bc,
+			Framework:          value.Framework,
 			EnvVariables:       value.EnvVariables,
 			Capabilities:       convertCapabilities(value.Capabilities),
 		}
@@ -102,6 +104,7 @@ func (a *AppConfiguration) Normalize(ctx context.Context, pc core.ObjectPathCont
 
 func (a *AppConfiguration) ToBlock(orgName string, stackId int64) types.Block {
 	block := a.BlockConfiguration.ToBlock(orgName, stackId)
+	block.Framework = a.Framework
 	block.Capabilities = a.Capabilities.ToCapabilities(stackId)
 	return block
 }

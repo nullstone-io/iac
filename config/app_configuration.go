@@ -2,10 +2,14 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
-	"gopkg.in/nullstone-io/go-api-client.v0/find"
+	"gopkg.in/nullstone-io/go-api-client.v0/types"
+	"strings"
+)
+
+var (
+	_ core.ChangeApplier = &AppConfiguration{}
 )
 
 type AppConfiguration struct {
@@ -15,17 +19,17 @@ type AppConfiguration struct {
 	Capabilities CapabilityConfigurations `json:"capabilities"`
 }
 
-func convertCapabilities(parsed yaml.CapabilityConfigurations) []CapabilityConfiguration {
-	result := make([]CapabilityConfiguration, len(parsed))
+func convertCapabilities(parsed yaml.CapabilityConfigurations) CapabilityConfigurations {
+	result := make(CapabilityConfigurations, len(parsed))
 	for i, capValue := range parsed {
 		moduleVersion := "latest"
 		if capValue.ModuleSourceVersion != nil {
 			moduleVersion = *capValue.ModuleSourceVersion
 		}
-		result[i] = CapabilityConfiguration{
+		result[i] = &CapabilityConfiguration{
 			ModuleSource:        capValue.ModuleSource,
 			ModuleSourceVersion: moduleVersion,
-			Variables:           capValue.Variables,
+			Variables:           convertVariables(capValue.Variables),
 			Connections:         convertConnections(capValue.Connections),
 			Namespace:           capValue.Namespace,
 		}
@@ -33,29 +37,90 @@ func convertCapabilities(parsed yaml.CapabilityConfigurations) []CapabilityConfi
 	return result
 }
 
-func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[string]AppConfiguration {
-	apps := make(map[string]AppConfiguration)
-	for appName, appValue := range parsed {
-		app := AppConfiguration{
-			BlockConfiguration: blockConfigFromYaml(appName, appValue.BlockConfiguration, BlockTypeApplication),
-			EnvVariables:       appValue.EnvVariables,
-			Capabilities:       convertCapabilities(appValue.Capabilities),
+func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[string]*AppConfiguration {
+	apps := make(map[string]*AppConfiguration)
+	for name, value := range parsed {
+		bc := blockConfigFromYaml(name, value.BlockConfiguration, BlockTypeApplication, types.CategoryApp)
+		apps[name] = &AppConfiguration{
+			BlockConfiguration: *bc,
+			EnvVariables:       value.EnvVariables,
+			Capabilities:       convertCapabilities(value.Capabilities),
 		}
-		apps[appName] = app
 	}
 	return apps
 }
 
-func (a AppConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, repoName, filename string) error {
-	yamlPath := fmt.Sprintf("apps.%s", a.Name)
-	contract := fmt.Sprintf("app/*/*")
-	return ValidateBlock(ctx, resolver, repoName, filename, yamlPath, contract, a.ModuleSource, a.ModuleSourceVersion, a.Variables, a.Connections, a.EnvVariables, a.Capabilities)
+func (a *AppConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+	errs := a.BlockConfiguration.Resolve(ctx, resolver, ic, pc)
+	errs = append(errs, a.Capabilities.Resolve(ctx, resolver, ic, pc, a.Module)...)
+	return errs
 }
 
-func (a *AppConfiguration) Normalize(ctx context.Context, resolver *find.ResourceResolver) error {
-	err := core.NormalizeConnectionTargets(ctx, a.Connections, resolver)
-	if err != nil {
+func (a *AppConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
+	errs := a.BlockConfiguration.Validate(ic, pc)
+	errs = append(errs, a.ValidateEnvVariables(pc)...)
+	errs = append(errs, a.Capabilities.Validate(ic, pc, a.Module)...)
+	return errs
+}
+
+func hasInvalidChars(r rune) bool {
+	return (r < 'A' || r > 'z') && r != '_' && (r < '0' || r > '9')
+}
+
+func startsWithNumber(s string) bool {
+	return s[0] >= '0' && s[0] <= '9'
+}
+
+func (a *AppConfiguration) ValidateEnvVariables(pc core.ObjectPathContext) core.ValidateErrors {
+	if len(a.EnvVariables) == 0 {
+		return nil
+	}
+
+	errs := core.ValidateErrors{}
+	for k, _ := range a.EnvVariables {
+		curpc := pc.SubKey("environment", k)
+		if startsWithNumber(k) {
+			errs = append(errs, EnvVariableKeyStartsWithNumberError(curpc))
+		}
+		if strings.IndexFunc(k, hasInvalidChars) != -1 {
+			errs = append(errs, EnvVariableKeyInvalidCharsError(curpc))
+		}
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
+
+func (a *AppConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) core.NormalizeErrors {
+	errs := core.NormalizeErrors{}
+	errs = append(errs, a.Connections.Normalize(ctx, pc, resolver)...)
+	errs = append(errs, a.Capabilities.Normalize(ctx, pc, resolver)...)
+	return errs
+}
+
+func (a *AppConfiguration) ToBlock(orgName string, stackId int64) types.Block {
+	block := a.BlockConfiguration.ToBlock(orgName, stackId)
+	block.Capabilities = a.Capabilities.ToCapabilities(stackId)
+	return block
+}
+
+func (a *AppConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
+	if err := a.BlockConfiguration.ApplyChangesTo(ic, updater); err != nil {
 		return err
 	}
-	return a.Capabilities.Normalize(ctx, resolver)
+
+	if ic.IsOverrides {
+		for name, value := range a.EnvVariables {
+			updater.AddOrUpdateEnvVariable(name, value, false)
+		}
+	} else {
+		updater.RemoveEnvVariablesNotIn(a.EnvVariables)
+		for name, value := range a.EnvVariables {
+			updater.AddOrUpdateEnvVariable(name, value, false)
+		}
+	}
+
+	return a.Capabilities.ApplyChangesTo(ic, updater)
 }

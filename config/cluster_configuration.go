@@ -1,29 +1,19 @@
 package config
 
 import (
-	"context"
-	"fmt"
 	"github.com/nullstone-io/iac/yaml"
-	"gopkg.in/nullstone-io/go-api-client.v0/find"
+	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
 type ClusterConfiguration struct {
 	BlockConfiguration
 }
 
-func convertClusterConfigurations(parsed map[string]yaml.ClusterConfiguration) map[string]ClusterConfiguration {
-	result := make(map[string]ClusterConfiguration)
-	for clusterName, clusterValue := range parsed {
-		cluster := ClusterConfiguration{
-			BlockConfiguration: blockConfigFromYaml(clusterName, clusterValue.BlockConfiguration, BlockTypeCluster),
-		}
-		result[clusterName] = cluster
+func convertClusterConfigurations(parsed map[string]yaml.ClusterConfiguration) map[string]*ClusterConfiguration {
+	result := make(map[string]*ClusterConfiguration)
+	for name, value := range parsed {
+		bc := blockConfigFromYaml(name, value.BlockConfiguration, BlockTypeCluster, types.CategoryCluster)
+		result[name] = &ClusterConfiguration{BlockConfiguration: *bc}
 	}
 	return result
-}
-
-func (c ClusterConfiguration) Validate(ctx context.Context, resolver *find.ResourceResolver, repoName, filename string) error {
-	yamlPath := fmt.Sprintf("clusters.%s", c.Name)
-	contract := fmt.Sprintf("cluster/*/*")
-	return ValidateBlock(ctx, resolver, repoName, filename, yamlPath, contract, c.ModuleSource, c.ModuleSourceVersion, c.Variables, c.Connections, nil, nil)
 }

@@ -1,0 +1,10 @@
+version: "0.1"
+
+apps:
+  app1:
+    vars:
+      memory: 2048
+    environment:
+      KEY2: value2
+    capabilities: []
+    

@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nullstone.io/.nullstone/config.yml",
+  "title": "Nullstone configuration specification",
+  "description": "The Nullstone configuration file is a YAML file defining a platform-agnostic architecture",
+  "type": "object",
+  "properties": {
+    "version": {
+      "const": "0.1"
+    },
+    "apps": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/app" }
+      }
+    },
+    "blocks": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/block" }
+      }
+    },
+    "cluster_namespaces": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/cluster_namespace" }
+      }
+    },
+    "clusters": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/cluster" }
+      }
+    },
+    "datastores": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/datastore" }
+      }
+    },
+    "domains": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/domain" }
+      }
+    },
+    "ingresses": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/ingress" }
+      }
+    },
+    "networks": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/network" }
+      }
+    },
+    "subdomains": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/subdomain" }
+      }
+    },
+    "required": ["version"]
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "block": {
+      "id": "#/definitions/block",
+      "type": "object",
+      "properties": {
+        "module": {
+          "type": "string",
+          "description": ""
+        },
+        "module_version": {
+          "type": "string",
+          "description": ""
+        },
+        "vars": { "$ref": "#/definitions/variables" },
+        "connections": { "$ref": "#/definitions/connection_targets" },
+        "is_shared": {
+          "type": "boolean",
+          "description": ""
+        }
+      },
+      "patternProperties": {"^x-": {}},
+      "additionalProperties": false
+    },
+    "app": {
+      "allOf": [
+        { "$ref": "#/definitions/block" },
+        {
+          "type": "object",
+          "properties": {
+            "environment": {
+              "type": "object",
+              "patternProperties": {
+                "^[A-Za-z0-9_]+$": { "type": "string" }
+              }
+            },
+            "capabilities": { "$ref":  "#/definitions/capabilities" }
+          }
+        }
+      ]
+    },
+    "cluster_namespace": {
+      "allOf": [
+        { "$ref": "#/definitions/block" }
+      ]
+    },
+    "cluster": {
+      "allOf": [
+        { "$ref": "#/definitions/block" }
+      ]
+    },
+    "datastore": {
+      "allOf": [
+        { "$ref": "#/definitions/block" }
+      ]
+    },
+    "domain": {
+      "allOf": [
+        { "$ref": "#/definitions/block" },
+        {
+          "type": "object",
+          "properties": {
+            "dns_name": {
+              "type": "string",
+              "description": ""
+            }
+          }
+        }
+      ]
+    },
+    "ingress": {
+      "allOf": [
+        { "$ref": "#/definitions/block" }
+      ]
+    },
+    "network": {
+      "allOf": [
+        { "$ref": "#/definitions/block" }
+      ]
+    },
+    "subdomain": {
+      "allOf": [
+        { "$ref": "#/definitions/block" },
+        {
+          "type": "object",
+          "properties": {
+            "dns_name": {
+              "type": "string",
+              "description": ""
+            }
+          }
+        }
+      ]
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/capability" }
+    },
+    "capability": {
+      "type": "object",
+      "properties": {
+        "namespace": { "types": "string" },
+        "module": { "type": "string" },
+        "module_version": { "type": "string" },
+        "vars": { "$ref": "#/definitions/variables" },
+        "connections": { "$ref": "#/definitions/connection_targets" }
+      }
+    },
+    "variables": {
+      "type": "object",
+      "patternProperties": {
+        "^[A-Za-z_][A-Za-z0-9_\\-]*$": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "type": "string" },
+            { "type": "integer" },
+            { "type": "number" },
+            { "type": "object" },
+            { "type": "array" }
+          ]
+        }
+      }
+    },
+    "connection_targets": {
+      "type": "object",
+      "patternProperties": {
+        "^[_a-z0-9\\-]+$": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^(?:([a-zA-Z0-9\\-]+)\\.)?(?:([a-zA-Z0-9\\-]+)\\.)?([a-zA-Z0-9\\-]+)$"
+            },
+            { "$ref": "#/definitions/connection_target" }
+          ]
+        }
+      }
+    },
+    "connection_target": {
+      "type": "object",
+      "properties": {
+        "stack_name": {
+          "type": "string"
+        },
+        "env_name": {
+          "type": "string"
+        },
+        "block_name": {
+          "type": "string"
+        }
+      },
+      "required": ["block_name"]
+    }
+  }
+}

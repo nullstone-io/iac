@@ -5,12 +5,7 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
-type Differ struct {
-	Current types.WorkspaceConfig
-	Desired types.WorkspaceConfig
-}
-
-// Diff performs a difference between two WorkspaceConfig and produces a set of []types.WorkspaceChange
+// DiffWorkspaceConfig performs a difference between two WorkspaceConfig and produces a set of []types.WorkspaceChange
 //
 // It is the inverse function of ApplyChanges as seen here:
 // ApplyChanges(current, DiffConfig(current, desired)) == current
@@ -22,47 +17,56 @@ type Differ struct {
 // - add: B-A (config in desired, not in current)
 // - remove: A-B (config in current, not in desired)
 // - update: A⋂B (config in current and desired, value changed)
-func (d Differ) Diff() IndexedChanges {
+func DiffWorkspaceConfig(cur, des types.WorkspaceConfig) IndexedChanges {
 	changes := IndexedChanges{}
-	d.diffModuleVersion(changes)
-	d.diffVariables(changes)
-	d.diffEnvVariables(changes)
-	d.diffConnections(changes)
-	d.diffCapabilities(changes)
+	diffModuleVersion(changes, cur, des)
+	diffVariables(changes, cur.Variables, des.Variables)
+	diffEnvVariables(changes, cur.EnvVariables, des.EnvVariables)
+	diffConnections(changes, cur.Connections, des.Connections)
+	diffCapabilities(changes, cur, des)
 	return changes
 }
 
-func (d Differ) diffModuleVersion(changes IndexedChanges) {
-	if d.Current.SourceVersion != "" && d.Current.SourceVersion != d.Desired.SourceVersion {
+func DiffCapabilityConfig(cur, des types.CapabilityConfig) IndexedChanges {
+	changes := IndexedChanges{}
+	diffCapModuleVersion(changes, cur, des)
+	diffVariables(changes, cur.Variables, des.Variables)
+	diffConnections(changes, cur.Connections, des.Connections)
+	diffCapNamespace(changes, cur, des)
+	return changes
+}
+
+func diffModuleVersion(changes IndexedChanges, cur, des types.WorkspaceConfig) {
+	if cur.SourceVersion != "" && cur.SourceVersion != des.SourceVersion {
 		changes.Add(types.WorkspaceChange{
 			ChangeType: types.ChangeTypeModuleVersion,
 			Identifier: types.ChangeIdentifierModuleVersion,
 			Action:     types.ChangeActionUpdate,
 			Current: types.ModuleConfig{
-				Source:        d.Current.Source,
-				SourceVersion: d.Current.SourceVersion,
-				Variables:     d.Current.Variables,
-				Connections:   d.Current.Connections,
-				Providers:     d.Current.Providers,
+				Source:        cur.Source,
+				SourceVersion: cur.SourceVersion,
+				Variables:     cur.Variables,
+				Connections:   cur.Connections,
+				Providers:     cur.Providers,
 			},
 			Desired: types.ModuleConfig{
-				Source:        d.Desired.Source,
-				SourceVersion: d.Desired.SourceVersion,
-				Variables:     d.Desired.Variables,
-				Connections:   d.Desired.Connections,
-				Providers:     d.Desired.Providers,
+				Source:        des.Source,
+				SourceVersion: des.SourceVersion,
+				Variables:     des.Variables,
+				Connections:   des.Connections,
+				Providers:     des.Providers,
 			},
 		})
 	}
 }
 
-func (d Differ) diffVariables(changes IndexedChanges) {
-	for name, b := range d.Desired.Variables {
+func diffVariables(changes IndexedChanges, cur, des types.Variables) {
+	for name, b := range des {
 		// we don't need to worry about service_env_vars/env_vars or service_secrets/secrets, these are dealt with differently
 		if name == "service_env_vars" || name == "service_secrets" || name == "env_vars" || name == "secrets" {
 			continue
 		}
-		if a, ok := d.Current.Variables[name]; !ok {
+		if a, ok := cur[name]; !ok {
 			// add variable
 			changes.Add(types.WorkspaceChange{
 				ChangeType: types.ChangeTypeVariable,
@@ -82,8 +86,8 @@ func (d Differ) diffVariables(changes IndexedChanges) {
 			})
 		}
 	}
-	for name, a := range d.Current.Variables {
-		if _, ok := d.Desired.Variables[name]; !ok {
+	for name, a := range cur {
+		if _, ok := des[name]; !ok {
 			// delete variable
 			changes.Add(types.WorkspaceChange{
 				ChangeType: types.ChangeTypeVariable,
@@ -96,9 +100,9 @@ func (d Differ) diffVariables(changes IndexedChanges) {
 	}
 }
 
-func (d Differ) diffEnvVariables(changes IndexedChanges) {
-	for name, b := range d.Desired.EnvVariables {
-		if a, ok := d.Current.EnvVariables[name]; !ok {
+func diffEnvVariables(changes IndexedChanges, cur, des types.EnvVariables) {
+	for name, b := range des {
+		if a, ok := cur[name]; !ok {
 			// add env variable
 			changes.Add(types.WorkspaceChange{
 				ChangeType: types.ChangeTypeEnvVariable,
@@ -118,8 +122,8 @@ func (d Differ) diffEnvVariables(changes IndexedChanges) {
 			})
 		}
 	}
-	for name, a := range d.Current.EnvVariables {
-		if _, ok := d.Desired.EnvVariables[name]; !ok {
+	for name, a := range cur {
+		if _, ok := des[name]; !ok {
 			// delete env variable
 			changes.Add(types.WorkspaceChange{
 				ChangeType: types.ChangeTypeEnvVariable,
@@ -132,9 +136,9 @@ func (d Differ) diffEnvVariables(changes IndexedChanges) {
 	}
 }
 
-func (d Differ) diffConnections(changes IndexedChanges) {
-	for name, b := range d.Desired.Connections {
-		if a, ok := d.Current.Connections[name]; !ok {
+func diffConnections(changes IndexedChanges, cur, des types.Connections) {
+	for name, b := range des {
+		if a, ok := cur[name]; !ok {
 			// add connection
 			changes.Add(types.WorkspaceChange{
 				ChangeType: types.ChangeTypeConnection,
@@ -154,8 +158,8 @@ func (d Differ) diffConnections(changes IndexedChanges) {
 			})
 		}
 	}
-	for name, a := range d.Current.Connections {
-		if _, ok := d.Desired.Connections[name]; !ok {
+	for name, a := range cur {
+		if _, ok := des[name]; !ok {
 			// delete connection
 			changes.Add(types.WorkspaceChange{
 				ChangeType: types.ChangeTypeConnection,
@@ -168,9 +172,9 @@ func (d Differ) diffConnections(changes IndexedChanges) {
 	}
 }
 
-func (d Differ) diffCapabilities(changes IndexedChanges) {
-	for _, b := range d.Desired.Capabilities {
-		a := d.Current.Capabilities.FindById(b.Id)
+func diffCapabilities(changes IndexedChanges, cur, des types.WorkspaceConfig) {
+	for _, b := range des.Capabilities {
+		a := cur.Capabilities.FindById(b.Id)
 		if a == nil || (a.NeedsDestroyed == true && b.NeedsDestroyed == false) {
 			// add capability
 			changes.Add(types.WorkspaceChange{
@@ -206,8 +210,8 @@ func (d Differ) diffCapabilities(changes IndexedChanges) {
 			})
 		}
 	}
-	for _, a := range d.Current.Capabilities {
-		b := d.Desired.Capabilities.FindById(a.Id)
+	for _, a := range cur.Capabilities {
+		b := des.Capabilities.FindById(a.Id)
 		// if a capability was added and then deleted from the desired config and never applied, delete it
 		// if the existing capability was marked as needs destroyed, then we don't need to do anything here
 		if b == nil && !a.NeedsDestroyed {
@@ -219,5 +223,39 @@ func (d Differ) diffCapabilities(changes IndexedChanges) {
 				Desired:    nil,
 			})
 		}
+	}
+}
+
+func diffCapModuleVersion(changes IndexedChanges, cur, des types.CapabilityConfig) {
+	if cur.SourceVersion != "" && cur.SourceVersion != des.SourceVersion {
+		changes.Add(types.WorkspaceChange{
+			ChangeType: types.ChangeTypeModuleVersion,
+			Identifier: types.ChangeIdentifierModuleVersion,
+			Action:     types.ChangeActionUpdate,
+			Current: types.ModuleConfig{
+				Source:        cur.Source,
+				SourceVersion: cur.SourceVersion,
+				Variables:     cur.Variables,
+				Connections:   cur.Connections,
+			},
+			Desired: types.ModuleConfig{
+				Source:        des.Source,
+				SourceVersion: des.SourceVersion,
+				Variables:     des.Variables,
+				Connections:   des.Connections,
+			},
+		})
+	}
+}
+
+func diffCapNamespace(changes IndexedChanges, cur, des types.CapabilityConfig) {
+	if cur.Namespace != des.Namespace {
+		changes.Add(types.WorkspaceChange{
+			ChangeType: "namespace",
+			Identifier: "namespace",
+			Action:     types.ChangeActionUpdate,
+			Current:    cur.Namespace,
+			Desired:    des.Namespace,
+		})
 	}
 }

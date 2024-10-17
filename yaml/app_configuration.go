@@ -15,6 +15,7 @@ type CapabilityConfiguration struct {
 type AppConfiguration struct {
 	BlockConfiguration `yaml:",inline" json:",inline"`
 
+	Framework    string                   `yaml:"framework,omitempty" json:"framework"`
 	EnvVariables map[string]string        `yaml:"environment,omitempty" json:"envVars"`
 	Capabilities CapabilityConfigurations `yaml:"capabilities,omitempty" json:"capabilities"`
 }

@@ -1,0 +1,14 @@
+version: "0.1"
+
+apps:
+  app1:
+    vars:
+      cpu: 1024
+    environment:
+      KEY2: value2
+    capabilities:
+      - module: nullstone/fake-cap
+        module_version: "0.1.2"
+        vars:
+          fake-var: 10
+    

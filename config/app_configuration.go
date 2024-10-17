@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+var (
+	_ core.ChangeApplier = &AppConfiguration{}
+)
+
 type AppConfiguration struct {
 	BlockConfiguration
 
@@ -15,17 +19,17 @@ type AppConfiguration struct {
 	Capabilities CapabilityConfigurations `json:"capabilities"`
 }
 
-func convertCapabilities(parsed yaml.CapabilityConfigurations) []CapabilityConfiguration {
-	result := make([]CapabilityConfiguration, len(parsed))
+func convertCapabilities(parsed yaml.CapabilityConfigurations) CapabilityConfigurations {
+	result := make(CapabilityConfigurations, len(parsed))
 	for i, capValue := range parsed {
 		moduleVersion := "latest"
 		if capValue.ModuleSourceVersion != nil {
 			moduleVersion = *capValue.ModuleSourceVersion
 		}
-		result[i] = CapabilityConfiguration{
+		result[i] = &CapabilityConfiguration{
 			ModuleSource:        capValue.ModuleSource,
 			ModuleSourceVersion: moduleVersion,
-			Variables:           capValue.Variables,
+			Variables:           convertVariables(capValue.Variables),
 			Connections:         convertConnections(capValue.Connections),
 			Namespace:           capValue.Namespace,
 		}
@@ -46,58 +50,16 @@ func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[strin
 	return apps
 }
 
-func (a *AppConfiguration) Resolve(ctx context.Context, resolver core.ModuleVersionResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+func (a *AppConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	errs := a.BlockConfiguration.Resolve(ctx, resolver, ic, pc)
-	errs = append(errs, a.ResolveCapabilities(ctx, resolver, ic, pc)...)
+	errs = append(errs, a.Capabilities.Resolve(ctx, resolver, ic, pc, a.Module)...)
 	return errs
 }
 
-func (a *AppConfiguration) ResolveCapabilities(ctx context.Context, resolver core.ModuleVersionResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
-	if len(a.Capabilities) == 0 {
-		return nil
-	}
-	errs := core.ResolveErrors{}
-	for i, iacCap := range a.Capabilities {
-		curpc := pc.SubIndex("capabilities", i)
-		var err *core.ResolveError
-		if a.Capabilities[i], err = a.ResolveCapability(ctx, resolver, ic, curpc, iacCap); err != nil {
-			errs = append(errs, *err)
-		}
-	}
-
-	if len(errs) > 0 {
-		return errs
-	}
-	return nil
-}
-
-func (a *AppConfiguration) ResolveCapability(ctx context.Context, resolver core.ModuleVersionResolver, ic core.IacContext, pc core.ObjectPathContext, iacCap CapabilityConfiguration) (CapabilityConfiguration, *core.ResolveError) {
-	if ic.IsOverrides && iacCap.ModuleSource == "" {
-		// TODO: Add support for loading module in overrides file
-		return iacCap, nil
-	}
-
-	contract := types.ModuleContractName{
-		Category: string(types.CategoryCapability),
-		Provider: "*",
-		Platform: "*",
-	}
-	if a.Module != nil {
-		contract.Provider = strings.Join(a.Module.ProviderTypes, ",")
-	}
-	m, mv, err := core.ResolveModule(ctx, resolver, pc, iacCap.ModuleSource, iacCap.ModuleSourceVersion, contract)
-	if err != nil {
-		return iacCap, err
-	}
-	iacCap.Module = m
-	iacCap.ModuleVersion = mv
-	return iacCap, nil
-}
-
-func (a *AppConfiguration) Validate(ctx context.Context, resolver core.ValidateResolver, ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
-	errs := a.BlockConfiguration.Validate(ctx, resolver, ic, pc)
+func (a *AppConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
+	errs := a.BlockConfiguration.Validate(ic, pc)
 	errs = append(errs, a.ValidateEnvVariables(pc)...)
-	errs = append(errs, a.Capabilities.Validate(ctx, resolver, ic, pc, a.Module)...)
+	errs = append(errs, a.Capabilities.Validate(ic, pc, a.Module)...)
 	return errs
 }
 
@@ -131,16 +93,34 @@ func (a *AppConfiguration) ValidateEnvVariables(pc core.ObjectPathContext) core.
 	return nil
 }
 
-func (a *AppConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) error {
-	err := NormalizeConnectionTargets(ctx, a.Connections, resolver)
-	if err != nil {
-		return err
-	}
-	return a.Capabilities.Normalize(ctx, resolver)
+func (a *AppConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) core.NormalizeErrors {
+	errs := core.NormalizeErrors{}
+	errs = append(errs, a.Connections.Normalize(ctx, pc, resolver)...)
+	errs = append(errs, a.Capabilities.Normalize(ctx, pc, resolver)...)
+	return errs
 }
 
 func (a *AppConfiguration) ToBlock(orgName string, stackId int64) types.Block {
 	block := a.BlockConfiguration.ToBlock(orgName, stackId)
 	block.Capabilities = a.Capabilities.ToCapabilities(stackId)
 	return block
+}
+
+func (a *AppConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
+	if err := a.BlockConfiguration.ApplyChangesTo(ic, updater); err != nil {
+		return err
+	}
+
+	if ic.IsOverrides {
+		for name, value := range a.EnvVariables {
+			updater.AddOrUpdateEnvVariable(name, value, false)
+		}
+	} else {
+		updater.RemoveEnvVariablesNotIn(a.EnvVariables)
+		for name, value := range a.EnvVariables {
+			updater.AddOrUpdateEnvVariable(name, value, false)
+		}
+	}
+
+	return a.Capabilities.ApplyChangesTo(ic, updater)
 }

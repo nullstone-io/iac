@@ -6,6 +6,12 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
+type ResolveResolver interface {
+	BlockResolver
+	ModuleResolver
+	ModuleVersionResolver
+}
+
 type BlockResolver interface {
 	// ResolveBlock loads the types.Block based on the resolved connection target
 	// This relies on the StackId/BlockId and doesn't consider EnvId
@@ -25,10 +31,4 @@ type ModuleResolver interface {
 type ModuleVersionResolver interface {
 	// ResolveModuleVersion pulls module metadata and version metadata for the input source/version
 	ResolveModuleVersion(ctx context.Context, source artifacts.ModuleSource, version string) (*types.Module, *types.ModuleVersion, error)
-}
-
-type ValidateResolver interface {
-	BlockResolver
-	ModuleResolver
-	ModuleVersionResolver
 }

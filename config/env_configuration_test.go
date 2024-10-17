@@ -271,6 +271,7 @@ func TestConvertConfiguration(t *testing.T) {
 				IacContext: core.IacContext{
 					RepoName: "acme/api",
 					Filename: "config.yml",
+					Version:  "0.1",
 				},
 				Applications: map[string]*AppConfiguration{
 					"acme-docs": {
@@ -280,12 +281,14 @@ func TestConvertConfiguration(t *testing.T) {
 							Name:                "acme-docs",
 							ModuleSource:        "nullstone/aws-fargate-service",
 							ModuleSourceVersion: latest,
-							Variables: map[string]any{
-								"num_tasks": 2,
+							Variables: VariableConfigurations{
+								"num_tasks": {Value: 2},
 							},
-							Connections: map[string]types.ConnectionTarget{
+							Connections: ConnectionConfigurations{
 								"cluster-namespace": {
-									BlockName: "namespace0",
+									Target: types.ConnectionTarget{
+										BlockName: "namespace0",
+									},
 								},
 							},
 						},
@@ -293,16 +296,18 @@ func TestConvertConfiguration(t *testing.T) {
 							"TESTING": "abc123",
 							"BLAH":    "blahblahblah",
 						},
-						Capabilities: []CapabilityConfiguration{
+						Capabilities: CapabilityConfigurations{
 							{
 								ModuleSource:        "nullstone/aws-load-balancer",
 								ModuleSourceVersion: latest,
-								Variables: map[string]any{
-									"health_check_path": "/status",
+								Variables: VariableConfigurations{
+									"health_check_path": {Value: "/status"},
 								},
-								Connections: map[string]types.ConnectionTarget{
+								Connections: ConnectionConfigurations{
 									"subdomain": {
-										BlockName: subdomainName,
+										Target: types.ConnectionTarget{
+											BlockName: subdomainName,
+										},
 									},
 								},
 								Namespace: &primary,
@@ -431,16 +436,16 @@ func TestConvertConfiguration(t *testing.T) {
 			},
 		},
 		{
-			name:          "capability block doesn't exist",
-			filename:      "test-fixtures/config.invalid10.yml",
-			want:          nil,
-			resolveErrors: core.ResolveErrors(nil),
-			validationErrors: core.ValidateErrors{
-				core.ValidateError{
+			name:     "capability block doesn't exist",
+			filename: "test-fixtures/config.invalid10.yml",
+			want:     nil,
+			resolveErrors: core.ResolveErrors{
+				{
 					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs.capabilities[0]", Field: "connections", Key: "subdomain"},
 					ErrorMessage:      "Connection is invalid, block core/ns-sub-for-blah does not exist",
 				},
 			},
+			validationErrors: core.ValidateErrors(nil),
 		},
 		{
 			name:          "block doesn't match contract for capability connection",
@@ -475,6 +480,7 @@ func TestConvertConfiguration(t *testing.T) {
 					RepoName:    "acme/api",
 					Filename:    "config.yml",
 					IsOverrides: true,
+					Version:     "0.1",
 				},
 				Applications: map[string]*AppConfiguration{
 					"acme-api": {
@@ -482,10 +488,10 @@ func TestConvertConfiguration(t *testing.T) {
 							Type:     BlockTypeApplication,
 							Category: types.CategoryApp,
 							Name:     "acme-api",
-							Variables: map[string]any{
-								"enable_versioned_assets": false,
+							Variables: VariableConfigurations{
+								"enable_versioned_assets": {Value: false},
 							},
-							Connections: types.ConnectionTargets{},
+							Connections: ConnectionConfigurations{},
 						},
 						EnvVariables: map[string]string{
 							"TESTING": "abc123",
@@ -495,16 +501,18 @@ func TestConvertConfiguration(t *testing.T) {
 							{
 								ModuleSource:        "nullstone/aws-s3-cdn",
 								ModuleSourceVersion: "latest",
-								Variables:           map[string]any{"enable_www": true},
+								Variables:           VariableConfigurations{"enable_www": {Value: true}},
 								Namespace:           ptr("secondary"),
-								Connections: map[string]types.ConnectionTarget{
+								Connections: ConnectionConfigurations{
 									"subdomain": {
-										StackId:   0,
-										StackName: "",
-										BlockId:   0,
-										BlockName: "ns-sub-for-acme-docs",
-										EnvId:     nil,
-										EnvName:   "",
+										Target: types.ConnectionTarget{
+											StackId:   0,
+											StackName: "",
+											BlockId:   0,
+											BlockName: "ns-sub-for-acme-docs",
+											EnvId:     nil,
+											EnvName:   "",
+										},
 									},
 								},
 							},
@@ -561,7 +569,7 @@ func TestConvertConfiguration(t *testing.T) {
 			ctx := context.Background()
 			err1 := got.Resolve(ctx, resolver)
 			assert.Equal(t, test.resolveErrors, err1)
-			err2 := got.Validate(ctx, resolver)
+			err2 := got.Validate()
 			assert.Equal(t, test.validationErrors, err2)
 		})
 	}

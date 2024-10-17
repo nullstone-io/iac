@@ -5,7 +5,7 @@ import (
 	"github.com/nullstone-io/iac/core"
 )
 
-func Resolve(ctx context.Context, input ParseMapResult, resolver core.ModuleVersionResolver) core.ResolveErrors {
+func Resolve(ctx context.Context, input ParseMapResult, resolver core.ResolveResolver) core.ResolveErrors {
 	errs := core.ResolveErrors{}
 	if input.Config != nil {
 		for _, err := range input.Config.Resolve(ctx, resolver) {

@@ -8,7 +8,10 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
-var _ ValidateResolver = &ApiResolver{}
+var (
+	_ ResolveResolver    = &ApiResolver{}
+	_ ConnectionResolver = &ApiResolver{}
+)
 
 type ApiResolver struct {
 	ApiClient        *api.Client
@@ -30,6 +33,10 @@ func NewApiResolver(apiClient *api.Client, stackId, envId int64) *ApiResolver {
 
 func (a *ApiResolver) ResolveBlock(ctx context.Context, ct types.ConnectionTarget) (types.Block, error) {
 	return a.ResourceResolver.FindBlock(ctx, ct)
+}
+
+func (a *ApiResolver) ResolveConnection(ctx context.Context, ct types.ConnectionTarget) (types.ConnectionTarget, error) {
+	return a.ResourceResolver.Resolve(ctx, ct)
 }
 
 func (a *ApiResolver) ResolveModule(ctx context.Context, source artifacts.ModuleSource) (*types.Module, error) {

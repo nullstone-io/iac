@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"github.com/nullstone-io/iac/config"
 	yaml2 "github.com/nullstone-io/iac/yaml"
+	"gopkg.in/nullstone-io/go-api-client.v0/types"
 	"gopkg.in/yaml.v3"
 	"io"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -31,8 +34,30 @@ func (e InvalidYamlError) Unwrap() error {
 }
 
 type ParseMapResult struct {
-	Config    *config.EnvConfiguration
-	Overrides map[string]*config.EnvConfiguration
+	// Config contains `.nullstone/config.yml` validated and normalized as Nullstone objects
+	// This was added to the state since TemporalIacSync.IacSync Config is intentionally redacted from json
+	Config *config.EnvConfiguration `json:"config"`
+
+	// Overrides contains `.nullstone/<env|previews>.yml` validated and normalized as Nullstone objects
+	// This was added to the state since TemporalIacSync.IacSync Overrides is intentionally redacted from json
+	Overrides map[string]*config.EnvConfiguration `json:"overrides"`
+}
+
+func (r ParseMapResult) BlockNames(env types.Environment) map[string]bool {
+	blockNames := map[string]bool{}
+	if r.Config != nil {
+		blockNames = r.Config.BlockNames()
+	}
+	envName := env.Name
+	if env.Type == types.EnvTypePreview {
+		envName = "previews"
+	}
+	if cur, _ := r.Overrides[envName]; cur != nil {
+		for k := range cur.BlockNames() {
+			blockNames[k] = true
+		}
+	}
+	return blockNames
 }
 
 func ParseMap(parseContext string, files map[string]string) (ParseMapResult, error) {
@@ -73,4 +98,41 @@ func ParseConfig(parseContext, filename string, isOverrides bool, r io.Reader) (
 		return nil, InvalidYamlError{ParseContext: parseContext, FileName: filename, Err: err}
 	}
 	return config.ConvertConfiguration(parseContext, filename, isOverrides, obj), nil
+}
+
+func ParseConfigFile(parseContext, filename string, isOverrides bool) (*config.EnvConfiguration, error) {
+	raw, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return ParseConfig(parseContext, filename, isOverrides, bytes.NewReader(raw))
+}
+
+func ParseConfigDir(dir string) (*ParseMapResult, error) {
+	pmr := &ParseMapResult{
+		Overrides: map[string]*config.EnvConfiguration{},
+	}
+	entries, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return pmr, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yml") {
+			continue
+		}
+		isOverrides := entry.Name() != "config.yml"
+		ec, err := ParseConfigFile("TestApplyChanges", filepath.Join(dir, entry.Name()), isOverrides)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse config file: %w", err)
+		}
+		if !isOverrides {
+			pmr.Config = ec
+		} else {
+			pmr.Overrides[strings.TrimSuffix(entry.Name(), ".yml")] = ec
+		}
+	}
+	return pmr, nil
 }

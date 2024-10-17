@@ -7,7 +7,10 @@ import (
 	"strings"
 )
 
-var _ yaml.Unmarshaler = &ConnectionTarget{}
+var (
+	_ yaml.Unmarshaler = &ConnectionTarget{}
+	_ yaml.Marshaler   = &ConnectionTarget{}
+)
 
 type ConnectionTarget types.ConnectionTarget
 
@@ -39,6 +42,25 @@ func (c *ConnectionTarget) UnmarshalYAML(node *yaml.Node) error {
 		return nil
 	}
 	return nil
+}
+
+func (c *ConnectionTarget) MarshalYAML() (interface{}, error) {
+	tokens := make([]string, 0)
+	if c.StackName != "" {
+		tokens = append(tokens, c.StackName)
+	}
+	if c.EnvName != "" {
+		tokens = append(tokens, c.EnvName)
+	}
+	if c.BlockName != "" {
+		tokens = append(tokens, c.BlockName)
+	}
+	node := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: strings.Join(tokens, "."),
+	}
+	return node, nil
 }
 
 type ConnectionTargets map[string]ConnectionTarget

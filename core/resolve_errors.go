@@ -6,10 +6,18 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
+var (
+	_ error = ResolveError{}
+)
+
 type ResolveError struct {
-	IacContext        IacContext
-	ObjectPathContext ObjectPathContext
-	ErrorMessage      string
+	IacContext        IacContext        `json:"iacContext"`
+	ObjectPathContext ObjectPathContext `json:"objectPathContext"`
+	ErrorMessage      string            `json:"errorMessage"`
+}
+
+func (e ResolveError) Error() string {
+	return fmt.Sprintf("%s => %s", e.IacContext.Context(e.ObjectPathContext), e.ErrorMessage)
 }
 
 func (e ResolveError) ToValidationError() errors.ValidationError {
@@ -71,5 +79,33 @@ func MissingModuleVersionError(pc ObjectPathContext, source, version string) *Re
 	return &ResolveError{
 		ObjectPathContext: pc.SubField("module_version"),
 		ErrorMessage:      fmt.Sprintf("Module version (%s@%s) does not exist", source, version),
+	}
+}
+
+func MissingConnectionTargetError(pc ObjectPathContext, err error) *ResolveError {
+	return &ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Connection is invalid, %s", err),
+	}
+}
+
+func LookupConnectionTargetFailedError(pc ObjectPathContext, err error) *ResolveError {
+	return &ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Failed to validate connection, error when looking up connection target: %s", err),
+	}
+}
+
+func InvalidModuleFormatError(pc ObjectPathContext, moduleSource string) *ResolveError {
+	return &ResolveError{
+		ObjectPathContext: pc.SubField("module"),
+		ErrorMessage:      fmt.Sprintf("Invalid module format (%s) - must be in the format \"<module-org>/<module-name>\"", moduleSource),
+	}
+}
+
+func ModuleLookupFailedError(pc ObjectPathContext, moduleSource string, err error) *ResolveError {
+	return &ResolveError{
+		ObjectPathContext: pc.SubField("module"),
+		ErrorMessage:      fmt.Sprintf("Module (%s) lookup failed: %s", moduleSource, err),
 	}
 }

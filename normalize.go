@@ -17,7 +17,7 @@ func Normalize(ctx context.Context, input ParseMapResult, resolver core.Connecti
 
 	for _, cur := range input.Overrides {
 		for _, err := range cur.Normalize(ctx, resolver) {
-			err.IacContext = input.Config.IacContext
+			err.IacContext = cur.IacContext
 			errs = append(errs, err)
 		}
 	}

@@ -82,10 +82,10 @@ func (a *AppConfiguration) ValidateEnvVariables(pc core.ObjectPathContext) core.
 	for k, _ := range a.EnvVariables {
 		curpc := pc.SubKey("environment", k)
 		if startsWithNumber(k) {
-			errs = append(errs, EnvVariableKeyStartsWithNumberError(curpc))
+			errs = append(errs, core.EnvVariableKeyStartsWithNumberError(curpc))
 		}
 		if strings.IndexFunc(k, hasInvalidChars) != -1 {
-			errs = append(errs, EnvVariableKeyInvalidCharsError(curpc))
+			errs = append(errs, core.EnvVariableKeyInvalidCharsError(curpc))
 		}
 	}
 

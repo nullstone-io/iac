@@ -186,7 +186,7 @@ func (c *CapabilityConfiguration) Validate(ic core.IacContext, pc core.ObjectPat
 			}
 		}
 		if !found {
-			errs = append(errs, UnsupportedAppCategoryError(pc.SubField("module"), c.ModuleSource, string(appModule.Subcategory)))
+			errs = append(errs, core.UnsupportedAppCategoryError(pc.SubField("module"), c.ModuleSource, string(appModule.Subcategory)))
 		}
 	}
 

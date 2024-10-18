@@ -73,3 +73,24 @@ func MismatchedConnectionContractError(pc ObjectPathContext, blockName, connecti
 		ErrorMessage:      fmt.Sprintf("Block (%s) does not match the required contract (%s) for the capability connection", blockName, connectionContract),
 	}
 }
+
+func EnvVariableKeyStartsWithNumberError(pc ObjectPathContext) ValidateError {
+	return ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      "Invalid environment variable, key must not start with a number",
+	}
+}
+
+func EnvVariableKeyInvalidCharsError(pc ObjectPathContext) ValidateError {
+	return ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      "Invalid environment variable, key must contain only letters, numbers, and underscores",
+	}
+}
+
+func UnsupportedAppCategoryError(pc ObjectPathContext, moduleSource, subcategory string) ValidateError {
+	return ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Module (%s) does not support application category (%s)", moduleSource, subcategory),
+	}
+}

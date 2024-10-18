@@ -55,7 +55,7 @@ func (c CapabilityConfigurations) ToCapabilities() []types.Capability {
 		capability := types.Capability{
 			Name:                cur.Name,
 			ModuleSource:        cur.ModuleSource,
-			ModuleSourceVersion: cur.ModuleSourceVersion,
+			ModuleSourceVersion: cur.ModuleConstraint,
 			Connections:         cur.Connections.Targets(),
 		}
 		if cur.Namespace != nil {
@@ -102,12 +102,12 @@ func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.Res
 }
 
 type CapabilityConfiguration struct {
-	Name                string                   `json:"name"`
-	ModuleSource        string                   `json:"moduleSource"`
-	ModuleSourceVersion string                   `json:"moduleSourceVersion"`
-	Variables           VariableConfigurations   `json:"vars"`
-	Connections         ConnectionConfigurations `json:"connections"`
-	Namespace           *string                  `json:"namespace"`
+	Name             string                   `json:"name"`
+	ModuleSource     string                   `json:"moduleSource"`
+	ModuleConstraint string                   `json:"moduleConstraint"`
+	Variables        VariableConfigurations   `json:"vars"`
+	Connections      ConnectionConfigurations `json:"connections"`
+	Namespace        *string                  `json:"namespace"`
 
 	Module        *types.Module        `json:"module"`
 	ModuleVersion *types.ModuleVersion `json:"moduleVersion"`
@@ -146,7 +146,7 @@ func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.Res
 	}
 
 	manifest := config.Manifest{Variables: map[string]config.Variable{}, Connections: map[string]config.Connection{}}
-	m, mv, err := core.ResolveModule(ctx, resolver, pc, c.ModuleSource, c.ModuleSourceVersion, contract)
+	m, mv, err := core.ResolveModule(ctx, resolver, pc, c.ModuleSource, c.ModuleConstraint, contract)
 	if err != nil {
 		errs = append(errs, *err)
 	} else {
@@ -194,7 +194,7 @@ func (c *CapabilityConfiguration) Validate(ic core.IacContext, pc core.ObjectPat
 
 	//   1. validate each of the variables to ensure the module supports them
 	//   2. validate each of the connections to ensure the block matches the connection contract
-	moduleName := fmt.Sprintf("%s@%s", c.ModuleSource, c.ModuleSourceVersion)
+	moduleName := fmt.Sprintf("%s@%s", c.ModuleSource, c.ModuleConstraint)
 	errs = append(errs, c.Variables.Validate(pc, moduleName)...)
 	errs = append(errs, c.Connections.Validate(pc, moduleName)...)
 	if len(errs) > 0 {
@@ -215,7 +215,7 @@ func (c *CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater cor
 		capUpdater.UpdateVariableValue(name, vc.Value)
 	}
 	for name, cc := range c.Connections {
-		capUpdater.UpdateConnectionTarget(name, cc.Target)
+		capUpdater.UpdateConnectionTarget(name, cc.Target, cc.EffectiveTarget)
 	}
 	return nil
 }

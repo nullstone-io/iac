@@ -42,12 +42,14 @@ func (w ConfigUpdater) UpdateVariableValue(name string, value any) {
 	w.Config.Variables[name] = existing
 }
 
-func (w ConfigUpdater) UpdateConnectionTarget(name string, value types.ConnectionTarget) {
+func (w ConfigUpdater) UpdateConnectionTarget(name string, desired, effective types.ConnectionTarget) {
 	existing, ok := w.Config.Connections[name]
 	if !ok {
 		return
 	}
-	existing.Reference = &value
+	existing.Target = &types.ConnectionTargetString{ConnectionTarget: desired}
+	existing.EffectiveTarget = &effective
+	existing.OldReference = &effective
 	w.Config.Connections[name] = existing
 }
 
@@ -63,6 +65,9 @@ func (w ConfigUpdater) AddOrUpdateEnvVariable(name string, value string, sensiti
 			Value:     value,
 			Sensitive: sensitive,
 		}
+	}
+	if w.Config.EnvVariables == nil {
+		w.Config.EnvVariables = types.EnvVariables{}
 	}
 	w.Config.EnvVariables[name] = envVar
 }
@@ -80,7 +85,7 @@ func (w ConfigUpdater) GetCapabilityUpdater(identity core.CapabilityIdentity) co
 		found := identity.Match(core.CapabilityIdentity{
 			Name:              cur.Name,
 			ModuleSource:      cur.Source,
-			ConnectionTargets: cur.Connections.Targets(),
+			ConnectionTargets: cur.Connections.EffectiveTargets(),
 		})
 		if found {
 			return CapabilityConfigUpdater{
@@ -98,7 +103,7 @@ func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentit
 		found := identities.Find(core.CapabilityIdentity{
 			Name:              cur.Name,
 			ModuleSource:      cur.Source,
-			ConnectionTargets: cur.Connections.Targets(),
+			ConnectionTargets: cur.Connections.EffectiveTargets(),
 		})
 		if found != nil {
 			result = append(result, cur)
@@ -136,13 +141,15 @@ func (c CapabilityConfigUpdater) UpdateVariableValue(name string, value any) {
 	})
 }
 
-func (c CapabilityConfigUpdater) UpdateConnectionTarget(name string, value types.ConnectionTarget) {
+func (c CapabilityConfigUpdater) UpdateConnectionTarget(name string, desired, effective types.ConnectionTarget) {
 	c.doOperation(func(cc *types.CapabilityConfig) {
 		existingConn, ok := cc.Connections[name]
 		if !ok {
 			return
 		}
-		existingConn.Reference = &value
+		existingConn.Target = &types.ConnectionTargetString{ConnectionTarget: desired}
+		existingConn.EffectiveTarget = &effective
+		existingConn.OldReference = &effective
 		cc.Connections[name] = existingConn
 	})
 }

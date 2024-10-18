@@ -31,6 +31,8 @@ func ParseEnvConfiguration(data []byte) (*EnvConfiguration, error) {
 	return r, nil
 }
 
+// EnvConfigurationFromWorkspaceConfig is used to generate an IaC configuration from types.WorkspaceConfig
+// Deprecated - This needs reworked
 func EnvConfigurationFromWorkspaceConfig(stackId, envId int64, block types.Block, config types.WorkspaceConfig) EnvConfiguration {
 	result := EnvConfiguration{Version: "0.1"}
 

@@ -69,10 +69,10 @@ func (c CapabilityConfigurations) hasAnyWithNoName() bool {
 }
 
 type CapabilityConfiguration struct {
-	Name                string            `yaml:"name,omitempty" json:"name,omitempty"`
-	ModuleSource        string            `yaml:"module,omitempty" json:"module"`
-	ModuleSourceVersion *string           `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any    `yaml:"vars,omitempty" json:"vars"`
-	Connections         ConnectionTargets `yaml:"connections,omitempty" json:"connections"`
-	Namespace           *string           `yaml:"namespace,omitempty" json:"namespace"`
+	Name             string                `yaml:"name,omitempty" json:"name,omitempty"`
+	ModuleSource     string                `yaml:"module,omitempty" json:"module"`
+	ModuleConstraint *string               `yaml:"module_version,omitempty" json:"moduleVersion"`
+	Variables        map[string]any        `yaml:"vars,omitempty" json:"vars"`
+	Connections      ConnectionConstraints `yaml:"connections,omitempty" json:"connections"`
+	Namespace        *string               `yaml:"namespace,omitempty" json:"namespace"`
 }

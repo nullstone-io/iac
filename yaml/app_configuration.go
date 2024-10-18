@@ -26,12 +26,12 @@ func AppConfigurationFromWorkspaceConfig(stackId, envId int64, config types.Work
 			namespace = &v.Namespace
 		}
 		caps = append(caps, CapabilityConfiguration{
-			Name:                v.Name,
-			ModuleSource:        v.Source,
-			ModuleSourceVersion: &v.SourceVersion,
-			Variables:           VariablesFromWorkspaceConfig(v.Variables),
-			Connections:         ConnectionsFromWorkspaceConfig(stackId, envId, v.Connections),
-			Namespace:           namespace,
+			Name:             v.Name,
+			ModuleSource:     v.Source,
+			ModuleConstraint: &v.SourceVersion,
+			Variables:        VariablesFromWorkspaceConfig(v.Variables),
+			Connections:      ConnectionsFromWorkspaceConfig(stackId, envId, v.Connections),
+			Namespace:        namespace,
 		})
 	}
 	return AppConfiguration{

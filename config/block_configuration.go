@@ -28,14 +28,14 @@ const (
 )
 
 type BlockConfiguration struct {
-	Type                BlockType                `json:"type"`
-	Category            types.CategoryName       `json:"category"`
-	Name                string                   `json:"name"`
-	ModuleSource        string                   `json:"moduleSource"`
-	ModuleSourceVersion string                   `json:"moduleSourceVersion"`
-	Variables           VariableConfigurations   `json:"vars"`
-	Connections         ConnectionConfigurations `json:"connections"`
-	IsShared            bool                     `json:"isShared"`
+	Type             BlockType                `json:"type"`
+	Category         types.CategoryName       `json:"category"`
+	Name             string                   `json:"name"`
+	ModuleSource     string                   `json:"moduleSource"`
+	ModuleConstraint string                   `json:"moduleConstraint"`
+	Variables        VariableConfigurations   `json:"vars"`
+	Connections      ConnectionConfigurations `json:"connections"`
+	IsShared         bool                     `json:"isShared"`
 
 	// These fields are populated via Resolve()
 	Module        *types.Module        `json:"module"`
@@ -50,16 +50,13 @@ func convertVariables(parsed map[string]any) VariableConfigurations {
 	return result
 }
 
-func convertConnections(parsed map[string]yaml.ConnectionTarget) ConnectionConfigurations {
+func convertConnections(parsed map[string]yaml.ConnectionConstraint) ConnectionConfigurations {
 	result := ConnectionConfigurations{}
 	for key, conn := range parsed {
 		result[key] = &ConnectionConfiguration{
 			Target: types.ConnectionTarget{
-				StackId:   conn.StackId,
 				StackName: conn.StackName,
-				BlockId:   conn.BlockId,
 				BlockName: conn.BlockName,
-				EnvId:     conn.EnvId,
 				EnvName:   conn.EnvName,
 			},
 		}
@@ -77,21 +74,21 @@ func convertBlockConfigurations(parsed map[string]yaml.BlockConfiguration) map[s
 
 func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType BlockType, blockCategory types.CategoryName) *BlockConfiguration {
 	// set a default module version if not provided
-	moduleVersion := ""
-	if value.ModuleSourceVersion != nil {
-		moduleVersion = *value.ModuleSourceVersion
+	moduleConstraint := ""
+	if value.ModuleConstraint != nil {
+		moduleConstraint = *value.ModuleConstraint
 	} else if value.ModuleSource != "" {
-		moduleVersion = "latest"
+		moduleConstraint = "latest"
 	}
 	return &BlockConfiguration{
-		Type:                blockType,
-		Category:            blockCategory,
-		Name:                name,
-		ModuleSource:        value.ModuleSource,
-		ModuleSourceVersion: moduleVersion,
-		Variables:           convertVariables(value.Variables),
-		Connections:         convertConnections(value.Connections),
-		IsShared:            value.IsShared,
+		Type:             blockType,
+		Category:         blockCategory,
+		Name:             name,
+		ModuleSource:     value.ModuleSource,
+		ModuleConstraint: moduleConstraint,
+		Variables:        convertVariables(value.Variables),
+		Connections:      convertConnections(value.Connections),
+		IsShared:         value.IsShared,
 	}
 }
 
@@ -111,7 +108,7 @@ func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ResolveR
 
 	contract := types.ModuleContractName{Category: string(b.Category), Provider: "*", Platform: "*"}
 	manifest := config.Manifest{Variables: map[string]config.Variable{}, Connections: map[string]config.Connection{}}
-	m, mv, err := core.ResolveModule(ctx, resolver, pc, b.ModuleSource, b.ModuleSourceVersion, contract)
+	m, mv, err := core.ResolveModule(ctx, resolver, pc, b.ModuleSource, b.ModuleConstraint, contract)
 	if err != nil {
 		errs = append(errs, *err)
 	} else {
@@ -155,7 +152,7 @@ func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block 
 		IsShared:            b.IsShared,
 		DnsName:             "",
 		ModuleSource:        b.ModuleSource,
-		ModuleSourceVersion: b.ModuleSourceVersion,
+		ModuleSourceVersion: b.ModuleConstraint,
 		Connections:         b.Connections.Targets(),
 	}
 	return block
@@ -167,7 +164,7 @@ func (b *BlockConfiguration) ApplyChangesTo(ic core.IacContext, updater core.Wor
 		updater.UpdateVariableValue(name, vc.Value)
 	}
 	for name, cc := range b.Connections {
-		updater.UpdateConnectionTarget(name, cc.Target)
+		updater.UpdateConnectionTarget(name, cc.Target, cc.EffectiveTarget)
 	}
 	return nil
 }

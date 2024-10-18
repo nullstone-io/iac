@@ -23,17 +23,17 @@ type AppConfiguration struct {
 func convertCapabilities(parsed yaml.CapabilityConfigurations) CapabilityConfigurations {
 	result := make(CapabilityConfigurations, len(parsed))
 	for i, capValue := range parsed {
-		moduleVersion := "latest"
-		if capValue.ModuleSourceVersion != nil {
-			moduleVersion = *capValue.ModuleSourceVersion
+		moduleConstraint := "latest"
+		if capValue.ModuleConstraint != nil {
+			moduleConstraint = *capValue.ModuleConstraint
 		}
 		result[i] = &CapabilityConfiguration{
-			Name:                capValue.Name,
-			ModuleSource:        capValue.ModuleSource,
-			ModuleSourceVersion: moduleVersion,
-			Variables:           convertVariables(capValue.Variables),
-			Connections:         convertConnections(capValue.Connections),
-			Namespace:           capValue.Namespace,
+			Name:             capValue.Name,
+			ModuleSource:     capValue.ModuleSource,
+			ModuleConstraint: moduleConstraint,
+			Variables:        convertVariables(capValue.Variables),
+			Connections:      convertConnections(capValue.Connections),
+			Namespace:        capValue.Namespace,
 		}
 	}
 	return result

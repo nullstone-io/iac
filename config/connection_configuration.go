@@ -97,6 +97,10 @@ func (c *ConnectionConfiguration) Resolve(ctx context.Context, resolver core.Res
 	}
 	c.Block = &found
 
+	if found.ModuleSource == "" {
+		return core.ResolvedBlockMissingModuleError(pc, c.Target.StackName, c.Target.BlockName)
+	}
+
 	ms, err := artifacts.ParseSource(found.ModuleSource)
 	if err != nil {
 		return core.InvalidModuleFormatError(pc, found.ModuleSource)

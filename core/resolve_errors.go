@@ -96,6 +96,13 @@ func LookupConnectionTargetFailedError(pc ObjectPathContext, err error) *Resolve
 	}
 }
 
+func ResolvedBlockMissingModuleError(pc ObjectPathContext, stackName, blockName string) *ResolveError {
+	return &ResolveError{
+		ObjectPathContext: pc.SubField("module"),
+		ErrorMessage:      fmt.Sprintf("Module is required on block (%s/%s) that was resolved by a connection.", stackName, blockName),
+	}
+}
+
 func InvalidModuleFormatError(pc ObjectPathContext, moduleSource string) *ResolveError {
 	return &ResolveError{
 		ObjectPathContext: pc.SubField("module"),

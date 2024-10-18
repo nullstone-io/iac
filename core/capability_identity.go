@@ -29,7 +29,7 @@ func (i CapabilityIdentity) Match(other CapabilityIdentity) bool {
 	if i.Name != "" && other.Name != "" {
 		return i.Name == other.Name
 	}
-	
+
 	if i.ModuleSource != other.ModuleSource {
 		return false
 	}

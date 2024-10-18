@@ -74,6 +74,13 @@ func MismatchedConnectionContractError(pc ObjectPathContext, blockName, connecti
 	}
 }
 
+func MissingCapabilityNameError(pc ObjectPathContext) *ValidateError {
+	return &ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Capability requires a name"),
+	}
+}
+
 func EnvVariableKeyStartsWithNumberError(pc ObjectPathContext) ValidateError {
 	return ValidateError{
 		ObjectPathContext: pc,

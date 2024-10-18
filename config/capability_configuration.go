@@ -166,16 +166,22 @@ func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.Res
 }
 
 func (c *CapabilityConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext, appModule *types.Module) core.ValidateErrors {
+	errs := core.ValidateErrors{}
+	// TODO: After deprecating (ModuleSource+ConnectionTargets), validate Name
+	//if c.Name == "" {
+	//	err := core.MissingCapabilityNameError(pc)
+	//	errs = append(errs, *err)
+	//}
+
 	if c.Module == nil {
 		// We can't perform validation if the module isn't loaded
-		return nil
+		return errs
 	}
 	if ic.IsOverrides && c.ModuleSource == "" {
 		// TODO: Add support for validating variables and connections in an overrides file
-		return nil
+		return errs
 	}
 
-	errs := core.ValidateErrors{}
 	// check to make sure the capability module supports the subcategory
 	// examples are "container", "serverless", "static-site", "server"
 	// TODO: Add support for validating app category

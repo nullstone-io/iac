@@ -108,6 +108,7 @@ func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.Res
 }
 
 type CapabilityConfiguration struct {
+	Name                string                   `json:"name"`
 	ModuleSource        string                   `json:"moduleSource"`
 	ModuleSourceVersion string                   `json:"moduleSourceVersion"`
 	Variables           VariableConfigurations   `json:"vars"`
@@ -120,6 +121,7 @@ type CapabilityConfiguration struct {
 
 func (c *CapabilityConfiguration) Identity() core.CapabilityIdentity {
 	return core.CapabilityIdentity{
+		Name:              c.Name,
 		ModuleSource:      c.ModuleSource,
 		ConnectionTargets: c.Connections.Targets(),
 	}

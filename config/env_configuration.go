@@ -8,7 +8,10 @@ import (
 )
 
 type EnvConfiguration struct {
-	IacContext        core.IacContext                           `json:"iacContext"`
+	IacContext core.IacContext `json:"iacContext"`
+
+	Events EventConfigurations `json:"events"`
+
 	Applications      map[string]*AppConfiguration              `json:"applications"`
 	Datastores        map[string]*DatastoreConfiguration        `json:"datastores"`
 	Subdomains        map[string]*SubdomainConfiguration        `json:"subdomains"`
@@ -29,6 +32,7 @@ func ConvertConfiguration(repoName, filename string, isOverrides bool, parsed ya
 			Version:     parsed.Version,
 		},
 	}
+	result.Events = convertEventConfigurations(parsed.Events)
 	result.Applications = convertAppConfigurations(parsed.Applications)
 	result.Blocks = convertBlockConfigurations(parsed.Blocks)
 	result.Clusters = convertClusterConfigurations(parsed.Clusters)
@@ -45,39 +49,39 @@ func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ResolveRes
 	errs := core.ResolveErrors{}
 
 	for _, app := range e.Applications {
-		pc := core.NewObjectPathContext("apps", app.Name)
+		pc := core.NewObjectPathContextKey("apps", app.Name)
 		errs = append(errs, app.Resolve(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, block := range e.Blocks {
-		pc := core.NewObjectPathContext("blocks", block.Name)
+		pc := core.NewObjectPathContextKey("blocks", block.Name)
 		errs = append(errs, block.Resolve(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, cluster := range e.Clusters {
-		pc := core.NewObjectPathContext("clusters", cluster.Name)
+		pc := core.NewObjectPathContextKey("clusters", cluster.Name)
 		errs = append(errs, cluster.Resolve(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
-		pc := core.NewObjectPathContext("cluster_namespaces", clusterNamespace.Name)
+		pc := core.NewObjectPathContextKey("cluster_namespaces", clusterNamespace.Name)
 		errs = append(errs, clusterNamespace.Resolve(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, ds := range e.Datastores {
-		pc := core.NewObjectPathContext("networks", ds.Name)
+		pc := core.NewObjectPathContextKey("networks", ds.Name)
 		errs = append(errs, ds.Resolve(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, domain := range e.Domains {
-		pc := core.NewObjectPathContext("domains", domain.Name)
+		pc := core.NewObjectPathContextKey("domains", domain.Name)
 		errs = append(errs, domain.Resolve(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, ingress := range e.Ingresses {
-		pc := core.NewObjectPathContext("ingresses", ingress.Name)
+		pc := core.NewObjectPathContextKey("ingresses", ingress.Name)
 		errs = append(errs, ingress.Resolve(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, network := range e.Networks {
-		pc := core.NewObjectPathContext("networks", network.Name)
+		pc := core.NewObjectPathContextKey("networks", network.Name)
 		errs = append(errs, network.Resolve(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, sub := range e.Subdomains {
-		pc := core.NewObjectPathContext("subdomains", sub.Name)
+		pc := core.NewObjectPathContextKey("subdomains", sub.Name)
 		errs = append(errs, sub.Resolve(ctx, resolver, e.IacContext, pc)...)
 	}
 
@@ -91,40 +95,45 @@ func (e *EnvConfiguration) Validate() core.ValidateErrors {
 	errs := core.ValidateErrors{}
 
 	for _, app := range e.Applications {
-		pc := core.NewObjectPathContext("apps", app.Name)
+		pc := core.NewObjectPathContextKey("apps", app.Name)
 		errs = append(errs, app.Validate(e.IacContext, pc)...)
 	}
 	for _, block := range e.Blocks {
-		pc := core.NewObjectPathContext("blocks", block.Name)
+		pc := core.NewObjectPathContextKey("blocks", block.Name)
 		errs = append(errs, block.Validate(e.IacContext, pc)...)
 	}
 	for _, cluster := range e.Clusters {
-		pc := core.NewObjectPathContext("clusters", cluster.Name)
+		pc := core.NewObjectPathContextKey("clusters", cluster.Name)
 		errs = append(errs, cluster.Validate(e.IacContext, pc)...)
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
-		pc := core.NewObjectPathContext("cluster_namespaces", clusterNamespace.Name)
+		pc := core.NewObjectPathContextKey("cluster_namespaces", clusterNamespace.Name)
 		errs = append(errs, clusterNamespace.Validate(e.IacContext, pc)...)
 	}
 	for _, ds := range e.Datastores {
-		pc := core.NewObjectPathContext("networks", ds.Name)
+		pc := core.NewObjectPathContextKey("networks", ds.Name)
 		errs = append(errs, ds.Validate(e.IacContext, pc)...)
 	}
 	for _, domain := range e.Domains {
-		pc := core.NewObjectPathContext("domains", domain.Name)
+		pc := core.NewObjectPathContextKey("domains", domain.Name)
 		errs = append(errs, domain.Validate(e.IacContext, pc)...)
 	}
 	for _, ingress := range e.Ingresses {
-		pc := core.NewObjectPathContext("ingresses", ingress.Name)
+		pc := core.NewObjectPathContextKey("ingresses", ingress.Name)
 		errs = append(errs, ingress.Validate(e.IacContext, pc)...)
 	}
 	for _, network := range e.Networks {
-		pc := core.NewObjectPathContext("networks", network.Name)
+		pc := core.NewObjectPathContextKey("networks", network.Name)
 		errs = append(errs, network.Validate(e.IacContext, pc)...)
 	}
 	for _, sub := range e.Subdomains {
-		pc := core.NewObjectPathContext("subdomains", sub.Name)
+		pc := core.NewObjectPathContextKey("subdomains", sub.Name)
 		errs = append(errs, sub.Validate(e.IacContext, pc)...)
+	}
+
+	for name, event := range e.Events {
+		pc := core.NewObjectPathContextKey("events", name)
+		errs = append(errs, event.Validate(e.IacContext, pc)...)
 	}
 
 	if len(errs) > 0 {
@@ -137,39 +146,39 @@ func (e *EnvConfiguration) Normalize(ctx context.Context, resolver core.Connecti
 	errs := core.NormalizeErrors{}
 
 	for _, app := range e.Applications {
-		pc := core.NewObjectPathContext("apps", app.Name)
+		pc := core.NewObjectPathContextKey("apps", app.Name)
 		errs = append(errs, app.Normalize(ctx, pc, resolver)...)
 	}
 	for _, block := range e.Blocks {
-		pc := core.NewObjectPathContext("blocks", block.Name)
+		pc := core.NewObjectPathContextKey("blocks", block.Name)
 		errs = append(errs, block.Normalize(ctx, pc, resolver)...)
 	}
 	for _, cluster := range e.Clusters {
-		pc := core.NewObjectPathContext("clusters", cluster.Name)
+		pc := core.NewObjectPathContextKey("clusters", cluster.Name)
 		errs = append(errs, cluster.Normalize(ctx, pc, resolver)...)
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
-		pc := core.NewObjectPathContext("cluster_namespaces", clusterNamespace.Name)
+		pc := core.NewObjectPathContextKey("cluster_namespaces", clusterNamespace.Name)
 		errs = append(errs, clusterNamespace.Normalize(ctx, pc, resolver)...)
 	}
 	for _, ds := range e.Datastores {
-		pc := core.NewObjectPathContext("networks", ds.Name)
+		pc := core.NewObjectPathContextKey("networks", ds.Name)
 		errs = append(errs, ds.Normalize(ctx, pc, resolver)...)
 	}
 	for _, domain := range e.Domains {
-		pc := core.NewObjectPathContext("domains", domain.Name)
+		pc := core.NewObjectPathContextKey("domains", domain.Name)
 		errs = append(errs, domain.Normalize(ctx, pc, resolver)...)
 	}
 	for _, ingress := range e.Ingresses {
-		pc := core.NewObjectPathContext("ingresses", ingress.Name)
+		pc := core.NewObjectPathContextKey("ingresses", ingress.Name)
 		errs = append(errs, ingress.Normalize(ctx, pc, resolver)...)
 	}
 	for _, network := range e.Networks {
-		pc := core.NewObjectPathContext("networks", network.Name)
+		pc := core.NewObjectPathContextKey("networks", network.Name)
 		errs = append(errs, network.Normalize(ctx, pc, resolver)...)
 	}
 	for _, sub := range e.Subdomains {
-		pc := core.NewObjectPathContext("subdomains", sub.Name)
+		pc := core.NewObjectPathContextKey("subdomains", sub.Name)
 		errs = append(errs, sub.Normalize(ctx, pc, resolver)...)
 	}
 

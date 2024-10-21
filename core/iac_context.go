@@ -17,8 +17,12 @@ func (c IacContext) Context(sub ObjectPathContext) string {
 	return fmt.Sprintf("%s#%s (%s)", c.RepoName, c.Filename, sub.Context())
 }
 
-func NewObjectPathContext(field string, index string) ObjectPathContext {
-	return ObjectPathContext{Field: field, Key: index}.SubField("")
+func NewObjectPathContextKey(field string, key string) ObjectPathContext {
+	return ObjectPathContext{Field: field, Key: key}.SubField("")
+}
+
+func NewObjectPathContextIndex(field string, index int) ObjectPathContext {
+	return ObjectPathContext{Field: field, Index: &index}.SubField("")
 }
 
 type ObjectPathContext struct {

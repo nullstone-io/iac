@@ -6,7 +6,10 @@ import (
 )
 
 type EnvConfiguration struct {
-	Version           string                                   `yaml:"version" json:"version"`
+	Version string `yaml:"version" json:"version"`
+
+	Events EventConfigurations `yaml:"events,omitempty" json:"events"`
+
 	Applications      map[string]AppConfiguration              `yaml:"apps,omitempty" json:"apps"`
 	Blocks            map[string]BlockConfiguration            `yaml:"blocks,omitempty" json:"blocks"`
 	Clusters          map[string]ClusterConfiguration          `yaml:"clusters,omitempty" json:"clusters"`

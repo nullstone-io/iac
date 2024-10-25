@@ -2,16 +2,6 @@ package yaml
 
 import "gopkg.in/nullstone-io/go-api-client.v0/types"
 
-type CapabilityConfigurations []CapabilityConfiguration
-
-type CapabilityConfiguration struct {
-	ModuleSource        string            `yaml:"module,omitempty" json:"module"`
-	ModuleSourceVersion *string           `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any    `yaml:"vars,omitempty" json:"vars"`
-	Connections         ConnectionTargets `yaml:"connections,omitempty" json:"connections"`
-	Namespace           *string           `yaml:"namespace,omitempty" json:"namespace"`
-}
-
 type AppConfiguration struct {
 	BlockConfiguration `yaml:",inline" json:",inline"`
 

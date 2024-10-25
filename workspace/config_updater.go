@@ -78,6 +78,7 @@ func (w ConfigUpdater) RemoveEnvVariablesNotIn(envVariables map[string]string) {
 func (w ConfigUpdater) GetCapabilityUpdater(identity core.CapabilityIdentity) core.CapabilityConfigUpdater {
 	for i, cur := range w.Config.Capabilities {
 		found := identity.Match(core.CapabilityIdentity{
+			Name:              cur.Name,
 			ModuleSource:      cur.Source,
 			ConnectionTargets: cur.Connections.Targets(),
 		})
@@ -95,6 +96,7 @@ func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentit
 	result := make(types.CapabilityConfigs, 0)
 	for _, cur := range w.Config.Capabilities {
 		found := identities.Find(core.CapabilityIdentity{
+			Name:              cur.Name,
 			ModuleSource:      cur.Source,
 			ConnectionTargets: cur.Connections.Targets(),
 		})

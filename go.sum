@@ -107,8 +107,8 @@ google.golang.org/appengine v1.6.5/go.mod h1:8WjMMxjGQR8xUklV/ARdw2HLXBOI7O7uCID
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
-gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20241024171723-15d99426ed39 h1:a4p5niu9gA0cV3MDbaqOF3OcViTk/K5RHewXkqRWJoM=
-gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20241024171723-15d99426ed39/go.mod h1:EHFRYFcg303Tc9FDxBmvUrT8AncZ4KMT8FrRoGJnqDk=
+gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20241025125133-d3e3cc5ae079 h1:QM+6o67PfrdBSEEEbxkFWSmNU7d1kD3Ex6aVTJsqgtg=
+gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20241025125133-d3e3cc5ae079/go.mod h1:EHFRYFcg303Tc9FDxBmvUrT8AncZ4KMT8FrRoGJnqDk=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=

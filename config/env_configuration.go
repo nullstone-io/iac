@@ -48,6 +48,11 @@ func ConvertConfiguration(repoName, filename string, isOverrides bool, parsed ya
 func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver) core.ResolveErrors {
 	errs := core.ResolveErrors{}
 
+	for name, evt := range e.Events {
+		pc := core.NewObjectPathContextKey("events", name)
+		errs = append(errs, evt.Resolve(ctx, resolver, e.IacContext, pc)...)
+	}
+
 	for _, app := range e.Applications {
 		pc := core.NewObjectPathContextKey("apps", app.Name)
 		errs = append(errs, app.Resolve(ctx, resolver, e.IacContext, pc)...)
@@ -94,6 +99,11 @@ func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ResolveRes
 func (e *EnvConfiguration) Validate() core.ValidateErrors {
 	errs := core.ValidateErrors{}
 
+	for name, event := range e.Events {
+		pc := core.NewObjectPathContextKey("events", name)
+		errs = append(errs, event.Validate(e.IacContext, pc)...)
+	}
+
 	for _, app := range e.Applications {
 		pc := core.NewObjectPathContextKey("apps", app.Name)
 		errs = append(errs, app.Validate(e.IacContext, pc)...)
@@ -129,11 +139,6 @@ func (e *EnvConfiguration) Validate() core.ValidateErrors {
 	for _, sub := range e.Subdomains {
 		pc := core.NewObjectPathContextKey("subdomains", sub.Name)
 		errs = append(errs, sub.Validate(e.IacContext, pc)...)
-	}
-
-	for name, event := range e.Events {
-		pc := core.NewObjectPathContextKey("events", name)
-		errs = append(errs, event.Validate(e.IacContext, pc)...)
 	}
 
 	if len(errs) > 0 {

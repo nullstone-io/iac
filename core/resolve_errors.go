@@ -116,3 +116,17 @@ func ModuleLookupFailedError(pc ObjectPathContext, moduleSource string, err erro
 		ErrorMessage:      fmt.Sprintf("Module (%s) lookup failed: %s", moduleSource, err),
 	}
 }
+
+func BlockLookupFailedInEventError(pc ObjectPathContext, err error) ResolveError {
+	return ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Block must exist to subscribe to event, but it failed to resolve: %s", err),
+	}
+}
+
+func ToolChannelLookupFailedError(pc ObjectPathContext, tool string, err error) ResolveError {
+	return ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Failed to look up %s channels: %s", tool, err),
+	}
+}

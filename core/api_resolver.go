@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"gopkg.in/nullstone-io/go-api-client.v0"
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
@@ -56,4 +57,8 @@ func (a *ApiResolver) ResolveModuleVersion(ctx context.Context, source artifacts
 	}
 	mv, err := a.ApiClient.ModuleVersions().Get(ctx, source.OrgName, source.ModuleName, version)
 	return m, mv, err
+}
+
+func (a *ApiResolver) ListChannels(ctx context.Context, tool string) ([]map[string]any, error) {
+	return nil, fmt.Errorf("not implemented")
 }

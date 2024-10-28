@@ -101,10 +101,3 @@ func InvalidEventTargetError(pc ObjectPathContext, target string) ValidateError 
 		ErrorMessage:      fmt.Sprintf("Event Target (%s) is not a valid event target", target),
 	}
 }
-
-func MissingRequiredEventData(pc ObjectPathContext, fieldName string) ValidateError {
-	return ValidateError{
-		ObjectPathContext: pc,
-		ErrorMessage:      fmt.Sprintf("Required field (%s) is missing from event data", fieldName),
-	}
-}

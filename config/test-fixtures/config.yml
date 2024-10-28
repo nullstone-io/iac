@@ -1,4 +1,18 @@
 version: "0.1"
+
+events:
+  deployments:
+    actions:
+      - app-deployed
+    statuses:
+      - completed
+    blocks:
+      - acme-docs
+    targets:
+      slack:
+        channels:
+          - deployments
+
 apps:
   acme-docs:
     module: nullstone/aws-fargate-service

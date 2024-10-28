@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -44,20 +45,28 @@ type EventConfiguration struct {
 
 func (c *EventConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	errs := core.ResolveErrors{}
-	for _, blockName := range c.BlockNames {
-		block, err := resolver.ResolveBlock(ctx, types.ConnectionTarget{BlockName: blockName})
-		if err != nil {
-			errs = append(errs, core.BlockLookupFailedInEventError(pc.SubKey("blocks", blockName), err))
-		} else {
-			c.Blocks = append(c.Blocks, block)
-		}
-	}
 	errs = append(errs, c.Targets.Resolve(ctx, resolver, ic, pc)...)
 	return errs
 }
 
 func (c *EventConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
 	return c.Targets.Validate(ic, pc)
+}
+
+func (c *EventConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.NormalizeResolver) core.NormalizeErrors {
+	errs := core.NormalizeErrors{}
+	for _, blockName := range c.BlockNames {
+		block, err := resolver.ResolveBlock(ctx, types.ConnectionTarget{BlockName: blockName})
+		if err != nil {
+			errs = append(errs, core.NormalizeError{
+				ObjectPathContext: pc.SubKey("blocks", blockName),
+				ErrorMessage:      fmt.Sprintf("Block must exist to subscribe to event, but it failed to resolve: %s", err),
+			})
+		} else {
+			c.Blocks = append(c.Blocks, block)
+		}
+	}
+	return errs
 }
 
 func eventConfigFromYaml(name string, value yaml.EventConfiguration) *EventConfiguration {

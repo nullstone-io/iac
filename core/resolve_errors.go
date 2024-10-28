@@ -117,13 +117,6 @@ func ModuleLookupFailedError(pc ObjectPathContext, moduleSource string, err erro
 	}
 }
 
-func BlockLookupFailedInEventError(pc ObjectPathContext, err error) ResolveError {
-	return ResolveError{
-		ObjectPathContext: pc,
-		ErrorMessage:      fmt.Sprintf("Block must exist to subscribe to event, but it failed to resolve: %s", err),
-	}
-}
-
 func ToolChannelLookupFailedError(pc ObjectPathContext, tool string, err error) ResolveError {
 	return ResolveError{
 		ObjectPathContext: pc,

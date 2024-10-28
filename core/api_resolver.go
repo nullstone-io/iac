@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"fmt"
 	"gopkg.in/nullstone-io/go-api-client.v0"
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
@@ -15,8 +14,9 @@ var (
 )
 
 type ApiResolver struct {
-	ApiClient        *api.Client
-	ResourceResolver *find.ResourceResolver
+	ApiClient            *api.Client
+	ResourceResolver     *find.ResourceResolver
+	EventChannelResolver EventChannelResolver
 }
 
 func NewApiResolver(apiClient *api.Client, stackId, envId int64) *ApiResolver {
@@ -60,5 +60,8 @@ func (a *ApiResolver) ResolveModuleVersion(ctx context.Context, source artifacts
 }
 
 func (a *ApiResolver) ListChannels(ctx context.Context, tool string) ([]map[string]any, error) {
-	return nil, fmt.Errorf("not implemented")
+	if a.EventChannelResolver == nil {
+		return nil, nil
+	}
+	return a.EventChannelResolver.ListChannels(ctx, tool)
 }

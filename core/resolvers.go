@@ -13,6 +13,11 @@ type ResolveResolver interface {
 	EventChannelResolver
 }
 
+type NormalizeResolver interface {
+	BlockResolver
+	ConnectionResolver
+}
+
 type BlockResolver interface {
 	// ResolveBlock loads the types.Block based on the resolved connection target
 	// This relies on the StackId/BlockId and doesn't consider EnvId

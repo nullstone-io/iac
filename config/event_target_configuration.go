@@ -8,15 +8,25 @@ import (
 )
 
 var (
-	AllEventTargets = map[types.EventTarget]bool{}
+	AllEventTargets = map[types.EventTarget]bool{
+		types.EventTargetSlack:          true,
+		types.EventTargetMicrosoftTeams: true,
+		types.EventTargetDiscord:        true,
+		types.EventTargetWhatsapp:       true,
+		types.EventTargetWebhook:        true,
+		types.EventTargetTask:           true,
+	}
 )
 
 type EventTargetConfigurations map[string]*EventTargetConfiguration
 
-func convertEventTargetConfigurations(parsed map[string]yaml.EventTargetConfiguration) EventTargetConfigurations {
+func convertEventTargetConfigurations(parsed yaml.EventTargetConfiguration) EventTargetConfigurations {
 	events := EventTargetConfigurations{}
-	for target, value := range parsed {
-		events[target] = eventTargetConfigFromYaml(target, value)
+	if parsed.Slack != nil {
+		events[string(types.EventTargetSlack)] = &EventTargetConfiguration{
+			Target:    string(types.EventTargetSlack),
+			SlackData: slackEventTargetDataFromYaml(parsed.Slack),
+		}
 	}
 	return events
 }
@@ -49,13 +59,6 @@ type EventTargetConfiguration struct {
 	Target string `json:"target"`
 
 	SlackData *SlackEventTargetData `json:"slackData"`
-}
-
-func eventTargetConfigFromYaml(target string, value yaml.EventTargetConfiguration) *EventTargetConfiguration {
-	return &EventTargetConfiguration{
-		Target:    target,
-		SlackData: slackEventTargetDataFromYaml(value.Slack),
-	}
 }
 
 func (c *EventTargetConfiguration) ChannelData() map[string]any {

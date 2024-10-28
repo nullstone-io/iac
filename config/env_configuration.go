@@ -147,8 +147,13 @@ func (e *EnvConfiguration) Validate() core.ValidateErrors {
 	return nil
 }
 
-func (e *EnvConfiguration) Normalize(ctx context.Context, resolver core.ConnectionResolver) core.NormalizeErrors {
+func (e *EnvConfiguration) Normalize(ctx context.Context, resolver core.NormalizeResolver) core.NormalizeErrors {
 	errs := core.NormalizeErrors{}
+
+	for _, event := range e.Events {
+		pc := core.NewObjectPathContextKey("events", event.Name)
+		errs = append(errs, event.Normalize(ctx, pc, resolver)...)
+	}
 
 	for _, app := range e.Applications {
 		pc := core.NewObjectPathContextKey("apps", app.Name)

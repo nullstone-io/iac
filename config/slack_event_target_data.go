@@ -28,7 +28,7 @@ func (d *SlackEventTargetData) Resolve(ctx context.Context, resolver core.EventC
 		return core.ResolveErrors{core.ToolChannelLookupFailedError(pc, string(types.IntegrationToolSlack), err)}
 	}
 
-	d.ChannelIds = map[string]string{}
+	allChannelIds := map[string]string{}
 	for _, rawData := range channels {
 		var id string
 		var name string
@@ -39,9 +39,17 @@ func (d *SlackEventTargetData) Resolve(ctx context.Context, resolver core.EventC
 			name, _ = val.(string)
 		}
 		if name != "" {
-			d.ChannelIds[name] = id
+			allChannelIds[name] = id
 		}
 	}
+
+	d.ChannelIds = map[string]string{}
+	for _, channelName := range d.Channels {
+		if id, ok := allChannelIds[channelName]; ok {
+			d.ChannelIds[channelName] = id
+		}
+	}
+
 	return nil
 }
 

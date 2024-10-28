@@ -273,6 +273,23 @@ func TestConvertConfiguration(t *testing.T) {
 					Filename: "config.yml",
 					Version:  "0.1",
 				},
+				Events: EventConfigurations{
+					"deployments": {
+						Name:       "deployments",
+						Actions:    []types.EventAction{types.EventActionAppDeployed},
+						BlockNames: []string{"acme-docs"},
+						Statuses:   []types.EventStatus{types.EventStatusCompleted},
+						Targets: EventTargetConfigurations{
+							"slack": {
+								Target: "slack",
+								SlackData: &SlackEventTargetData{
+									Channels: []string{"deployments"},
+								},
+							},
+						},
+						Blocks: nil,
+					},
+				},
 				Applications: map[string]*AppConfiguration{
 					"acme-docs": {
 						BlockConfiguration: BlockConfiguration{
@@ -482,6 +499,22 @@ func TestConvertConfiguration(t *testing.T) {
 					IsOverrides: true,
 					Version:     "0.1",
 				},
+				Events: EventConfigurations{
+					"deployments": {
+						Name:       "deployments",
+						Actions:    []types.EventAction{types.EventActionAppDeployed},
+						BlockNames: []string{"acme-api"},
+						Targets: EventTargetConfigurations{
+							"slack": {
+								Target: "slack",
+								SlackData: &SlackEventTargetData{
+									Channels: []string{"deployments"},
+								},
+							},
+						},
+						Blocks: nil,
+					},
+				},
 				Applications: map[string]*AppConfiguration{
 					"acme-api": {
 						BlockConfiguration: BlockConfiguration{
@@ -565,6 +598,20 @@ func TestConvertConfiguration(t *testing.T) {
 			resolver := core.NewApiResolver(apiHub.Client(defaults.OrgName), defaults.StackId, defaults.EnvId)
 			resolver.ResourceResolver.StacksById[defaults.StackId] = sr
 			resolver.ResourceResolver.StacksByName["core"] = sr
+			resolver.EventChannelResolver = core.StaticEventChannelResolver{
+				ChannelsByTool: map[string][]map[string]any{
+					string(types.IntegrationToolSlack): {
+						map[string]any{
+							"id":   "C01DBR86SRK",
+							"name": "deployments",
+						},
+						map[string]any{
+							"id":   "C01DBR86STK",
+							"name": "random",
+						},
+					},
+				},
+			}
 
 			ctx := context.Background()
 			err1 := got.Resolve(ctx, resolver)

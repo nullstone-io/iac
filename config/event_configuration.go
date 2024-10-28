@@ -25,7 +25,7 @@ func (s EventConfigurations) MergeInto(env types.Environment, events map[string]
 	for name, cur := range s {
 		if existing, ok := events[name]; !ok {
 			// event doesn't exist yet, add a new one
-			events[name] = cur.ToEnvEvent(env)
+			events[name] = cur.ToEnvEvent(name, env)
 		} else {
 			// event exists, perform override
 			events[name] = cur.OverrideEnvEvent(existing)
@@ -79,7 +79,7 @@ func eventConfigFromYaml(name string, value yaml.EventConfiguration) *EventConfi
 	}
 }
 
-func (c *EventConfiguration) ToEnvEvent(env types.Environment) types.EnvEvent {
+func (c *EventConfiguration) ToEnvEvent(name string, env types.Environment) types.EnvEvent {
 	var channels map[types.IntegrationTool]types.ChannelData
 	if c.Targets != nil {
 		channels = c.Targets.Channels()
@@ -88,7 +88,7 @@ func (c *EventConfiguration) ToEnvEvent(env types.Environment) types.EnvEvent {
 		OrgName:  env.OrgName,
 		StackId:  env.StackId,
 		EnvId:    env.Id,
-		Name:     c.Name,
+		Name:     name,
 		Actions:  c.Actions,
 		Blocks:   c.BlockIds(),
 		Statuses: c.Statuses,

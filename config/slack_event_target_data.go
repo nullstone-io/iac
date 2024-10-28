@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -43,14 +44,19 @@ func (d *SlackEventTargetData) Resolve(ctx context.Context, resolver core.EventC
 		}
 	}
 
+	errs := core.ResolveErrors{}
 	d.ChannelIds = map[string]string{}
 	for _, channelName := range d.Channels {
 		if id, ok := allChannelIds[channelName]; ok {
 			d.ChannelIds[channelName] = id
+		} else {
+			errs = append(errs, core.ResolveError{
+				ObjectPathContext: pc,
+				ErrorMessage:      fmt.Sprintf("Slack channel %q could not be found in the connected workspace", channelName),
+			})
 		}
 	}
-
-	return nil
+	return errs
 }
 
 func (d *SlackEventTargetData) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {

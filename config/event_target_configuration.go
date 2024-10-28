@@ -71,7 +71,7 @@ func (c *EventTargetConfiguration) ChannelData() map[string]any {
 func (c *EventTargetConfiguration) Resolve(ctx context.Context, resolver core.EventChannelResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	errs := core.ResolveErrors{}
 	if c.SlackData != nil {
-		errs = append(errs, c.SlackData.Resolve(ctx, resolver, ic, pc.SubField("slack"))...)
+		errs = append(errs, c.SlackData.Resolve(ctx, resolver, ic, pc)...)
 	}
 	return errs
 }
@@ -82,7 +82,7 @@ func (c *EventTargetConfiguration) Validate(ic core.IacContext, pc core.ObjectPa
 	if _, ok := AllEventTargets[eventTarget]; !ok {
 		errs = append(errs, core.InvalidEventTargetError(pc, c.Target))
 	} else {
-		errs = append(errs, c.SlackData.Validate(ic, pc.SubField("slack"))...)
+		errs = append(errs, c.SlackData.Validate(ic, pc)...)
 	}
 	return errs
 }

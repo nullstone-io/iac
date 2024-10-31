@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/nullstone-io/module v0.2.9
 	github.com/stretchr/testify v1.8.4
-	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20241028185315-eaa730319444
+	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20241031212340-d6b8e4fd6fd2
 	gopkg.in/yaml.v3 v3.0.1
 )
 

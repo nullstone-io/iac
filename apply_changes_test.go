@@ -179,7 +179,7 @@ func TestApplyChanges(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			pmr, err := ParseConfigDir(filepath.Join("test-fixtures", test.testFixturesDir))
+			pmr, err := ParseConfigDir("TestApplyChanges", filepath.Join("test-fixtures", test.testFixturesDir))
 			require.NoError(t, err, "cannot test fixture dir")
 			got := mustClone(t, test.input)
 			err = ApplyChangesTo(*pmr, test.block, test.env, workspace.ConfigUpdater{Config: &got})

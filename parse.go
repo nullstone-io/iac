@@ -66,29 +66,19 @@ func ParseMap(parseContext string, files map[string]string) (ParseMapResult, err
 		Overrides: map[string]*config.EnvConfiguration{},
 	}
 
-	for filepath, raw := range files {
-		desc := getConfigFileDescription(filepath)
-		if desc == "config" {
-			parsed, err := ParseConfig(parseContext, filepath, false, bytes.NewBufferString(raw))
-			if err != nil {
-				return result, err
-			}
-			result.Config = parsed
+	for filename, raw := range files {
+		desc, isOverrides := getConfigFileDescription(filename)
+		parsed, err := ParseConfig(parseContext, filename, isOverrides, bytes.NewBufferString(raw))
+		if err != nil {
+			return result, err
+		}
+		if isOverrides {
+			result.Overrides[desc] = parsed
 		} else {
-			eo, err := ParseConfig(parseContext, filepath, true, bytes.NewBufferString(raw))
-			if err != nil {
-				return result, err
-			}
-			result.Overrides[desc] = eo
+			result.Config = parsed
 		}
 	}
 	return result, nil
-}
-
-func getConfigFileDescription(filepath string) string {
-	_, filename := path.Split(filepath)
-	woExt := strings.TrimSuffix(filename, path.Ext(filename))
-	return woExt
 }
 
 func ParseConfig(parseContext, filename string, isOverrides bool, r io.Reader) (*config.EnvConfiguration, error) {
@@ -108,7 +98,7 @@ func ParseConfigFile(parseContext, filename string, isOverrides bool) (*config.E
 	return ParseConfig(parseContext, filename, isOverrides, bytes.NewReader(raw))
 }
 
-func ParseConfigDir(dir string) (*ParseMapResult, error) {
+func ParseConfigDir(parseContext, dir string) (*ParseMapResult, error) {
 	pmr := &ParseMapResult{
 		Overrides: map[string]*config.EnvConfiguration{},
 	}
@@ -120,19 +110,36 @@ func ParseConfigDir(dir string) (*ParseMapResult, error) {
 		return nil, err
 	}
 	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yml") {
+		filename := entry.Name()
+		if entry.IsDir() || !isYmlFile(filename) {
 			continue
 		}
-		isOverrides := entry.Name() != "config.yml"
-		ec, err := ParseConfigFile("TestApplyChanges", filepath.Join(dir, entry.Name()), isOverrides)
+		desc, isOverrides := getConfigFileDescription(filename)
+		ec, err := ParseConfigFile(parseContext, filepath.Join(dir, filename), isOverrides)
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse config file: %w", err)
 		}
-		if !isOverrides {
-			pmr.Config = ec
+		if isOverrides {
+			pmr.Overrides[desc] = ec
 		} else {
-			pmr.Overrides[strings.TrimSuffix(entry.Name(), ".yml")] = ec
+			pmr.Config = ec
 		}
 	}
 	return pmr, nil
+}
+
+func getConfigFileDescription(filepath string) (string, bool) {
+	_, filename := path.Split(filepath)
+	woExt := strings.TrimSuffix(filename, path.Ext(filename))
+	return woExt, woExt != "config"
+}
+
+func isYmlFile(filename string) bool {
+	switch filepath.Ext(filename) {
+	case ".yml":
+		return true
+	case ".yaml":
+		return true
+	}
+	return false
 }

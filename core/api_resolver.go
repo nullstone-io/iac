@@ -14,8 +14,9 @@ var (
 )
 
 type ApiResolver struct {
-	ApiClient        *api.Client
-	ResourceResolver *find.ResourceResolver
+	ApiClient            *api.Client
+	ResourceResolver     *find.ResourceResolver
+	EventChannelResolver EventChannelResolver
 }
 
 func NewApiResolver(apiClient *api.Client, stackId, envId int64) *ApiResolver {
@@ -56,4 +57,11 @@ func (a *ApiResolver) ResolveModuleVersion(ctx context.Context, source artifacts
 	}
 	mv, err := a.ApiClient.ModuleVersions().Get(ctx, source.OrgName, source.ModuleName, version)
 	return m, mv, err
+}
+
+func (a *ApiResolver) ListChannels(ctx context.Context, tool string) ([]map[string]any, error) {
+	if a.EventChannelResolver == nil {
+		return nil, nil
+	}
+	return a.EventChannelResolver.ListChannels(ctx, tool)
 }

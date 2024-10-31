@@ -10,6 +10,12 @@ type ResolveResolver interface {
 	BlockResolver
 	ModuleResolver
 	ModuleVersionResolver
+	EventChannelResolver
+}
+
+type NormalizeResolver interface {
+	BlockResolver
+	ConnectionResolver
 }
 
 type BlockResolver interface {
@@ -31,4 +37,8 @@ type ModuleResolver interface {
 type ModuleVersionResolver interface {
 	// ResolveModuleVersion pulls module metadata and version metadata for the input source/version
 	ResolveModuleVersion(ctx context.Context, source artifacts.ModuleSource, version string) (*types.Module, *types.ModuleVersion, error)
+}
+
+type EventChannelResolver interface {
+	ListChannels(ctx context.Context, tool string) ([]map[string]any, error)
 }

@@ -1,4 +1,16 @@
 version: "0.1"
+
+events:
+  deployments:
+    actions:
+      - app-deployed
+    blocks:
+      - acme-api
+    targets:
+      slack:
+        channels:
+          - deployments
+
 apps:
   acme-api:
     vars:

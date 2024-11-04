@@ -1,10 +1,11 @@
-package iac
+package events
 
 import (
+	"github.com/nullstone-io/iac"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
-func GetEvents(input ParseMapResult, env types.Environment) map[string]types.EnvEvent {
+func Get(input iac.ParseMapResult, env types.Environment) map[string]types.EnvEvent {
 	effective := map[string]types.EnvEvent{}
 	if input.Config != nil {
 		input.Config.Events.MergeInto(env, effective)

@@ -7,6 +7,7 @@ import (
 )
 
 type IacContext struct {
+	RepoUrl     string `json:"repoUrl"`
 	RepoName    string `json:"repoName"`
 	Filename    string `json:"filename"`
 	IsOverrides bool   `json:"isOverrides"`

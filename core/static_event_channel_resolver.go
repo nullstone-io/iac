@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 )
 
 var (
@@ -13,5 +14,24 @@ type StaticEventChannelResolver struct {
 }
 
 func (s StaticEventChannelResolver) ListChannels(ctx context.Context, tool string) ([]map[string]any, error) {
-	return s.ChannelsByTool[tool], nil
+	if s.ChannelsByTool == nil {
+		return nil, ErrEventChannelsNotInitialized
+	}
+	byTool, ok := s.ChannelsByTool[tool]
+	if !ok {
+		return nil, EventChannelsByToolsNotInitializedError{Tool: tool}
+	}
+	return byTool, nil
+}
+
+var (
+	_ error = EventChannelsByToolsNotInitializedError{}
+)
+
+type EventChannelsByToolsNotInitializedError struct {
+	Tool string
+}
+
+func (e EventChannelsByToolsNotInitializedError) Error() string {
+	return fmt.Sprintf("event channels have not been initialized for %s", e.Tool)
 }

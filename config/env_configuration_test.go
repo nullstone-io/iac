@@ -269,6 +269,7 @@ func TestConvertConfiguration(t *testing.T) {
 			filename: "test-fixtures/config.yml",
 			want: &EnvConfiguration{
 				IacContext: core.IacContext{
+					RepoUrl:  "https://github.com/acme/api",
 					RepoName: "acme/api",
 					Filename: "config.yml",
 					Version:  "0.1",
@@ -494,6 +495,7 @@ func TestConvertConfiguration(t *testing.T) {
 			isOverrides: true,
 			want: &EnvConfiguration{
 				IacContext: core.IacContext{
+					RepoUrl:     "https://github.com/acme/api",
 					RepoName:    "acme/api",
 					Filename:    "config.yml",
 					IsOverrides: true,
@@ -578,7 +580,7 @@ func TestConvertConfiguration(t *testing.T) {
 			parsed, err := config2.ParseEnvConfiguration(buf)
 			assert.NoError(t, err)
 
-			got := ConvertConfiguration("acme/api", "config.yml", test.isOverrides, *parsed)
+			got := ConvertConfiguration("https://github.com/acme/api", "acme/api", "config.yml", test.isOverrides, *parsed)
 
 			if test.want != nil {
 				if diff := cmp.Diff(test.want, got); diff != "" {

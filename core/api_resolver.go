@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"gopkg.in/nullstone-io/go-api-client.v0"
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
@@ -11,6 +12,8 @@ import (
 var (
 	_ ResolveResolver    = &ApiResolver{}
 	_ ConnectionResolver = &ApiResolver{}
+
+	ErrEventChannelsNotInitialized = errors.New("event channels have not been initialized")
 )
 
 type ApiResolver struct {
@@ -61,7 +64,7 @@ func (a *ApiResolver) ResolveModuleVersion(ctx context.Context, source artifacts
 
 func (a *ApiResolver) ListChannels(ctx context.Context, tool string) ([]map[string]any, error) {
 	if a.EventChannelResolver == nil {
-		return nil, nil
+		return nil, ErrEventChannelsNotInitialized
 	}
 	return a.EventChannelResolver.ListChannels(ctx, tool)
 }

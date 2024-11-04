@@ -60,7 +60,7 @@ func (r ParseMapResult) BlockNames(env types.Environment) map[string]bool {
 	return blockNames
 }
 
-func ParseMap(parseContext string, files map[string]string) (ParseMapResult, error) {
+func ParseMap(repoUrl, repoName string, files map[string]string) (ParseMapResult, error) {
 	result := ParseMapResult{
 		Config:    nil,
 		Overrides: map[string]*config.EnvConfiguration{},
@@ -68,7 +68,7 @@ func ParseMap(parseContext string, files map[string]string) (ParseMapResult, err
 
 	for filename, raw := range files {
 		desc, isOverrides := getConfigFileDescription(filename)
-		parsed, err := ParseConfig(parseContext, filename, isOverrides, bytes.NewBufferString(raw))
+		parsed, err := ParseConfig(repoUrl, repoName, filename, isOverrides, bytes.NewBufferString(raw))
 		if err != nil {
 			return result, err
 		}
@@ -81,24 +81,24 @@ func ParseMap(parseContext string, files map[string]string) (ParseMapResult, err
 	return result, nil
 }
 
-func ParseConfig(parseContext, filename string, isOverrides bool, r io.Reader) (*config.EnvConfiguration, error) {
+func ParseConfig(repoUrl, repoName, filename string, isOverrides bool, r io.Reader) (*config.EnvConfiguration, error) {
 	decoder := yaml.NewDecoder(r)
 	var obj yaml2.EnvConfiguration
 	if err := decoder.Decode(&obj); err != nil {
-		return nil, InvalidYamlError{ParseContext: parseContext, FileName: filename, Err: err}
+		return nil, InvalidYamlError{ParseContext: repoName, FileName: filename, Err: err}
 	}
-	return config.ConvertConfiguration(parseContext, filename, isOverrides, obj), nil
+	return config.ConvertConfiguration(repoUrl, repoName, filename, isOverrides, obj), nil
 }
 
-func ParseConfigFile(parseContext, filename string, isOverrides bool) (*config.EnvConfiguration, error) {
+func ParseConfigFile(repoUrl, repoName, filename string, isOverrides bool) (*config.EnvConfiguration, error) {
 	raw, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	return ParseConfig(parseContext, filename, isOverrides, bytes.NewReader(raw))
+	return ParseConfig(repoUrl, repoName, filename, isOverrides, bytes.NewReader(raw))
 }
 
-func ParseConfigDir(parseContext, dir string) (*ParseMapResult, error) {
+func ParseConfigDir(repoUrl, repoName, dir string) (*ParseMapResult, error) {
 	pmr := &ParseMapResult{
 		Overrides: map[string]*config.EnvConfiguration{},
 	}
@@ -115,7 +115,7 @@ func ParseConfigDir(parseContext, dir string) (*ParseMapResult, error) {
 			continue
 		}
 		desc, isOverrides := getConfigFileDescription(filename)
-		ec, err := ParseConfigFile(parseContext, filepath.Join(dir, filename), isOverrides)
+		ec, err := ParseConfigFile(repoUrl, repoName, filepath.Join(dir, filename), isOverrides)
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse config file: %w", err)
 		}

@@ -32,6 +32,7 @@ func NewApiResolver(apiClient *api.Client, stackId, envId int64) *ApiResolver {
 			StacksById:   map[int64]*find.StackResolver{},
 			StacksByName: map[string]*find.StackResolver{},
 		},
+		EventChannelResolver: &ApiEventChannelResolver{ApiClient: apiClient},
 	}
 }
 

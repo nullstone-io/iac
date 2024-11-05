@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"gopkg.in/nullstone-io/go-api-client.v0"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -36,13 +37,17 @@ func (a *ApiEventChannelResolver) ListChannels(ctx context.Context, tool string)
 
 	integration := a.findIntegration(tool)
 	if integration == nil {
-		return nil, fmt.Errorf("No %q integration found in %s organization.", tool, a.ApiClient.Config.OrgName)
+		return nil, NoIntegrationFoundError{OrgName: a.ApiClient.Config.OrgName, Tool: tool}
 	}
 	status, err := a.ApiClient.Integrations().GetStatus(ctx, integration.Id)
 	if err != nil {
 		return nil, err
 	} else if status == nil {
 		return nil, fmt.Errorf("Unable to find channels for %q in %s organization", tool, a.ApiClient.Config.OrgName)
+	}
+
+	if !status.IsConnected {
+		return nil, IntegrationDisconnectedError{OrgName: a.ApiClient.Config.OrgName, Tool: tool}
 	}
 
 	byTool = []map[string]any{}
@@ -73,4 +78,37 @@ func (a *ApiEventChannelResolver) findIntegration(tool string) *types.Integratio
 		}
 	}
 	return nil
+}
+
+var (
+	_ error = NoIntegrationFoundError{}
+	_ error = IntegrationDisconnectedError{}
+)
+
+type NoIntegrationFoundError struct {
+	OrgName string
+	Tool    string
+}
+
+func (e NoIntegrationFoundError) Error() string {
+	return fmt.Sprintf("No %q integration found in %s organization.", e.Tool, e.OrgName)
+}
+
+func IsNoIntegrationFoundError(err error) bool {
+	var nife NoIntegrationFoundError
+	return errors.As(err, &nife)
+}
+
+type IntegrationDisconnectedError struct {
+	OrgName string
+	Tool    string
+}
+
+func (e IntegrationDisconnectedError) Error() string {
+	return fmt.Sprintf("%q integration is disconnected in %s organization.", e.Tool, e.OrgName)
+}
+
+func IsIntegrationDisconnectedError(err error) bool {
+	var ide IntegrationDisconnectedError
+	return errors.As(err, &ide)
 }

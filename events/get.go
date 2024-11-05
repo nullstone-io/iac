@@ -6,18 +6,16 @@ import (
 )
 
 func Get(input iac.ConfigFiles, env types.Environment) map[string]types.EnvEvent {
+	overrides := input.GetOverrides(env)
+	if input.Config == nil && overrides == nil {
+		return nil
+	}
 	effective := map[string]types.EnvEvent{}
 	if input.Config != nil {
 		input.Config.Events.MergeInto(env, effective)
 	}
-
-	name := env.Name
-	if env.Type == types.EnvTypePreview {
-		name = "previews"
-	}
-	if overrides, ok := input.Overrides[name]; ok && overrides != nil {
+	if overrides != nil {
 		overrides.Events.MergeInto(env, effective)
 	}
-
 	return effective
 }

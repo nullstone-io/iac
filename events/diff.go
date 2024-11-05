@@ -22,6 +22,9 @@ type Change struct {
 
 func Diff(current, desired map[string]types.EnvEvent, initiatingRepoUrl string) Changes {
 	changes := Changes{}
+	if desired == nil {
+		return changes
+	}
 
 	for name, des := range desired {
 		des := des

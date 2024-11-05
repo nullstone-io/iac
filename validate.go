@@ -4,7 +4,7 @@ import (
 	"github.com/nullstone-io/iac/core"
 )
 
-func Validate(input ParseMapResult) core.ValidateErrors {
+func Validate(input ConfigFiles) core.ValidateErrors {
 	errs := core.ValidateErrors{}
 	if input.Config != nil {
 		for _, err := range input.Config.Validate() {

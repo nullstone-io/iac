@@ -5,7 +5,7 @@ import (
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
-func Get(input iac.ParseMapResult, env types.Environment) map[string]types.EnvEvent {
+func Get(input iac.ConfigFiles, env types.Environment) map[string]types.EnvEvent {
 	effective := map[string]types.EnvEvent{}
 	if input.Config != nil {
 		input.Config.Events.MergeInto(env, effective)

@@ -5,7 +5,7 @@ import (
 	"github.com/nullstone-io/iac/core"
 )
 
-func Normalize(ctx context.Context, input ParseMapResult, resolver core.NormalizeResolver) core.NormalizeErrors {
+func Normalize(ctx context.Context, input ConfigFiles, resolver core.NormalizeResolver) core.NormalizeErrors {
 	errs := core.NormalizeErrors{}
 
 	if input.Config != nil {

@@ -60,6 +60,7 @@ func (a *ApiEventChannelResolver) ListChannels(ctx context.Context, tool string)
 			"context_team_id": cur.ContextTeamId,
 		})
 	}
+	a.cache[tool] = byTool
 	return byTool, nil
 }
 

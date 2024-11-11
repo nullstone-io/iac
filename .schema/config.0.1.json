@@ -180,7 +180,7 @@
       "type": "object",
       "patternProperties": {
         "^[A-Za-z_][A-Za-z0-9_\\-]*$": {
-          "oneOf": [
+          "anyOf": [
             { "type": "boolean" },
             { "type": "string" },
             { "type": "integer" },

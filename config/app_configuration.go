@@ -28,6 +28,7 @@ func convertCapabilities(parsed yaml.CapabilityConfigurations) CapabilityConfigu
 			moduleVersion = *capValue.ModuleSourceVersion
 		}
 		result[i] = &CapabilityConfiguration{
+			Name:                capValue.Name,
 			ModuleSource:        capValue.ModuleSource,
 			ModuleSourceVersion: moduleVersion,
 			Variables:           convertVariables(capValue.Variables),

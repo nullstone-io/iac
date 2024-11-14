@@ -12,55 +12,64 @@
       "type": "object",
       "patternProperties": {
         "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/app" }
-      }
+      },
+      "additionalProperties": false
     },
     "blocks": {
       "type": "object",
       "patternProperties": {
         "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/block" }
-      }
+      },
+      "additionalProperties": false
     },
     "cluster_namespaces": {
       "type": "object",
       "patternProperties": {
         "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/cluster_namespace" }
-      }
+      },
+      "additionalProperties": false
     },
     "clusters": {
       "type": "object",
       "patternProperties": {
         "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/cluster" }
-      }
+      },
+      "additionalProperties": false
     },
     "datastores": {
       "type": "object",
       "patternProperties": {
         "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/datastore" }
-      }
+      },
+      "additionalProperties": false
     },
     "domains": {
       "type": "object",
       "patternProperties": {
         "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/domain" }
-      }
+      },
+      "additionalProperties": false
     },
     "ingresses": {
       "type": "object",
       "patternProperties": {
         "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/ingress" }
-      }
+      },
+      "additionalProperties": false
     },
     "networks": {
       "type": "object",
       "patternProperties": {
         "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/network" }
-      }
+      },
+      "additionalProperties": false
     },
     "subdomains": {
       "type": "object",
       "patternProperties": {
         "^[a-z0-9\\-]+$": { "$ref":  "#/definitions/subdomain" }
-      }
+      },
+      "additionalProperties": false
     }
   },
   "required": ["version"],
@@ -89,25 +98,37 @@
       "additionalProperties": false
     },
     "app": {
-      "allOf": [
-        { "$ref": "#/definitions/block" },
-        {
+      "id": "#/definitions/app",
+      "type": "object",
+      "properties": {
+        "module": {
+          "type": "string",
+          "description": ""
+        },
+        "module_version": {
+          "type": "string",
+          "description": ""
+        },
+        "vars": { "$ref": "#/definitions/variables" },
+        "connections": { "$ref": "#/definitions/connection_targets" },
+        "is_shared": {
+          "type": "boolean",
+          "description": ""
+        },
+        "framework": {
+          "type": "string",
+          "description": ""
+        },
+        "environment": {
           "type": "object",
-          "properties": {
-            "framework": {
-              "type": "string",
-              "description": ""
-            },
-            "environment": {
-              "type": "object",
-              "patternProperties": {
-                "^[A-Za-z0-9_]+$": { "type": "string" }
-              }
-            },
-            "capabilities": { "$ref":  "#/definitions/capabilities" }
+          "patternProperties": {
+            "^[A-Za-z0-9_]+$": { "type": "string" }
           }
-        }
-      ]
+        },
+        "capabilities": { "$ref":  "#/definitions/capabilities" }
+      },
+      "patternProperties": {"^x-": {}},
+      "additionalProperties": false
     },
     "cluster_namespace": {
       "allOf": [
@@ -125,18 +146,26 @@
       ]
     },
     "domain": {
-      "allOf": [
-        { "$ref": "#/definitions/block" },
-        {
-          "type": "object",
-          "properties": {
-            "dns_name": {
-              "type": "string",
-              "description": ""
-            }
-          }
+      "id": "#/definitions/subdomain",
+      "type": "object",
+      "properties": {
+        "module": {
+          "type": "string",
+          "description": ""
+        },
+        "module_version": {
+          "type": "string",
+          "description": ""
+        },
+        "vars": { "$ref": "#/definitions/variables" },
+        "connections": { "$ref": "#/definitions/connection_targets" },
+        "dns_name": {
+          "type": "string",
+          "description": ""
         }
-      ]
+      },
+      "patternProperties": {"^x-": {}},
+      "additionalProperties": false
     },
     "ingress": {
       "allOf": [
@@ -149,18 +178,30 @@
       ]
     },
     "subdomain": {
-      "allOf": [
-        { "$ref": "#/definitions/block" },
-        {
-          "type": "object",
-          "properties": {
-            "dns_name": {
-              "type": "string",
-              "description": ""
-            }
-          }
+      "id": "#/definitions/subdomain",
+      "type": "object",
+      "properties": {
+        "module": {
+          "type": "string",
+          "description": ""
+        },
+        "module_version": {
+          "type": "string",
+          "description": ""
+        },
+        "vars": { "$ref": "#/definitions/variables" },
+        "connections": { "$ref": "#/definitions/connection_targets" },
+        "is_shared": {
+          "type": "boolean",
+          "description": ""
+        },
+        "dns_name": {
+          "type": "string",
+          "description": ""
         }
-      ]
+      },
+      "patternProperties": {"^x-": {}},
+      "additionalProperties": false
     },
     "capabilities": {
       "type": "array",

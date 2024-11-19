@@ -42,12 +42,14 @@ func (w ConfigUpdater) UpdateVariableValue(name string, value any) {
 	w.Config.Variables[name] = existing
 }
 
-func (w ConfigUpdater) UpdateConnectionTarget(name string, value types.ConnectionTarget) {
+func (w ConfigUpdater) UpdateConnectionTarget(name string, desired, effective types.ConnectionTarget) {
 	existing, ok := w.Config.Connections[name]
 	if !ok {
 		return
 	}
-	existing.Reference = &value
+	existing.Target = &desired
+	existing.EffectiveTarget = &effective
+	existing.Reference = &effective
 	w.Config.Connections[name] = existing
 }
 
@@ -134,13 +136,15 @@ func (c CapabilityConfigUpdater) UpdateVariableValue(name string, value any) {
 	})
 }
 
-func (c CapabilityConfigUpdater) UpdateConnectionTarget(name string, value types.ConnectionTarget) {
+func (c CapabilityConfigUpdater) UpdateConnectionTarget(name string, desired, effective types.ConnectionTarget) {
 	c.doOperation(func(cc *types.CapabilityConfig) {
 		existingConn, ok := cc.Connections[name]
 		if !ok {
 			return
 		}
-		existingConn.Reference = &value
+		existingConn.Target = &desired
+		existingConn.EffectiveTarget = &effective
+		existingConn.Reference = &effective
 		cc.Connections[name] = existingConn
 	})
 }

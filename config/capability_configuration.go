@@ -61,7 +61,7 @@ func (c CapabilityConfigurations) ToCapabilities(stackId int64) []types.Capabili
 			capability.Namespace = *cur.Namespace
 		}
 		for key, conn := range cur.Connections {
-			target := conn.Target
+			target := conn.EffectiveTarget
 			if target.StackId == 0 && target.StackName == "" {
 				target.StackId = stackId
 			}
@@ -121,7 +121,7 @@ type CapabilityConfiguration struct {
 func (c *CapabilityConfiguration) Identity() core.CapabilityIdentity {
 	return core.CapabilityIdentity{
 		ModuleSource:      c.ModuleSource,
-		ConnectionTargets: c.Connections.Targets(),
+		ConnectionTargets: c.Connections.EffectiveTargets(),
 	}
 }
 
@@ -213,7 +213,7 @@ func (c *CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater cor
 		capUpdater.UpdateVariableValue(name, vc.Value)
 	}
 	for name, cc := range c.Connections {
-		capUpdater.UpdateConnectionTarget(name, cc.Target)
+		capUpdater.UpdateConnectionTarget(name, cc.Target, cc.EffectiveTarget)
 	}
 	return nil
 }

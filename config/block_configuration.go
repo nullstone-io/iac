@@ -156,7 +156,7 @@ func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block 
 		DnsName:             "",
 		ModuleSource:        b.ModuleSource,
 		ModuleSourceVersion: b.ModuleSourceVersion,
-		Connections:         b.Connections.Targets(),
+		Connections:         b.Connections.EffectiveTargets(),
 	}
 	for k, conn := range block.Connections {
 		if conn.StackId == 0 && conn.StackName == "" {
@@ -173,7 +173,7 @@ func (b *BlockConfiguration) ApplyChangesTo(ic core.IacContext, updater core.Wor
 		updater.UpdateVariableValue(name, vc.Value)
 	}
 	for name, cc := range b.Connections {
-		updater.UpdateConnectionTarget(name, cc.Target)
+		updater.UpdateConnectionTarget(name, cc.Target, cc.EffectiveTarget)
 	}
 	return nil
 }

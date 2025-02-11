@@ -121,26 +121,16 @@
         },
         "environment": {
           "type": "object",
-          "properties": {
-            "framework": {
-              "type": "string",
-              "description": ""
-            },
-            "environment": {
-              "type": "object",
-              "patternProperties": {
-                "^[A-Za-z0-9_]+$": { "type": "string" }
-              }
-            },
-            "capabilities": {
-              "oneOf": [
-                { "$ref":  "#/definitions/capabilities" },
-                { "$ref":  "#/definitions/capabilitiesArray" }
-              ]
-            }
+          "patternProperties": {
+            "^[A-Za-z0-9_]+$": { "type": "string" }
           }
         },
-        "capabilities": { "$ref":  "#/definitions/capabilities" }
+        "capabilities": {
+          "oneOf": [
+            { "$ref":  "#/definitions/capabilities" },
+            { "$ref":  "#/definitions/capabilitiesArray" }
+          ]
+        }
       },
       "patternProperties": {"^x-": {}},
       "additionalProperties": false

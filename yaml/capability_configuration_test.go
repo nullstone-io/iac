@@ -24,6 +24,16 @@ func TestCapabilityConfigurations_UnmarshalYAML(t *testing.T) {
 				},
 			},
 		},
+		"sequence-with-name": {
+			content: `- name: keys
+  module: nullstone/jwt-keys`,
+			want: CapabilityConfigurations{
+				{
+					Name:         "keys",
+					ModuleSource: "nullstone/jwt-keys",
+				},
+			},
+		},
 		"map": {
 			content: `keys:
   module: nullstone/jwt-keys`,

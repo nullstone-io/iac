@@ -53,6 +53,7 @@ func (c CapabilityConfigurations) ToCapabilities(stackId int64) []types.Capabili
 	var result []types.Capability
 	for _, cur := range c {
 		capability := types.Capability{
+			Name:                cur.Name,
 			ModuleSource:        cur.ModuleSource,
 			ModuleSourceVersion: cur.ModuleSourceVersion,
 			Connections:         types.ConnectionTargets{},

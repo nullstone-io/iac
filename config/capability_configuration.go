@@ -49,24 +49,17 @@ func (c CapabilityConfigurations) Validate(ic core.IacContext, pc core.ObjectPat
 	return nil
 }
 
-func (c CapabilityConfigurations) ToCapabilities(stackId int64) []types.Capability {
+func (c CapabilityConfigurations) ToCapabilities() []types.Capability {
 	var result []types.Capability
 	for _, cur := range c {
 		capability := types.Capability{
 			Name:                cur.Name,
 			ModuleSource:        cur.ModuleSource,
 			ModuleSourceVersion: cur.ModuleSourceVersion,
-			Connections:         types.ConnectionTargets{},
+			Connections:         cur.Connections.Targets(),
 		}
 		if cur.Namespace != nil {
 			capability.Namespace = *cur.Namespace
-		}
-		for key, conn := range cur.Connections {
-			target := conn.Target
-			if target.StackId == 0 && target.StackName == "" {
-				target.StackId = stackId
-			}
-			capability.Connections[key] = target
 		}
 		result = append(result, capability)
 	}

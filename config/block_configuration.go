@@ -158,12 +158,6 @@ func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block 
 		ModuleSourceVersion: b.ModuleSourceVersion,
 		Connections:         b.Connections.Targets(),
 	}
-	for k, conn := range block.Connections {
-		if conn.StackId == 0 && conn.StackName == "" {
-			conn.StackId = stackId
-		}
-		block.Connections[k] = conn
-	}
 	return block
 }
 

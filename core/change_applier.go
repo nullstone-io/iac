@@ -15,6 +15,7 @@ type WorkspaceConfigUpdater interface {
 	AddOrUpdateEnvVariable(name string, value string, sensitive bool)
 	RemoveEnvVariablesNotIn(envVariables map[string]string)
 	GetCapabilityUpdater(identity CapabilityIdentity) CapabilityConfigUpdater
+	AddCapability(name string) CapabilityConfigUpdater
 	RemoveCapabilitiesNotIn(identities CapabilityIdentities)
 }
 

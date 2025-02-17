@@ -69,9 +69,8 @@ func (c CapabilityConfigurations) ToCapabilities() []types.Capability {
 func (c CapabilityConfigurations) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
 	if ic.IsOverrides {
 		for _, cur := range c {
-			if err := cur.ApplyChangesTo(ic, updater); err != nil {
-				return err
-			}
+			// TODO: Add support to add capabilities in an overrides file?
+			cur.UpdateCapability(ic, updater)
 		}
 	} else {
 		updater.RemoveCapabilitiesNotIn(c.Identities())
@@ -205,10 +204,24 @@ func (c *CapabilityConfiguration) Validate(ic core.IacContext, pc core.ObjectPat
 
 func (c *CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
 	capUpdater := updater.GetCapabilityUpdater(c.Identity())
-	if capUpdater == nil {
-		return nil
+	if capUpdater != nil {
+		// Update capability that already exists in the workspace config
+		c.doUpdateCapability(capUpdater)
+	} else {
+		// Add capability that doesn't exist in the workspace config yet
+		c.doUpdateCapability(updater.AddCapability(c.Name))
 	}
+	return nil
+}
 
+func (c *CapabilityConfiguration) UpdateCapability(ic core.IacContext, updater core.WorkspaceConfigUpdater) {
+	c.doUpdateCapability(updater.GetCapabilityUpdater(c.Identity()))
+}
+
+func (c *CapabilityConfiguration) doUpdateCapability(capUpdater core.CapabilityConfigUpdater) {
+	if capUpdater == nil {
+		return
+	}
 	capUpdater.UpdateSchema(c.ModuleSource, c.ModuleVersion)
 	capUpdater.UpdateNamespace(c.Namespace)
 	for name, vc := range c.Variables {
@@ -217,5 +230,4 @@ func (c *CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater cor
 	for name, cc := range c.Connections {
 		capUpdater.UpdateConnectionTarget(name, cc.DesiredTarget, cc.EffectiveTarget)
 	}
-	return nil
 }

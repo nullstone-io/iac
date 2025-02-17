@@ -97,6 +97,15 @@ func (w ConfigUpdater) GetCapabilityUpdater(identity core.CapabilityIdentity) co
 	return nil
 }
 
+func (w ConfigUpdater) AddCapability(name string) core.CapabilityConfigUpdater {
+	w.Config.Capabilities = append(w.Config.Capabilities, types.CapabilityConfig{Name: name})
+	ccu := CapabilityConfigUpdater{
+		WorkspaceConfig: w.Config,
+		Index:           len(w.Config.Capabilities) - 1,
+	}
+	return ccu
+}
+
 func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentities) {
 	result := make(types.CapabilityConfigs, 0)
 	for _, cur := range w.Config.Capabilities {
@@ -106,6 +115,7 @@ func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentit
 			ConnectionTargets: cur.Connections.EffectiveTargets(),
 		})
 		if found != nil {
+			// If we found the capability in the IaC file, let's keep it
 			result = append(result, cur)
 		}
 	}

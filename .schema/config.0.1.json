@@ -125,7 +125,12 @@
             "^[A-Za-z0-9_]+$": { "type": "string" }
           }
         },
-        "capabilities": { "$ref":  "#/definitions/capabilities" }
+        "capabilities": {
+          "oneOf": [
+            { "$ref":  "#/definitions/capabilities" },
+            { "$ref":  "#/definitions/capabilitiesArray" }
+          ]
+        }
       },
       "patternProperties": {"^x-": {}},
       "additionalProperties": false
@@ -204,13 +209,28 @@
       "additionalProperties": false
     },
     "capabilities": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/capability" }
+    },
+    "capabilitiesArray": {
       "type": "array",
-      "items": { "$ref": "#/definitions/capability" }
+      "items": { "$ref": "#/definitions/namedCapability" }
     },
     "capability": {
       "type": "object",
       "properties": {
         "namespace": { "types": "string" },
+        "module": { "type": "string" },
+        "module_version": { "type": "string" },
+        "vars": { "$ref": "#/definitions/variables" },
+        "connections": { "$ref": "#/definitions/connection_targets" }
+      }
+    },
+    "namedCapability": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "namespace": { "type": "string" },
         "module": { "type": "string" },
         "module_version": { "type": "string" },
         "vars": { "$ref": "#/definitions/variables" },

@@ -14,11 +14,22 @@ func (s CapabilityIdentities) Find(match CapabilityIdentity) *CapabilityIdentity
 }
 
 type CapabilityIdentity struct {
-	ModuleSource      string                  `json:"moduleSource"`
+	// Name is unique to the application that holds this capability
+	Name string `json:"name"`
+
+	// ModuleSource
+	// Deprecated
+	ModuleSource string `json:"moduleSource"`
+	// ConnectionTargets
+	// Deprecated
 	ConnectionTargets types.ConnectionTargets `json:"connectionTargets"`
 }
 
 func (i CapabilityIdentity) Match(other CapabilityIdentity) bool {
+	if i.Name != "" && other.Name != "" {
+		return i.Name == other.Name
+	}
+
 	if i.ModuleSource != other.ModuleSource {
 		return false
 	}

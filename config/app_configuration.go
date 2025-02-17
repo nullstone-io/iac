@@ -28,6 +28,7 @@ func convertCapabilities(parsed yaml.CapabilityConfigurations) CapabilityConfigu
 			moduleVersion = *capValue.ModuleSourceVersion
 		}
 		result[i] = &CapabilityConfiguration{
+			Name:                capValue.Name,
 			ModuleSource:        capValue.ModuleSource,
 			ModuleSourceVersion: moduleVersion,
 			Variables:           convertVariables(capValue.Variables),
@@ -105,7 +106,7 @@ func (a *AppConfiguration) Normalize(ctx context.Context, pc core.ObjectPathCont
 func (a *AppConfiguration) ToBlock(orgName string, stackId int64) types.Block {
 	block := a.BlockConfiguration.ToBlock(orgName, stackId)
 	block.Framework = a.Framework
-	block.Capabilities = a.Capabilities.ToCapabilities(stackId)
+	block.Capabilities = a.Capabilities.ToCapabilities()
 	return block
 }
 

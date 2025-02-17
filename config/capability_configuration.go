@@ -49,23 +49,17 @@ func (c CapabilityConfigurations) Validate(ic core.IacContext, pc core.ObjectPat
 	return nil
 }
 
-func (c CapabilityConfigurations) ToCapabilities(stackId int64) []types.Capability {
+func (c CapabilityConfigurations) ToCapabilities() []types.Capability {
 	var result []types.Capability
 	for _, cur := range c {
 		capability := types.Capability{
+			Name:                cur.Name,
 			ModuleSource:        cur.ModuleSource,
 			ModuleSourceVersion: cur.ModuleSourceVersion,
-			Connections:         types.ConnectionTargets{},
+			Connections:         cur.Connections.Targets(),
 		}
 		if cur.Namespace != nil {
 			capability.Namespace = *cur.Namespace
-		}
-		for key, conn := range cur.Connections {
-			target := conn.Target
-			if target.StackId == 0 && target.StackName == "" {
-				target.StackId = stackId
-			}
-			capability.Connections[key] = target
 		}
 		result = append(result, capability)
 	}
@@ -108,6 +102,7 @@ func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.Res
 }
 
 type CapabilityConfiguration struct {
+	Name                string                   `json:"name"`
 	ModuleSource        string                   `json:"moduleSource"`
 	ModuleSourceVersion string                   `json:"moduleSourceVersion"`
 	Variables           VariableConfigurations   `json:"vars"`
@@ -120,6 +115,7 @@ type CapabilityConfiguration struct {
 
 func (c *CapabilityConfiguration) Identity() core.CapabilityIdentity {
 	return core.CapabilityIdentity{
+		Name:              c.Name,
 		ModuleSource:      c.ModuleSource,
 		ConnectionTargets: c.Connections.Targets(),
 	}
@@ -164,16 +160,22 @@ func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.Res
 }
 
 func (c *CapabilityConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext, appModule *types.Module) core.ValidateErrors {
+	errs := core.ValidateErrors{}
+	// TODO: After deprecating (ModuleSource+ConnectionTargets), validate Name
+	//if c.Name == "" {
+	//	err := core.MissingCapabilityNameError(pc)
+	//	errs = append(errs, *err)
+	//}
+
 	if c.Module == nil {
 		// We can't perform validation if the module isn't loaded
-		return nil
+		return errs
 	}
 	if ic.IsOverrides && c.ModuleSource == "" {
 		// TODO: Add support for validating variables and connections in an overrides file
-		return nil
+		return errs
 	}
 
-	errs := core.ValidateErrors{}
 	// check to make sure the capability module supports the subcategory
 	// examples are "container", "serverless", "static-site", "server"
 	// TODO: Add support for validating app category

@@ -41,11 +41,14 @@ func ConnectionsFromWorkspaceConfig(stackId, envId int64, connections types.Conn
 		if conn.DesiredTarget == nil {
 			continue
 		}
-		result[name] = ConnectionConstraint{
-			StackName: conn.DesiredTarget.StackName,
-			EnvName:   conn.DesiredTarget.EnvName,
-			BlockName: conn.DesiredTarget.BlockName,
+		cc := ConnectionConstraint{BlockName: conn.DesiredTarget.BlockName}
+		if conn.DesiredTarget.StackId != stackId {
+			cc.StackName = conn.DesiredTarget.StackName
 		}
+		if conn.DesiredTarget.EnvId != nil && *conn.DesiredTarget.EnvId == envId {
+			cc.EnvName = conn.DesiredTarget.EnvName
+		}
+		result[name] = cc
 	}
 	return result
 }

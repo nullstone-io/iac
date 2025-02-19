@@ -38,13 +38,13 @@ func VariablesFromWorkspaceConfig(variables types.Variables) map[string]any {
 func ConnectionsFromWorkspaceConfig(stackId, envId int64, connections types.Connections) ConnectionConstraints {
 	result := ConnectionConstraints{}
 	for name, conn := range connections {
-		if conn.Target == nil {
+		if conn.DesiredTarget == nil {
 			continue
 		}
 		result[name] = ConnectionConstraint{
-			StackName: conn.Target.StackName,
-			BlockName: conn.Target.BlockName,
-			EnvName:   conn.Target.EnvName,
+			StackName: conn.DesiredTarget.StackName,
+			EnvName:   conn.DesiredTarget.EnvName,
+			BlockName: conn.DesiredTarget.BlockName,
 		}
 	}
 	return result

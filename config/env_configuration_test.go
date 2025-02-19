@@ -304,7 +304,7 @@ func TestConvertConfiguration(t *testing.T) {
 							},
 							Connections: ConnectionConfigurations{
 								"cluster-namespace": {
-									Target: types.ConnectionTarget{
+									DesiredTarget: types.ConnectionTarget{
 										BlockName: "namespace0",
 									},
 								},
@@ -323,7 +323,7 @@ func TestConvertConfiguration(t *testing.T) {
 								},
 								Connections: ConnectionConfigurations{
 									"subdomain": {
-										Target: types.ConnectionTarget{
+										DesiredTarget: types.ConnectionTarget{
 											BlockName: subdomainName,
 										},
 									},
@@ -540,7 +540,7 @@ func TestConvertConfiguration(t *testing.T) {
 								Namespace:        ptr("secondary"),
 								Connections: ConnectionConfigurations{
 									"subdomain": {
-										Target: types.ConnectionTarget{
+										DesiredTarget: types.ConnectionTarget{
 											StackId:   0,
 											StackName: "",
 											BlockId:   0,

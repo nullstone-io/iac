@@ -54,7 +54,7 @@ func convertConnections(parsed map[string]yaml.ConnectionConstraint) ConnectionC
 	result := ConnectionConfigurations{}
 	for key, conn := range parsed {
 		result[key] = &ConnectionConfiguration{
-			Target: types.ConnectionTarget{
+			DesiredTarget: types.ConnectionTarget{
 				StackName: conn.StackName,
 				BlockName: conn.BlockName,
 				EnvName:   conn.EnvName,
@@ -164,7 +164,7 @@ func (b *BlockConfiguration) ApplyChangesTo(ic core.IacContext, updater core.Wor
 		updater.UpdateVariableValue(name, vc.Value)
 	}
 	for name, cc := range b.Connections {
-		updater.UpdateConnectionTarget(name, cc.Target, cc.EffectiveTarget)
+		updater.UpdateConnectionTarget(name, cc.DesiredTarget, cc.EffectiveTarget)
 	}
 	return nil
 }

@@ -48,7 +48,7 @@ func (c *ConnectionConstraint) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
-func (c *ConnectionConstraint) MarshalYAML() (interface{}, error) {
+func (c ConnectionConstraint) MarshalYAML() (interface{}, error) {
 	node := &yaml.Node{
 		Kind:  yaml.ScalarNode,
 		Tag:   "!!str",
@@ -62,12 +62,12 @@ func (c *ConnectionConstraint) String() string {
 	if c.StackName != "" {
 		tokens = append(tokens, c.StackName)
 	}
-	if c.EnvName != "" {
+	if c.StackName != "" || c.EnvName != "" {
+		// always emit an env name if stack name is added
 		tokens = append(tokens, c.EnvName)
 	}
-	if c.BlockName != "" {
-		tokens = append(tokens, c.BlockName)
-	}
+	// block name should always exist
+	tokens = append(tokens, c.BlockName)
 	return strings.Join(tokens, ".")
 }
 
@@ -80,7 +80,7 @@ func ParseConnectionConstraint(s string) ConnectionConstraint {
 		}
 	case 2:
 		return ConnectionConstraint{
-			StackName: tokens[0],
+			EnvName:   tokens[0],
 			BlockName: tokens[1],
 		}
 	case 3:

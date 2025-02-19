@@ -294,11 +294,11 @@ func TestConvertConfiguration(t *testing.T) {
 				Applications: map[string]*AppConfiguration{
 					"acme-docs": {
 						BlockConfiguration: BlockConfiguration{
-							Type:                BlockTypeApplication,
-							Category:            types.CategoryApp,
-							Name:                "acme-docs",
-							ModuleSource:        "nullstone/aws-fargate-service",
-							ModuleSourceVersion: latest,
+							Type:             BlockTypeApplication,
+							Category:         types.CategoryApp,
+							Name:             "acme-docs",
+							ModuleSource:     "nullstone/aws-fargate-service",
+							ModuleConstraint: latest,
 							Variables: VariableConfigurations{
 								"num_tasks": {Value: 2},
 							},
@@ -316,8 +316,8 @@ func TestConvertConfiguration(t *testing.T) {
 						},
 						Capabilities: CapabilityConfigurations{
 							{
-								ModuleSource:        "nullstone/aws-load-balancer",
-								ModuleSourceVersion: latest,
+								ModuleSource:     "nullstone/aws-load-balancer",
+								ModuleConstraint: latest,
 								Variables: VariableConfigurations{
 									"health_check_path": {Value: "/status"},
 								},
@@ -534,10 +534,10 @@ func TestConvertConfiguration(t *testing.T) {
 						},
 						Capabilities: CapabilityConfigurations{
 							{
-								ModuleSource:        "nullstone/aws-s3-cdn",
-								ModuleSourceVersion: "latest",
-								Variables:           VariableConfigurations{"enable_www": {Value: true}},
-								Namespace:           ptr("secondary"),
+								ModuleSource:     "nullstone/aws-s3-cdn",
+								ModuleConstraint: "latest",
+								Variables:        VariableConfigurations{"enable_www": {Value: true}},
+								Namespace:        ptr("secondary"),
 								Connections: ConnectionConfigurations{
 									"subdomain": {
 										Target: types.ConnectionTarget{

@@ -5,19 +5,19 @@ import "gopkg.in/nullstone-io/go-api-client.v0/types"
 const RedactedValue = "••••••••••"
 
 type BlockConfiguration struct {
-	ModuleSource        string            `yaml:"module" json:"module"`
-	ModuleSourceVersion *string           `yaml:"module_version,omitempty" json:"moduleVersion"`
-	Variables           map[string]any    `yaml:"vars,omitempty" json:"vars"`
-	Connections         ConnectionTargets `yaml:"connections,omitempty" json:"connections"`
-	IsShared            bool              `yaml:"is_shared,omitempty" json:"isShared"`
+	ModuleSource     string                `yaml:"module" json:"module"`
+	ModuleConstraint *string               `yaml:"module_version,omitempty" json:"moduleVersion"`
+	Variables        map[string]any        `yaml:"vars,omitempty" json:"vars"`
+	Connections      ConnectionConstraints `yaml:"connections,omitempty" json:"connections"`
+	IsShared         bool                  `yaml:"is_shared,omitempty" json:"isShared"`
 }
 
 func BlockConfigurationFromWorkspaceConfig(stackId, envId int64, config types.WorkspaceConfig) BlockConfiguration {
 	return BlockConfiguration{
-		ModuleSource:        config.Source,
-		ModuleSourceVersion: &config.SourceVersion,
-		Variables:           VariablesFromWorkspaceConfig(config.Variables),
-		Connections:         ConnectionsFromWorkspaceConfig(stackId, envId, config.Connections),
+		ModuleSource:     config.Source,
+		ModuleConstraint: &config.SourceConstraint,
+		Variables:        VariablesFromWorkspaceConfig(config.Variables),
+		Connections:      ConnectionsFromWorkspaceConfig(stackId, envId, config.Connections),
 	}
 }
 
@@ -35,23 +35,17 @@ func VariablesFromWorkspaceConfig(variables types.Variables) map[string]any {
 	return result
 }
 
-func ConnectionsFromWorkspaceConfig(stackId, envId int64, connections types.Connections) ConnectionTargets {
-	result := ConnectionTargets{}
+func ConnectionsFromWorkspaceConfig(stackId, envId int64, connections types.Connections) ConnectionConstraints {
+	result := ConnectionConstraints{}
 	for name, conn := range connections {
-		if conn.Reference == nil {
+		if conn.Target == nil {
 			continue
 		}
-		target := ConnectionTarget{}
-		// we only need to populate the stack name if it is different then the root workspace
-		if conn.Reference.StackId != 0 && conn.Reference.StackId != stackId {
-			target.StackName = conn.Reference.StackName
+		result[name] = ConnectionConstraint{
+			StackName: conn.Target.StackName,
+			BlockName: conn.Target.BlockName,
+			EnvName:   conn.Target.EnvName,
 		}
-		target.BlockName = conn.Reference.BlockName
-		// we only need to populate the env name if it is different then the root workspace
-		if conn.Reference.EnvId != nil && *conn.Reference.EnvId != envId {
-			target.EnvName = conn.Reference.EnvName
-		}
-		result[name] = target
 	}
 	return result
 }

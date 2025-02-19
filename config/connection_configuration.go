@@ -74,10 +74,11 @@ func (s ConnectionConfigurations) Normalize(ctx context.Context, pc core.ObjectP
 }
 
 type ConnectionConfiguration struct {
-	Target types.ConnectionTarget `json:"target"`
-	Schema *config.Connection     `json:"schema"`
-	Block  *types.Block           `json:"block"`
-	Module *types.Module          `json:"module"`
+	Target          types.ConnectionTarget `json:"target"`
+	EffectiveTarget types.ConnectionTarget `json:"effectiveTarget"`
+	Schema          *config.Connection     `json:"schema"`
+	Block           *types.Block           `json:"block"`
+	Module          *types.Module          `json:"module"`
 }
 
 // Resolve resolves the connection's target (i.e. block) and matches the connection contract
@@ -150,6 +151,6 @@ func (c *ConnectionConfiguration) Normalize(ctx context.Context, pc core.ObjectP
 			ErrorMessage:      err.Error(),
 		}
 	}
-	c.Target = ct
+	c.EffectiveTarget = ct
 	return nil
 }

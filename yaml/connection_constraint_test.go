@@ -6,31 +6,31 @@ import (
 	"testing"
 )
 
-func TestConnectionTarget_UnmarshalYAML(t *testing.T) {
+func TestConnectionConstraint_UnmarshalYAML(t *testing.T) {
 	tests := []struct {
 		name    string
 		content string
-		want    ConnectionTarget
+		want    ConnectionConstraint
 	}{
 		{
 			name: "block_name",
 			content: `target:
   block_name: "block0"`,
-			want: ConnectionTarget{
+			want: ConnectionConstraint{
 				BlockName: "block0",
 			},
 		},
 		{
 			name:    "block name as string",
 			content: `target: "block0"`,
-			want: ConnectionTarget{
+			want: ConnectionConstraint{
 				BlockName: "block0",
 			},
 		},
 		{
 			name:    "stack and block name as string",
 			content: `target: "stack0.block0"`,
-			want: ConnectionTarget{
+			want: ConnectionConstraint{
 				StackName: "stack0",
 				BlockName: "block0",
 			},
@@ -38,7 +38,7 @@ func TestConnectionTarget_UnmarshalYAML(t *testing.T) {
 		{
 			name:    "stack, block, and env name as string",
 			content: `target: "stack0.env0.block0"`,
-			want: ConnectionTarget{
+			want: ConnectionConstraint{
 				StackName: "stack0",
 				EnvName:   "env0",
 				BlockName: "block0",
@@ -49,7 +49,7 @@ func TestConnectionTarget_UnmarshalYAML(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var got struct {
-				Target ConnectionTarget `yaml:"target"`
+				Target ConnectionConstraint `yaml:"target"`
 			}
 			assert.NoError(t, yaml.Unmarshal([]byte(test.content), &got))
 			assert.Equal(t, test.want, got.Target)

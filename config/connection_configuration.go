@@ -15,7 +15,7 @@ type ConnectionConfigurations map[string]*ConnectionConfiguration
 func (s ConnectionConfigurations) Targets() types.ConnectionTargets {
 	targets := types.ConnectionTargets{}
 	for key, c := range s {
-		targets[key] = c.Target
+		targets[key] = c.DesiredTarget
 	}
 	return targets
 }
@@ -57,7 +57,7 @@ func (s ConnectionConfigurations) Validate(pc core.ObjectPathContext, moduleName
 	return nil
 }
 
-// Normalize loops through all connections and does the following to Target:
+// Normalize loops through all connections and does the following to DesiredTarget:
 // 1. Fills all fields (Id+Name for Stack/Block/Env)
 // 2. If block.IsShared, resolves the Env to the previews-shared env
 func (s ConnectionConfigurations) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) core.NormalizeErrors {
@@ -74,7 +74,7 @@ func (s ConnectionConfigurations) Normalize(ctx context.Context, pc core.ObjectP
 }
 
 type ConnectionConfiguration struct {
-	Target          types.ConnectionTarget `json:"target"`
+	DesiredTarget   types.ConnectionTarget `json:"desiredTarget"`
 	EffectiveTarget types.ConnectionTarget `json:"effectiveTarget"`
 	Schema          *config.Connection     `json:"schema"`
 	Block           *types.Block           `json:"block"`
@@ -83,13 +83,13 @@ type ConnectionConfiguration struct {
 
 // Resolve resolves the connection's target (i.e. block) and matches the connection contract
 func (c *ConnectionConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, pc core.ObjectPathContext) *core.ResolveError {
-	if c.Schema == nil || c.Target.BlockName == "" {
+	if c.Schema == nil || c.DesiredTarget.BlockName == "" {
 		// There is nothing to resolve
 		// Validate will report errors
 		return nil
 	}
 
-	found, err := resolver.ResolveBlock(ctx, c.Target)
+	found, err := resolver.ResolveBlock(ctx, c.DesiredTarget)
 	if err != nil {
 		if find.IsMissingResource(err) {
 			return core.MissingConnectionTargetError(pc, err)
@@ -99,7 +99,7 @@ func (c *ConnectionConfiguration) Resolve(ctx context.Context, resolver core.Res
 	c.Block = &found
 
 	if found.ModuleSource == "" {
-		return core.ResolvedBlockMissingModuleError(pc, c.Target.StackName, c.Target.BlockName)
+		return core.ResolvedBlockMissingModuleError(pc, c.DesiredTarget.StackName, c.DesiredTarget.BlockName)
 	}
 
 	ms, err := artifacts.ParseSource(found.ModuleSource)
@@ -118,7 +118,7 @@ func (c *ConnectionConfiguration) Validate(pc core.ObjectPathContext, moduleName
 	if c.Schema == nil {
 		return core.ConnectionDoesNotExistError(pc, moduleName)
 	}
-	if c.Target.BlockName == "" {
+	if c.DesiredTarget.BlockName == "" {
 		return core.MissingConnectionBlockError(pc)
 	}
 	if c.Module == nil {
@@ -144,7 +144,7 @@ func (c *ConnectionConfiguration) Validate(pc core.ObjectPathContext, moduleName
 }
 
 func (c *ConnectionConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) *core.NormalizeError {
-	ct, err := resolver.ResolveConnection(ctx, c.Target)
+	ct, err := resolver.ResolveConnection(ctx, c.DesiredTarget)
 	if err != nil {
 		return &core.NormalizeError{
 			ObjectPathContext: pc,

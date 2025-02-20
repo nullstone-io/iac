@@ -215,7 +215,7 @@ func (c *CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater cor
 		capUpdater.UpdateVariableValue(name, vc.Value)
 	}
 	for name, cc := range c.Connections {
-		capUpdater.UpdateConnectionTarget(name, cc.Target, cc.EffectiveTarget)
+		capUpdater.UpdateConnectionTarget(name, cc.DesiredTarget, cc.EffectiveTarget)
 	}
 	return nil
 }

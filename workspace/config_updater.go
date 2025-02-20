@@ -47,7 +47,7 @@ func (w ConfigUpdater) UpdateConnectionTarget(name string, desired, effective ty
 	if !ok {
 		return
 	}
-	existing.Target = &types.ConnectionTargetString{ConnectionTarget: desired}
+	existing.DesiredTarget = &desired
 	existing.EffectiveTarget = &effective
 	existing.OldReference = &effective
 	w.Config.Connections[name] = existing
@@ -147,7 +147,7 @@ func (c CapabilityConfigUpdater) UpdateConnectionTarget(name string, desired, ef
 		if !ok {
 			return
 		}
-		existingConn.Target = &types.ConnectionTargetString{ConnectionTarget: desired}
+		existingConn.DesiredTarget = &desired
 		existingConn.EffectiveTarget = &effective
 		existingConn.OldReference = &effective
 		cc.Connections[name] = existingConn

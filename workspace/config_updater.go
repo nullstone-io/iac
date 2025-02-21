@@ -23,6 +23,12 @@ func (w ConfigUpdater) UpdateSchema(moduleSource string, moduleVersion *types.Mo
 		w.Config.Source = moduleSource
 	}
 	w.Config.SourceVersion = moduleVersion.Version
+	if w.Config.Variables == nil {
+		w.Config.Variables = types.Variables{}
+	}
+	if w.Config.Connections == nil {
+		w.Config.Connections = types.Connections{}
+	}
 	ModuleSchema(moduleVersion.Manifest).UpdateSchema(w.Config.Variables, w.Config.Connections)
 }
 
@@ -136,6 +142,12 @@ func (c CapabilityConfigUpdater) UpdateSchema(moduleSource string, moduleVersion
 			cc.Source = moduleSource
 		}
 		cc.SourceVersion = moduleVersion.Version
+		if cc.Variables == nil {
+			cc.Variables = types.Variables{}
+		}
+		if cc.Connections == nil {
+			cc.Connections = types.Connections{}
+		}
 		ModuleSchema(moduleVersion.Manifest).UpdateSchema(cc.Variables, cc.Connections)
 	})
 }

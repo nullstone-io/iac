@@ -222,7 +222,7 @@ func (c *CapabilityConfiguration) doUpdateCapability(capUpdater core.CapabilityC
 	if capUpdater == nil {
 		return
 	}
-	capUpdater.UpdateSchema(c.ModuleSource, c.ModuleVersion)
+	capUpdater.UpdateSchema(c.ModuleSource, c.ModuleConstraint, c.ModuleVersion)
 	capUpdater.UpdateNamespace(c.Namespace)
 	for name, vc := range c.Variables {
 		capUpdater.UpdateVariableValue(name, vc.Value)

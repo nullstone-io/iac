@@ -9,7 +9,7 @@ type ChangeApplier interface {
 }
 
 type WorkspaceConfigUpdater interface {
-	UpdateSchema(moduleSource string, moduleVersion *types.ModuleVersion)
+	UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion)
 	UpdateVariableValue(name string, value any)
 	UpdateConnectionTarget(name string, desired, effective types.ConnectionTarget)
 	AddOrUpdateEnvVariable(name string, value string, sensitive bool)
@@ -20,7 +20,7 @@ type WorkspaceConfigUpdater interface {
 }
 
 type CapabilityConfigUpdater interface {
-	UpdateSchema(moduleSource string, moduleVersion *types.ModuleVersion)
+	UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion)
 	UpdateVariableValue(name string, value any)
 	UpdateConnectionTarget(name string, desired, effective types.ConnectionTarget)
 	UpdateNamespace(namespace *string)

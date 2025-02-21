@@ -9,18 +9,24 @@ import (
 var (
 	_ core.WorkspaceConfigUpdater  = ConfigUpdater{}
 	_ core.CapabilityConfigUpdater = CapabilityConfigUpdater{}
+
+	DefaultModuleConstraint = "latest"
 )
 
 type ConfigUpdater struct {
 	Config *types.WorkspaceConfig
 }
 
-func (w ConfigUpdater) UpdateSchema(moduleSource string, moduleVersion *types.ModuleVersion) {
+func (w ConfigUpdater) UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion) {
 	if moduleVersion == nil {
 		return
 	}
 	if moduleSource != "" {
 		w.Config.Source = moduleSource
+	}
+	w.Config.SourceConstraint = DefaultModuleConstraint
+	if moduleConstraint != "" {
+		w.Config.SourceConstraint = moduleConstraint
 	}
 	w.Config.SourceVersion = moduleVersion.Version
 	if w.Config.Variables == nil {
@@ -133,13 +139,17 @@ type CapabilityConfigUpdater struct {
 	Index           int
 }
 
-func (c CapabilityConfigUpdater) UpdateSchema(moduleSource string, moduleVersion *types.ModuleVersion) {
+func (c CapabilityConfigUpdater) UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion) {
 	c.doOperation(func(cc *types.CapabilityConfig) {
 		if moduleVersion == nil {
 			return
 		}
 		if moduleSource != "" {
 			cc.Source = moduleSource
+		}
+		cc.SourceConstraint = DefaultModuleConstraint
+		if moduleConstraint != "" {
+			cc.SourceConstraint = moduleConstraint
 		}
 		cc.SourceVersion = moduleVersion.Version
 		if cc.Variables == nil {

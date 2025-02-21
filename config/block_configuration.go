@@ -159,7 +159,7 @@ func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block 
 }
 
 func (b *BlockConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
-	updater.UpdateSchema(b.ModuleSource, b.ModuleVersion)
+	updater.UpdateSchema(b.ModuleSource, b.ModuleConstraint, b.ModuleVersion)
 	for name, vc := range b.Variables {
 		updater.UpdateVariableValue(name, vc.Value)
 	}

@@ -53,6 +53,7 @@ func (c CapabilityConfigurations) ToCapabilities() []types.Capability {
 	var result []types.Capability
 	for _, cur := range c {
 		capability := types.Capability{
+			IdModel:             types.IdModel{Id: cur.Id},
 			Name:                cur.Name,
 			ModuleSource:        cur.ModuleSource,
 			ModuleSourceVersion: cur.ModuleConstraint,

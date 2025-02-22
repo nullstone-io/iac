@@ -109,8 +109,8 @@ func (w ConfigUpdater) GetCapabilityUpdater(identity core.CapabilityIdentity) co
 	return nil
 }
 
-func (w ConfigUpdater) AddCapability(name string) core.CapabilityConfigUpdater {
-	w.Config.Capabilities = append(w.Config.Capabilities, types.CapabilityConfig{Name: name})
+func (w ConfigUpdater) AddCapability(id int64, name string) core.CapabilityConfigUpdater {
+	w.Config.Capabilities = append(w.Config.Capabilities, types.CapabilityConfig{Id: id, Name: name})
 	ccu := CapabilityConfigUpdater{
 		WorkspaceConfig: w.Config,
 		Index:           len(w.Config.Capabilities) - 1,

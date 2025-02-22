@@ -101,6 +101,11 @@ func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.Res
 }
 
 type CapabilityConfiguration struct {
+	// Id refers the Capability Id stored in Nullstone
+	// It is not used in the IaC representation
+	// It is used primarily to identify the capability when generating infrastructure code
+	Id int64 `json:"id"`
+
 	Name             string                   `json:"name"`
 	ModuleSource     string                   `json:"moduleSource"`
 	ModuleConstraint string                   `json:"moduleConstraint"`
@@ -209,7 +214,7 @@ func (c *CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater cor
 		c.doUpdateCapability(capUpdater)
 	} else {
 		// Add capability that doesn't exist in the workspace config yet
-		c.doUpdateCapability(updater.AddCapability(c.Name))
+		c.doUpdateCapability(updater.AddCapability(c.Id, c.Name))
 	}
 	return nil
 }

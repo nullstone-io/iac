@@ -151,6 +151,13 @@ func (c *ConnectionConfiguration) Normalize(ctx context.Context, pc core.ObjectP
 			ErrorMessage:      err.Error(),
 		}
 	}
+	c.DesiredTarget.StackId = ct.StackId
+	c.DesiredTarget.StackName = ct.StackName
+	c.DesiredTarget.BlockId = ct.BlockId
+	c.DesiredTarget.BlockName = ct.BlockName
+	if c.DesiredTarget.EnvId != nil {
+		c.DesiredTarget.EnvName = ct.EnvName
+	}
 	c.EffectiveTarget = ct
 	return nil
 }

@@ -53,6 +53,7 @@ func (c CapabilityConfigurations) ToCapabilities() []types.Capability {
 	var result []types.Capability
 	for _, cur := range c {
 		capability := types.Capability{
+			IdModel:             types.IdModel{Id: cur.Id},
 			Name:                cur.Name,
 			ModuleSource:        cur.ModuleSource,
 			ModuleSourceVersion: cur.ModuleConstraint,
@@ -69,9 +70,8 @@ func (c CapabilityConfigurations) ToCapabilities() []types.Capability {
 func (c CapabilityConfigurations) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
 	if ic.IsOverrides {
 		for _, cur := range c {
-			if err := cur.ApplyChangesTo(ic, updater); err != nil {
-				return err
-			}
+			// TODO: Add support to add capabilities in an overrides file?
+			cur.UpdateCapability(ic, updater)
 		}
 	} else {
 		updater.RemoveCapabilitiesNotIn(c.Identities())
@@ -102,6 +102,11 @@ func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.Res
 }
 
 type CapabilityConfiguration struct {
+	// Id refers the Capability Id stored in Nullstone
+	// It is not used in the IaC representation
+	// It is used primarily to identify the capability when generating infrastructure code
+	Id int64 `json:"id"`
+
 	Name             string                   `json:"name"`
 	ModuleSource     string                   `json:"moduleSource"`
 	ModuleConstraint string                   `json:"moduleConstraint"`
@@ -205,11 +210,25 @@ func (c *CapabilityConfiguration) Validate(ic core.IacContext, pc core.ObjectPat
 
 func (c *CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
 	capUpdater := updater.GetCapabilityUpdater(c.Identity())
-	if capUpdater == nil {
-		return nil
+	if capUpdater != nil {
+		// Update capability that already exists in the workspace config
+		c.doUpdateCapability(capUpdater)
+	} else {
+		// Add capability that doesn't exist in the workspace config yet
+		c.doUpdateCapability(updater.AddCapability(c.Id, c.Name))
 	}
+	return nil
+}
 
-	capUpdater.UpdateSchema(c.ModuleSource, c.ModuleVersion)
+func (c *CapabilityConfiguration) UpdateCapability(ic core.IacContext, updater core.WorkspaceConfigUpdater) {
+	c.doUpdateCapability(updater.GetCapabilityUpdater(c.Identity()))
+}
+
+func (c *CapabilityConfiguration) doUpdateCapability(capUpdater core.CapabilityConfigUpdater) {
+	if capUpdater == nil {
+		return
+	}
+	capUpdater.UpdateSchema(c.ModuleSource, c.ModuleConstraint, c.ModuleVersion)
 	capUpdater.UpdateNamespace(c.Namespace)
 	for name, vc := range c.Variables {
 		capUpdater.UpdateVariableValue(name, vc.Value)
@@ -217,5 +236,4 @@ func (c *CapabilityConfiguration) ApplyChangesTo(ic core.IacContext, updater cor
 	for name, cc := range c.Connections {
 		capUpdater.UpdateConnectionTarget(name, cc.DesiredTarget, cc.EffectiveTarget)
 	}
-	return nil
 }

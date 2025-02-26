@@ -9,20 +9,32 @@ import (
 var (
 	_ core.WorkspaceConfigUpdater  = ConfigUpdater{}
 	_ core.CapabilityConfigUpdater = CapabilityConfigUpdater{}
+
+	DefaultModuleConstraint = "latest"
 )
 
 type ConfigUpdater struct {
 	Config *types.WorkspaceConfig
 }
 
-func (w ConfigUpdater) UpdateSchema(moduleSource string, moduleVersion *types.ModuleVersion) {
+func (w ConfigUpdater) UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion) {
 	if moduleVersion == nil {
 		return
 	}
 	if moduleSource != "" {
 		w.Config.Source = moduleSource
 	}
+	w.Config.SourceConstraint = DefaultModuleConstraint
+	if moduleConstraint != "" {
+		w.Config.SourceConstraint = moduleConstraint
+	}
 	w.Config.SourceVersion = moduleVersion.Version
+	if w.Config.Variables == nil {
+		w.Config.Variables = types.Variables{}
+	}
+	if w.Config.Connections == nil {
+		w.Config.Connections = types.Connections{}
+	}
 	ModuleSchema(moduleVersion.Manifest).UpdateSchema(w.Config.Variables, w.Config.Connections)
 }
 
@@ -97,6 +109,15 @@ func (w ConfigUpdater) GetCapabilityUpdater(identity core.CapabilityIdentity) co
 	return nil
 }
 
+func (w ConfigUpdater) AddCapability(id int64, name string) core.CapabilityConfigUpdater {
+	w.Config.Capabilities = append(w.Config.Capabilities, types.CapabilityConfig{Id: id, Name: name})
+	ccu := CapabilityConfigUpdater{
+		WorkspaceConfig: w.Config,
+		Index:           len(w.Config.Capabilities) - 1,
+	}
+	return ccu
+}
+
 func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentities) {
 	result := make(types.CapabilityConfigs, 0)
 	for _, cur := range w.Config.Capabilities {
@@ -106,6 +127,7 @@ func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentit
 			ConnectionTargets: cur.Connections.EffectiveTargets(),
 		})
 		if found != nil {
+			// If we found the capability in the IaC file, let's keep it
 			result = append(result, cur)
 		}
 	}
@@ -117,7 +139,7 @@ type CapabilityConfigUpdater struct {
 	Index           int
 }
 
-func (c CapabilityConfigUpdater) UpdateSchema(moduleSource string, moduleVersion *types.ModuleVersion) {
+func (c CapabilityConfigUpdater) UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion) {
 	c.doOperation(func(cc *types.CapabilityConfig) {
 		if moduleVersion == nil {
 			return
@@ -125,7 +147,17 @@ func (c CapabilityConfigUpdater) UpdateSchema(moduleSource string, moduleVersion
 		if moduleSource != "" {
 			cc.Source = moduleSource
 		}
+		cc.SourceConstraint = DefaultModuleConstraint
+		if moduleConstraint != "" {
+			cc.SourceConstraint = moduleConstraint
+		}
 		cc.SourceVersion = moduleVersion.Version
+		if cc.Variables == nil {
+			cc.Variables = types.Variables{}
+		}
+		if cc.Connections == nil {
+			cc.Connections = types.Connections{}
+		}
 		ModuleSchema(moduleVersion.Manifest).UpdateSchema(cc.Variables, cc.Connections)
 	})
 }

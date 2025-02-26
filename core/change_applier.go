@@ -9,17 +9,18 @@ type ChangeApplier interface {
 }
 
 type WorkspaceConfigUpdater interface {
-	UpdateSchema(moduleSource string, moduleVersion *types.ModuleVersion)
+	UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion)
 	UpdateVariableValue(name string, value any)
 	UpdateConnectionTarget(name string, desired, effective types.ConnectionTarget)
 	AddOrUpdateEnvVariable(name string, value string, sensitive bool)
 	RemoveEnvVariablesNotIn(envVariables map[string]string)
 	GetCapabilityUpdater(identity CapabilityIdentity) CapabilityConfigUpdater
+	AddCapability(id int64, name string) CapabilityConfigUpdater
 	RemoveCapabilitiesNotIn(identities CapabilityIdentities)
 }
 
 type CapabilityConfigUpdater interface {
-	UpdateSchema(moduleSource string, moduleVersion *types.ModuleVersion)
+	UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion)
 	UpdateVariableValue(name string, value any)
 	UpdateConnectionTarget(name string, desired, effective types.ConnectionTarget)
 	UpdateNamespace(namespace *string)

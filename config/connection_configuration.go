@@ -12,7 +12,7 @@ import (
 
 type ConnectionConfigurations map[string]*ConnectionConfiguration
 
-func (s ConnectionConfigurations) Targets() types.ConnectionTargets {
+func (s ConnectionConfigurations) DesiredTargets() types.ConnectionTargets {
 	targets := types.ConnectionTargets{}
 	for key, c := range s {
 		targets[key] = c.DesiredTarget

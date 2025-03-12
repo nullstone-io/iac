@@ -97,7 +97,7 @@ func (w ConfigUpdater) GetCapabilityUpdater(identity core.CapabilityIdentity) co
 		found := identity.Match(core.CapabilityIdentity{
 			Name:              cur.Name,
 			ModuleSource:      cur.Source,
-			ConnectionTargets: cur.Connections.EffectiveTargets(),
+			ConnectionTargets: cur.Connections.DesiredTargets(),
 		})
 		if found {
 			return CapabilityConfigUpdater{
@@ -124,7 +124,7 @@ func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentit
 		found := identities.Find(core.CapabilityIdentity{
 			Name:              cur.Name,
 			ModuleSource:      cur.Source,
-			ConnectionTargets: cur.Connections.EffectiveTargets(),
+			ConnectionTargets: cur.Connections.DesiredTargets(),
 		})
 		if found != nil {
 			// If we found the capability in the IaC file, let's keep it

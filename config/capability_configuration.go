@@ -57,7 +57,7 @@ func (c CapabilityConfigurations) ToCapabilities() []types.Capability {
 			Name:                cur.Name,
 			ModuleSource:        cur.ModuleSource,
 			ModuleSourceVersion: cur.ModuleConstraint,
-			Connections:         cur.Connections.Targets(),
+			Connections:         cur.Connections.DesiredTargets(),
 		}
 		if cur.Namespace != nil {
 			capability.Namespace = *cur.Namespace
@@ -122,7 +122,7 @@ func (c *CapabilityConfiguration) Identity() core.CapabilityIdentity {
 	return core.CapabilityIdentity{
 		Name:              c.Name,
 		ModuleSource:      c.ModuleSource,
-		ConnectionTargets: c.Connections.Targets(),
+		ConnectionTargets: c.Connections.DesiredTargets(),
 	}
 }
 

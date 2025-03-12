@@ -153,7 +153,7 @@ func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block 
 		DnsName:             "",
 		ModuleSource:        b.ModuleSource,
 		ModuleSourceVersion: b.ModuleConstraint,
-		Connections:         b.Connections.Targets(),
+		Connections:         b.Connections.DesiredTargets(),
 	}
 	return block
 }

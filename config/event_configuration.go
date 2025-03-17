@@ -6,6 +6,7 @@ import (
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
+	"slices"
 )
 
 func convertEventConfigurations(parsed yaml.EventConfigurations) EventConfigurations {
@@ -50,7 +51,40 @@ func (c *EventConfiguration) Resolve(ctx context.Context, resolver core.ResolveR
 }
 
 func (c *EventConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
-	return c.Targets.Validate(ic, pc)
+	errs := core.ValidateErrors{}
+	if err := c.validateActions(pc); err != nil {
+		errs = append(errs, *err)
+	}
+	if err := c.validateStatuses(pc); err != nil {
+		errs = append(errs, *err)
+	}
+	return append(errs, c.Targets.Validate(ic, pc)...)
+}
+
+func (c *EventConfiguration) validateActions(pc core.ObjectPathContext) *core.ValidateError {
+	invalid := make([]string, 0)
+	for _, action := range c.Actions {
+		if !slices.Contains(types.AllEventActions, action) {
+			invalid = append(invalid, string(action))
+		}
+	}
+	if len(invalid) < 1 {
+		return nil
+	}
+	return core.InvalidEventActionError(pc, invalid)
+}
+
+func (c *EventConfiguration) validateStatuses(pc core.ObjectPathContext) *core.ValidateError {
+	invalid := make([]string, 0)
+	for _, status := range c.Statuses {
+		if !slices.Contains(types.AllEventStatuses, status) {
+			invalid = append(invalid, string(status))
+		}
+	}
+	if len(invalid) < 1 {
+		return nil
+	}
+	return core.InvalidEventStatusError(pc, invalid)
 }
 
 func (c *EventConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.NormalizeResolver) core.NormalizeErrors {

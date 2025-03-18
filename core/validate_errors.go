@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"github.com/BSick7/go-api/errors"
+	"strings"
 )
 
 var (
@@ -99,6 +100,38 @@ func UnsupportedAppCategoryError(pc ObjectPathContext, moduleSource, subcategory
 	return ValidateError{
 		ObjectPathContext: pc,
 		ErrorMessage:      fmt.Sprintf("Module (%s) does not support application category (%s)", moduleSource, subcategory),
+	}
+}
+
+func InvalidEventActionError(pc ObjectPathContext, actions []string) *ValidateError {
+	if len(actions) == 0 {
+		return nil
+	}
+	if len(actions) == 1 {
+		return &ValidateError{
+			ObjectPathContext: pc,
+			ErrorMessage:      fmt.Sprintf("Event Action (%s) is not a valid event action", actions[0]),
+		}
+	}
+	return &ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Event Actions (%s) are not valid event actions", strings.Join(actions, ",")),
+	}
+}
+
+func InvalidEventStatusError(pc ObjectPathContext, actions []string) *ValidateError {
+	if len(actions) == 0 {
+		return nil
+	}
+	if len(actions) == 1 {
+		return &ValidateError{
+			ObjectPathContext: pc,
+			ErrorMessage:      fmt.Sprintf("Event Status (%s) is not a valid event status", actions[0]),
+		}
+	}
+	return &ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Event Statuses (%s) are not valid event statuses", strings.Join(actions, ",")),
 	}
 }
 

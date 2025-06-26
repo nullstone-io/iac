@@ -118,6 +118,9 @@ func (c *ConnectionConfiguration) Validate(pc core.ObjectPathContext, moduleName
 	if c.Schema == nil {
 		return core.ConnectionDoesNotExistError(pc, moduleName)
 	}
+	if c.Schema.Optional && c.DesiredTarget.IsEmpty() {
+		return nil
+	}
 	if c.DesiredTarget.BlockName == "" {
 		return core.MissingConnectionBlockError(pc)
 	}
@@ -144,6 +147,10 @@ func (c *ConnectionConfiguration) Validate(pc core.ObjectPathContext, moduleName
 }
 
 func (c *ConnectionConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) *core.NormalizeError {
+	if c.DesiredTarget.IsEmpty() {
+		c.EffectiveTarget = types.ConnectionTarget{}
+		return nil
+	}
 	ct, err := resolver.ResolveConnection(ctx, c.DesiredTarget)
 	if err != nil {
 		return &core.NormalizeError{

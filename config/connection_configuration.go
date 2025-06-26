@@ -157,6 +157,8 @@ func (c *ConnectionConfiguration) Normalize(ctx context.Context, pc core.ObjectP
 	c.DesiredTarget.BlockName = ct.BlockName
 	if c.DesiredTarget.EnvId != nil {
 		c.DesiredTarget.EnvName = ct.EnvName
+	} else if c.DesiredTarget.EnvName != "" {
+		c.DesiredTarget.EnvId = ct.EnvId
 	}
 	c.EffectiveTarget = ct
 	return nil

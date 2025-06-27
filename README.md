@@ -1,6 +1,6 @@
 # IaC
 
-This package synchronizes IaC files with blocks in Nullstone.
+This package synchronizes IaC configuration files with Nullstone configuration.
 
 ## Implementation Todos
 - [] Synchronize new blocks defined in IaC files

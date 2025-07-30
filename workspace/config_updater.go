@@ -29,6 +29,7 @@ func (w ConfigUpdater) UpdateSchema(moduleSource, moduleConstraint string, modul
 		w.Config.SourceConstraint = moduleConstraint
 	}
 	w.Config.SourceVersion = moduleVersion.Version
+	w.Config.SourceToolName = moduleVersion.ToolName
 	if w.Config.Variables == nil {
 		w.Config.Variables = types.Variables{}
 	}

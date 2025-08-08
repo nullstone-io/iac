@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.8
 
 require (
-	github.com/BSick7/go-api v0.13.1
+	github.com/BSick7/go-api v0.18.2
 	github.com/google/go-cmp v0.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/nullstone-io/module v0.2.9

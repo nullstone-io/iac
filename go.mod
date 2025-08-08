@@ -7,7 +7,7 @@ toolchain go1.22.8
 require (
 	github.com/BSick7/go-api v0.13.1
 	github.com/google/go-cmp v0.6.0
-	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/mux v1.8.1
 	github.com/nullstone-io/module v0.2.9
 	github.com/stretchr/testify v1.8.4
 	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20250730193949-ab9962424541

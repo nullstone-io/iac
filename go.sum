@@ -1,5 +1,5 @@
-github.com/BSick7/go-api v0.18.2 h1:k/DX8Rc77tnDysy6bI9E6wmcr1ZjkeAWOUjaCtp3cgs=
-github.com/BSick7/go-api v0.18.2/go.mod h1:FXOOtMFFHiWoM26ImAvBdiQ+GTAbx6GAoGfSRzu5uYk=
+github.com/BSick7/go-api v0.18.3 h1:nR36vbUdyfdLKNOVi6C/iBUVZ9J9OXelhvkxnp47LRU=
+github.com/BSick7/go-api v0.18.3/go.mod h1:FXOOtMFFHiWoM26ImAvBdiQ+GTAbx6GAoGfSRzu5uYk=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/agext/levenshtein v1.2.1 h1:QmvMAjj2aEICytGiWzmxoE0x2KZvE0fvmqMOfy2tjT8=
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=

@@ -3,7 +3,7 @@ module github.com/nullstone-io/iac
 go 1.24.0
 
 require (
-	github.com/BSick7/go-api v0.18.2
+	github.com/BSick7/go-api v0.18.3
 	github.com/google/go-cmp v0.7.0
 	github.com/gorilla/mux v1.8.1
 	github.com/nullstone-io/module v0.2.10

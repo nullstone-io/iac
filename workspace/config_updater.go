@@ -16,6 +16,7 @@ var (
 
 type ConfigUpdater struct {
 	Config *types.WorkspaceConfig
+	TemplateVars
 }
 
 func (w ConfigUpdater) UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion) {
@@ -137,14 +138,14 @@ func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentit
 }
 
 func (w ConfigUpdater) UpdateDomainName(domainName string) {
-	w.Config.Extra.DomainName = domainName
+	w.Config.Extra.DomainName = w.TemplateVars.ReplaceVars(domainName)
 	w.Config.Extra.Fqdn = fmt.Sprintf("%s.", domainName)
 }
 
 func (w ConfigUpdater) UpdateSubdomainName(subdomainName string) {
 	extra := w.Config.Extra
 
-	extra.SubdomainName = subdomainName
+	extra.SubdomainName = w.TemplateVars.ReplaceVars(subdomainName)
 	if extra.SubdomainName == "" {
 		extra.Fqdn = extra.DomainName
 	} else {

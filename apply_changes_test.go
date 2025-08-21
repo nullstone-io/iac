@@ -182,7 +182,14 @@ func TestApplyChanges(t *testing.T) {
 			pmr, err := ParseConfigDir("", "TestApplyChanges", filepath.Join("test-fixtures", test.testFixturesDir))
 			require.NoError(t, err, "cannot test fixture dir")
 			got := mustClone(t, test.input)
-			err = ApplyChangesTo(*pmr, test.block, test.env, workspace.ConfigUpdater{Config: &got})
+
+			updater := workspace.ConfigUpdater{
+				Config:    &got,
+				OrgName:   test.env.OrgName,
+				StackName: "apply-changes-test",
+				EnvName:   test.env.Name,
+			}
+			err = ApplyChangesTo(*pmr, test.block, test.env, updater)
 			require.NoError(t, err, "unexpected error")
 			if diff := cmp.Diff(test.want, got); diff != "" {
 				t.Errorf("-want, +got:\n%s", diff)

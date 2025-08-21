@@ -138,14 +138,20 @@ func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentit
 }
 
 func (w ConfigUpdater) UpdateDomainName(domainName string) {
-	w.Config.Extra.DomainName = w.TemplateVars.ReplaceVars(domainName)
-	w.Config.Extra.Fqdn = fmt.Sprintf("%s.", domainName)
+	extra := w.Config.Extra
+
+	extra.DomainNameTemplate = domainName
+	extra.DomainName = w.TemplateVars.ReplaceVars(extra.DomainNameTemplate)
+	extra.Fqdn = fmt.Sprintf("%s.", domainName)
+
+	w.Config.Extra = extra
 }
 
 func (w ConfigUpdater) UpdateSubdomainName(subdomainName string) {
 	extra := w.Config.Extra
 
-	extra.SubdomainName = w.TemplateVars.ReplaceVars(subdomainName)
+	extra.SubdomainNameTemplate = subdomainName
+	extra.SubdomainName = w.TemplateVars.ReplaceVars(extra.SubdomainNameTemplate)
 	if extra.SubdomainName == "" {
 		extra.Fqdn = extra.DomainName
 	} else {

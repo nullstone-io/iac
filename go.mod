@@ -3,12 +3,12 @@ module github.com/nullstone-io/iac
 go 1.24.0
 
 require (
-	github.com/BSick7/go-api v0.18.2
+	github.com/BSick7/go-api v0.18.3
 	github.com/google/go-cmp v0.7.0
 	github.com/gorilla/mux v1.8.1
 	github.com/nullstone-io/module v0.2.10
 	github.com/stretchr/testify v1.10.0
-	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20250814151520-6962f4e47dd6
+	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20250821200245-07b254b5e189
 	gopkg.in/yaml.v3 v3.0.1
 )
 

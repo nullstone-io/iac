@@ -164,7 +164,7 @@
         },
         "vars": { "$ref": "#/definitions/variables" },
         "connections": { "$ref": "#/definitions/connection_targets" },
-        "dns_name": {
+        "domain_name": {
           "type": "string",
           "description": ""
         }
@@ -200,7 +200,7 @@
           "type": "boolean",
           "description": ""
         },
-        "dns_name": {
+        "subdomain_name": {
           "type": "string",
           "description": ""
         }
@@ -219,7 +219,7 @@
     "capability": {
       "type": "object",
       "properties": {
-        "namespace": { "types": "string" },
+        "namespace": { "type": "string" },
         "module": { "type": "string" },
         "module_version": { "type": "string" },
         "vars": { "$ref": "#/definitions/variables" },

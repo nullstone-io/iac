@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 	"reflect"
@@ -133,6 +134,24 @@ func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentit
 		}
 	}
 	w.Config.Capabilities = result
+}
+
+func (w ConfigUpdater) UpdateDomainName(domainName string) {
+	w.Config.Extra.DomainName = domainName
+	w.Config.Extra.Fqdn = fmt.Sprintf("%s.", domainName)
+}
+
+func (w ConfigUpdater) UpdateSubdomainName(subdomainName string) {
+	extra := w.Config.Extra
+
+	extra.SubdomainName = subdomainName
+	if extra.SubdomainName == "" {
+		extra.Fqdn = extra.DomainName
+	} else {
+		extra.Fqdn = fmt.Sprintf("%s.%s.", extra.SubdomainName, extra.DomainName)
+	}
+
+	w.Config.Extra = extra
 }
 
 type CapabilityConfigUpdater struct {

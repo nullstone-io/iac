@@ -17,6 +17,14 @@ type WorkspaceConfigUpdater interface {
 	GetCapabilityUpdater(identity CapabilityIdentity) CapabilityConfigUpdater
 	AddCapability(id int64, name string) CapabilityConfigUpdater
 	RemoveCapabilitiesNotIn(identities CapabilityIdentities)
+	UpdateDomainName(domainName string)
+	UpdateSubdomainName(subdomainName string)
+}
+
+type ExtraWorkspaceConfigInput struct {
+	DnsName    *string
+	DomainName *string
+	Fqdn       *string
 }
 
 type CapabilityConfigUpdater interface {

@@ -164,9 +164,18 @@
         },
         "vars": { "$ref": "#/definitions/variables" },
         "connections": { "$ref": "#/definitions/connection_targets" },
-        "domain_name": {
+        "dns": { "$ref": "#/definitions/domain_dns" }
+      },
+      "patternProperties": {"^x-": {}},
+      "additionalProperties": false
+    },
+    "domain_dns": {
+      "id": "#/definitions/domain_dns",
+      "type": "object",
+      "properties": {
+        "template": {
           "type": "string",
-          "description": ""
+          "description": "A templated string for configuration the domain name. This interpolates {{ NULLSTONE_ORG }}"
         }
       },
       "patternProperties": {"^x-": {}},
@@ -200,9 +209,18 @@
           "type": "boolean",
           "description": ""
         },
-        "subdomain_name": {
+        "dns": { "$ref": "#/definitions/subdomain_dns" }
+      },
+      "patternProperties": {"^x-": {}},
+      "additionalProperties": false
+    },
+    "subdomain_dns": {
+      "id": "#/definitions/subdomain_dns",
+      "type": "object",
+      "properties": {
+        "template": {
           "type": "string",
-          "description": ""
+          "description": "A templated string for configuration the subdomain name. This interpolates {{ random() }}, {{ NULLSTONE_ORG }}, {{ NULLSTONE_STACK }}, {{ NULLSTONE_ENV }}"
         }
       },
       "patternProperties": {"^x-": {}},

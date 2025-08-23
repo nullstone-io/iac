@@ -3,8 +3,14 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"os"
+	"strconv"
+	"testing"
+
 	apierrors "github.com/BSick7/go-api/errors"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/gorilla/mux"
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/services"
@@ -14,10 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"net/http"
-	"os"
-	"strconv"
-	"testing"
 )
 
 type FactoryDefaults struct {
@@ -31,7 +33,15 @@ func ptr[T any](t T) *T {
 	return &t
 }
 
+func comparable[T any](a T) T {
+	raw, _ := json.Marshal(a)
+	var b T
+	json.Unmarshal(raw, &b)
+	return b
+}
+
 func TestConvertConfiguration(t *testing.T) {
+
 	providerType := "aws"
 	defaults := FactoryDefaults{
 		OrgName: "nullstone",
@@ -42,41 +52,135 @@ func TestConvertConfiguration(t *testing.T) {
 	latest := "latest"
 	primary := "primary"
 	subdomainName := "ns-sub-for-acme-docs"
-	modules := []*types.Module{
-		{
-			OrgName:       defaults.OrgName,
-			Name:          "aws-fargate-service",
-			Category:      types.CategoryApp,
-			Subcategory:   types.SubcategoryAppContainer,
-			ProviderTypes: []string{"aws"},
-			Platform:      "ecs",
-			Subplatform:   "",
-			LatestVersion: &types.ModuleVersion{
-				Version: "0.0.1",
-				Manifest: config.Manifest{
-					Connections: map[string]config.Connection{
-						"cluster-namespace": {
-							Contract: "cluster-namespace/aws/fargate",
-							Optional: false,
-						},
+	fargateServiceModule := types.Module{
+		OrgName:       defaults.OrgName,
+		Name:          "aws-fargate-service",
+		Category:      types.CategoryApp,
+		Subcategory:   types.SubcategoryAppContainer,
+		ProviderTypes: []string{"aws"},
+		Platform:      "ecs",
+		Subplatform:   "",
+		LatestVersion: &types.ModuleVersion{
+			Version: "0.0.1",
+			Manifest: config.Manifest{
+				Connections: map[string]config.Connection{
+					"cluster-namespace": {
+						Contract: "cluster-namespace/aws/fargate",
+						Optional: false,
 					},
-					Variables: map[string]config.Variable{
-						"num_tasks": {
-							Type:    "number",
-							Default: 1,
-						},
-						"cpu": {
-							Type:    "number",
-							Default: 256,
-						},
-						"memory": {
-							Type:    "number",
-							Default: 512,
-						},
+				},
+				Variables: map[string]config.Variable{
+					"num_tasks": {
+						Type:    "number",
+						Default: 1,
+					},
+					"cpu": {
+						Type:    "number",
+						Default: 256,
+					},
+					"memory": {
+						Type:    "number",
+						Default: 512,
 					},
 				},
 			},
 		},
+	}
+	loadBalancerModule := types.Module{
+		OrgName:       defaults.OrgName,
+		Name:          "aws-load-balancer",
+		Category:      types.CategoryCapability,
+		Subcategory:   types.SubcategoryCapabilityIngress,
+		ProviderTypes: []string{"aws"},
+		AppCategories: []string{"container"},
+		LatestVersion: &types.ModuleVersion{
+			Version: "0.0.1",
+			Manifest: config.Manifest{
+				Variables: map[string]config.Variable{
+					"enable_https": {
+						Type:    "bool",
+						Default: true,
+					},
+					"health_check_enabled": {
+						Type:    "bool",
+						Default: true,
+					},
+					"health_check_path": {
+						Type:    "string",
+						Default: "/",
+					},
+					"health_check_matcher": {
+						Type:    "string",
+						Default: "200-499",
+					},
+					"health_check_healthy_threshold": {
+						Type:    "number",
+						Default: 2,
+					},
+					"health_check_unhealthy_threshold": {
+						Type:    "number",
+						Default: 2,
+					},
+					"health_check_interval": {
+						Type:    "number",
+						Default: 5,
+					},
+					"health_check_timeout": {
+						Type:    "number",
+						Default: 4,
+					},
+				},
+				Connections: map[string]config.Connection{
+					"subdomain": {
+						Contract: "subdomain/aws/route53",
+					},
+				},
+			},
+		},
+	}
+	subdomainModule := types.Module{
+		OrgName:       defaults.OrgName,
+		Name:          "nullstone-aws-subdomain",
+		Category:      types.CategorySubdomain,
+		Platform:      "route53",
+		ProviderTypes: []string{"aws"},
+		LatestVersion: &types.ModuleVersion{
+			Version:  "0.0.1",
+			Manifest: config.Manifest{},
+		},
+	}
+	awsS3CdnModule := types.Module{
+		OrgName:       defaults.OrgName,
+		Name:          "aws-s3-cdn",
+		Category:      types.CategoryCapability,
+		Subcategory:   types.SubcategoryCapabilityIngress,
+		ProviderTypes: []string{"aws"},
+		AppCategories: []string{"static-site"},
+		LatestVersion: &types.ModuleVersion{
+			Version: "0.0.1",
+			Manifest: config.Manifest{
+				Connections: map[string]config.Connection{
+					"subdomain": {
+						Contract: "subdomain/aws/route53",
+					},
+				},
+				Variables: map[string]config.Variable{
+					"enable_www": {
+						Type:      "bool",
+						Default:   true,
+						Sensitive: false,
+					},
+					"notfound_behavior": {
+						Type:      "object({ enabled : bool spa_mode : bool document : string })",
+						Default:   map[string]any{"document": "404.html", "enabled": true, "spa_mode": true},
+						Sensitive: false,
+					},
+				},
+			},
+		},
+	}
+	modules := []*types.Module{
+		&fargateServiceModule,
 		{
 			OrgName:       defaults.OrgName,
 			Name:          "aws-s3-site",
@@ -110,88 +214,8 @@ func TestConvertConfiguration(t *testing.T) {
 				},
 			},
 		},
-		{
-			OrgName:       defaults.OrgName,
-			Name:          "aws-load-balancer",
-			Category:      types.CategoryCapability,
-			Subcategory:   types.SubcategoryCapabilityIngress,
-			ProviderTypes: []string{"aws"},
-			AppCategories: []string{"container"},
-			LatestVersion: &types.ModuleVersion{
-				Version: "0.0.1",
-				Manifest: config.Manifest{
-					Variables: map[string]config.Variable{
-						"enable_https": {
-							Type:    "bool",
-							Default: true,
-						},
-						"health_check_enabled": {
-							Type:    "bool",
-							Default: true,
-						},
-						"health_check_path": {
-							Type:    "string",
-							Default: "/",
-						},
-						"health_check_matcher": {
-							Type:    "string",
-							Default: "200-499",
-						},
-						"health_check_healthy_threshold": {
-							Type:    "number",
-							Default: 2,
-						},
-						"health_check_unhealthy_threshold": {
-							Type:    "number",
-							Default: 2,
-						},
-						"health_check_interval": {
-							Type:    "number",
-							Default: 5,
-						},
-						"health_check_timeout": {
-							Type:    "number",
-							Default: 4,
-						},
-					},
-					Connections: map[string]config.Connection{
-						"subdomain": {
-							Contract: "subdomain/aws/route53",
-						},
-					},
-				},
-			},
-		},
-		{
-			OrgName:       defaults.OrgName,
-			Name:          "aws-s3-cdn",
-			Category:      types.CategoryCapability,
-			Subcategory:   types.SubcategoryCapabilityIngress,
-			ProviderTypes: []string{"aws"},
-			AppCategories: []string{"static-site"},
-			LatestVersion: &types.ModuleVersion{
-				Version: "0.0.1",
-				Manifest: config.Manifest{
-					Connections: map[string]config.Connection{
-						"subdomain": {
-							Contract: "subdomain/aws/route53",
-						},
-					},
-					Variables: map[string]config.Variable{
-						"enable_www": {
-							Type:      "bool",
-							Default:   true,
-							Sensitive: false,
-						},
-						"notfound_behavior": {
-							Type:      "object({ enabled : bool spa_mode : bool document : string })",
-							Default:   map[string]any{"document": "404.html", "enabled": true, "spa_mode": true},
-							Sensitive: false,
-						},
-					},
-				},
-			},
-		},
+		&loadBalancerModule,
+		&awsS3CdnModule,
 		{
 			OrgName:       defaults.OrgName,
 			Name:          "aws-postgres-access",
@@ -235,17 +259,7 @@ func TestConvertConfiguration(t *testing.T) {
 				},
 			},
 		},
-		{
-			OrgName:       defaults.OrgName,
-			Name:          "nullstone-aws-subdomain",
-			Category:      types.CategorySubdomain,
-			Platform:      "route53",
-			ProviderTypes: []string{"aws"},
-			LatestVersion: &types.ModuleVersion{
-				Version:  "0.0.1",
-				Manifest: config.Manifest{},
-			},
-		},
+		&subdomainModule,
 	}
 	namespaceBlock := types.Block{
 		IdModel:             types.IdModel{Id: 100},
@@ -311,7 +325,8 @@ func TestConvertConfiguration(t *testing.T) {
 							"slack": {
 								Target: "slack",
 								SlackData: &SlackEventTargetData{
-									Channels: []string{"deployments"},
+									Channels:   []string{"deployments"},
+									ChannelIds: map[string]string{"deployments": "C01DBR86SRK"},
 								},
 							},
 						},
@@ -327,15 +342,19 @@ func TestConvertConfiguration(t *testing.T) {
 							ModuleSource:     "nullstone/aws-fargate-service",
 							ModuleConstraint: latest,
 							Variables: VariableConfigurations{
-								"num_tasks": {Value: 2},
+								"num_tasks": {Value: 2, Schema: &config.Variable{Type: "number", Default: float64(1)}},
 							},
 							Connections: ConnectionConfigurations{
 								"cluster-namespace": {
 									DesiredTarget: types.ConnectionTarget{
 										BlockName: "namespace0",
 									},
+									Schema: &config.Connection{Contract: "cluster-namespace/aws/fargate"},
+									Block:  &namespaceBlock,
 								},
 							},
+							Module:        ptr(comparable(fargateServiceModule)),
+							ModuleVersion: comparable(fargateServiceModule.LatestVersion),
 						},
 						EnvVariables: map[string]string{
 							"TESTING": "abc123",
@@ -346,16 +365,20 @@ func TestConvertConfiguration(t *testing.T) {
 								ModuleSource:     "nullstone/aws-load-balancer",
 								ModuleConstraint: latest,
 								Variables: VariableConfigurations{
-									"health_check_path": {Value: "/status"},
+									"health_check_path": {Value: "/status", Schema: &config.Variable{Type: "string", Default: "/"}},
 								},
 								Connections: ConnectionConfigurations{
 									"subdomain": {
 										DesiredTarget: types.ConnectionTarget{
 											BlockName: subdomainName,
 										},
+										Schema: &config.Connection{Contract: "subdomain/aws/route53"},
+										Block:  &subdomainBlock,
 									},
 								},
-								Namespace: &primary,
+								Namespace:     &primary,
+								Module:        ptr(comparable(loadBalancerModule)),
+								ModuleVersion: comparable(loadBalancerModule.LatestVersion),
 							},
 						},
 					},
@@ -546,6 +569,102 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: core.ValidateErrors(nil),
 		},
 		{
+			name:     "failed subdomain reservation",
+			filename: "test-fixtures/config.invalid16.yml",
+			setup: func(t *testing.T, router *mux.Router) {
+				router.Path("/orgs/{orgName}/stacks/{stackId}/subdomains/{subdomainId}/envs/{envId}/nullstone_reservation").
+					HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						vars := mux.Vars(r)
+						orgName := vars["orgName"]
+						stackId, _ := strconv.ParseInt(vars["stackId"], 10, 64)
+						subdomainId, _ := strconv.ParseInt(vars["subdomainId"], 10, 64)
+						envId, _ := strconv.ParseInt(vars["envId"], 10, 64)
+						if orgName != apiSubdomainBlock.OrgName || stackId != apiSubdomainBlock.StackId ||
+							subdomainId != apiSubdomainBlock.Id || envId != defaults.EnvId {
+							http.NotFound(w, r)
+							return
+						}
+						rawErr, _ := json.Marshal(apierrors.NewBadRequestMessageError(0, "requested subdomain is already in use by another subdomain"))
+						http.Error(w, string(rawErr), http.StatusBadRequest)
+					})
+			},
+			want: nil,
+			resolveErrors: core.ResolveErrors{
+				{
+					ObjectPathContext: core.ObjectPathContext{Path: "subdomains.api-subdomain"},
+					ErrorMessage:      "Failed to reserve subdomain \"awesome-app\": [Bad Request]\n  - requested subdomain is already in use by another subdomain",
+				},
+			},
+			validationErrors: core.ValidateErrors(nil),
+		},
+		{
+			name:     "successful subdomain reservation",
+			filename: "test-fixtures/config.valid17.yml",
+			setup: func(t *testing.T, router *mux.Router) {
+				router.Path("/orgs/{orgName}/stacks/{stackId}/subdomains/{subdomainId}/envs/{envId}/nullstone_reservation").
+					HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						vars := mux.Vars(r)
+						orgName := vars["orgName"]
+						stackId, _ := strconv.ParseInt(vars["stackId"], 10, 64)
+						subdomainId, _ := strconv.ParseInt(vars["subdomainId"], 10, 64)
+						envId, _ := strconv.ParseInt(vars["envId"], 10, 64)
+						if orgName != apiSubdomainBlock.OrgName || stackId != apiSubdomainBlock.StackId ||
+							subdomainId != apiSubdomainBlock.Id || envId != defaults.EnvId {
+							http.NotFound(w, r)
+							return
+						}
+						result := types.SubdomainReservation{
+							IsRandom:      false,
+							SubdomainName: "awesome",
+							DomainName:    "nullstone.app",
+						}
+						raw, _ := json.Marshal(result)
+						w.Write(raw)
+					})
+			},
+			want: &EnvConfiguration{
+				IacContext: core.IacContext{
+					RepoUrl:     "https://github.com/acme/api",
+					RepoName:    "acme/api",
+					Filename:    "config.yml",
+					IsOverrides: false,
+					Version:     "0.1",
+				},
+				Applications:      map[string]*AppConfiguration{},
+				Blocks:            map[string]*BlockConfiguration{},
+				ClusterNamespaces: map[string]*ClusterNamespaceConfiguration{},
+				Clusters:          map[string]*ClusterConfiguration{},
+				Datastores:        map[string]*DatastoreConfiguration{},
+				Domains:           map[string]*DomainConfiguration{},
+				Ingresses:         map[string]*IngressConfiguration{},
+				Networks:          map[string]*NetworkConfiguration{},
+				Subdomains: map[string]*SubdomainConfiguration{
+					"api-subdomain": {
+						BlockConfiguration: BlockConfiguration{
+							Type:             BlockTypeSubdomain,
+							Category:         types.CategorySubdomain,
+							Name:             "api-subdomain",
+							ModuleSource:     "nullstone/nullstone-aws-subdomain",
+							ModuleConstraint: "latest",
+							Variables:        VariableConfigurations{},
+							Connections:      ConnectionConfigurations{},
+							Module:           ptr(comparable(subdomainModule)),
+							ModuleVersion:    comparable(subdomainModule.LatestVersion),
+						},
+						DomainNameTemplate:    nil,
+						SubdomainNameTemplate: ptr("awesome"),
+						Reservation: &types.SubdomainReservation{
+							IsRandom:      false,
+							SubdomainName: "awesome",
+							DomainName:    "nullstone.app",
+						},
+					},
+				},
+			},
+			resolveErrors:    core.ResolveErrors(nil),
+			validationErrors: core.ValidateErrors(nil),
+		},
+		{
 			name:          "block doesn't match contract for capability connection",
 			filename:      "test-fixtures/config.invalid11.yml",
 			want:          nil,
@@ -590,7 +709,8 @@ func TestConvertConfiguration(t *testing.T) {
 							"slack": {
 								Target: "slack",
 								SlackData: &SlackEventTargetData{
-									Channels: []string{"deployments"},
+									Channels:   []string{"deployments"},
+									ChannelIds: map[string]string{"deployments": "C01DBR86SRK"},
 								},
 							},
 						},
@@ -616,7 +736,7 @@ func TestConvertConfiguration(t *testing.T) {
 							{
 								ModuleSource:     "nullstone/aws-s3-cdn",
 								ModuleConstraint: "latest",
-								Variables:        VariableConfigurations{"enable_www": {Value: true}},
+								Variables:        VariableConfigurations{"enable_www": {Value: true, Schema: &config.Variable{Type: "bool", Default: true}}},
 								Namespace:        ptr("secondary"),
 								Connections: ConnectionConfigurations{
 									"subdomain": {
@@ -628,8 +748,12 @@ func TestConvertConfiguration(t *testing.T) {
 											EnvId:     nil,
 											EnvName:   "",
 										},
+										Schema: &config.Connection{Contract: "subdomain/aws/route53"},
+										Block:  &subdomainBlock,
 									},
 								},
+								Module:        ptr(comparable(awsS3CdnModule)),
+								ModuleVersion: comparable(awsS3CdnModule.LatestVersion),
 							},
 						},
 					},
@@ -665,12 +789,6 @@ func TestConvertConfiguration(t *testing.T) {
 
 			got := ConvertConfiguration("https://github.com/acme/api", "acme/api", "config.yml", test.isOverrides, *parsed)
 
-			if test.want != nil {
-				if diff := cmp.Diff(test.want, got); diff != "" {
-					t.Errorf("(-want, +got): %s", diff)
-				}
-			}
-
 			sr := &find.StackResolver{
 				ApiClient:           apiHub.Client(defaults.OrgName),
 				Stack:               types.Stack{Name: "core", ProviderType: providerType},
@@ -703,6 +821,14 @@ func TestConvertConfiguration(t *testing.T) {
 			assert.Equal(t, test.resolveErrors, err1)
 			err2 := got.Validate()
 			assert.Equal(t, test.validationErrors, err2)
+			if test.want != nil {
+				opts := cmp.Options{
+					cmpopts.IgnoreTypes(types.Module{}, types.ModuleVersion{}),
+				}
+				if diff := cmp.Diff(test.want, got, opts...); diff != "" {
+					t.Errorf("(-want, +got): %s", diff)
+				}
+			}
 		})
 	}
 }

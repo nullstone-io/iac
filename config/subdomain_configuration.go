@@ -2,10 +2,11 @@ package config
 
 import (
 	"context"
+	"regexp"
+
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"regexp"
 )
 
 var (
@@ -28,33 +29,63 @@ func (s *SubdomainConfiguration) ToBlock(orgName string, stackId int64) types.Bl
 
 func (s *SubdomainConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	errs := s.BlockConfiguration.Resolve(ctx, resolver, ic, pc)
-	errs = append(errs, s.reserveRandom(ctx, resolver, pc)...)
-	s.resolveDomain(ctx, resolver)
+	errs = append(errs, s.reserve(ctx, resolver, pc)...)
+	s.resolveDomain()
 	return errs
 }
 
-func (s *SubdomainConfiguration) reserveRandom(ctx context.Context, resolver core.ResolveResolver, pc core.ObjectPathContext) core.ResolveErrors {
-	if s.SubdomainNameTemplate != nil {
-		template := *s.SubdomainNameTemplate
-		if !randomVarRegexp.MatchString(template) {
-			// If {{ random() }} is not in the subdomain template, we're not going to attempt to reserve a random
-			return nil
-		}
-		if !onlyRandomVarRegexp.MatchString(template) {
-			// {{ random() }} must be used as a standalone subdomain template
-			return core.ResolveErrors{core.InvalidRandomSubdomainTemplateError(pc.SubField("dns").SubField("template"), template)}
-		}
+// reserve requests a subdomain from Nullstone
+// This is only performed if there is no "domain"/"subdomain" connection in the module definition
+// - If `template="{{ random() }}"`, we request a random subdomain
+// - Else, we ask for the requested subdomain in SubdomainNameTemplate
+func (s *SubdomainConfiguration) reserve(ctx context.Context, resolver core.ResolveResolver, pc core.ObjectPathContext) core.ResolveErrors {
+	if s.ModuleVersion == nil {
+		return nil
+	}
+	conns := s.ModuleVersion.Manifest.Connections
+	_, hasDomain := conns["domain"]
+	_, hasSubdomain := conns["subdomain"]
+	if hasDomain || hasSubdomain {
+		return nil
 	}
 
-	reservation, err := resolver.ReserveNullstoneSubdomain(ctx, s.BlockConfiguration.Name, "random()")
+	isRandom, errs := s.detectRandom(pc)
+	if len(errs) > 0 {
+		return errs
+	}
+	if s.SubdomainNameTemplate == nil {
+		return nil
+	}
+
+	requested := *s.SubdomainNameTemplate
+	if isRandom {
+		requested = "random()"
+	}
+	reservation, err := resolver.ReserveNullstoneSubdomain(ctx, s.BlockConfiguration.Name, requested)
 	if err != nil {
-		return core.ResolveErrors{core.FailedSubdomainReservationError(pc, "random()", err)}
+		return core.ResolveErrors{core.FailedSubdomainReservationError(pc, requested, err)}
 	}
 	s.Reservation = reservation
 	return nil
 }
 
-func (s *SubdomainConfiguration) resolveDomain(ctx context.Context, resolver core.ResolveResolver) {
+func (s *SubdomainConfiguration) detectRandom(pc core.ObjectPathContext) (bool, core.ResolveErrors) {
+	if s.SubdomainNameTemplate == nil {
+		return false, nil
+	}
+	template := *s.SubdomainNameTemplate
+	if !randomVarRegexp.MatchString(template) {
+		// If {{ random() }} is not in the subdomain template, we're not going to attempt to reserve a random
+		return false, nil
+	}
+	if !onlyRandomVarRegexp.MatchString(template) {
+		// {{ random() }} must be used as a standalone subdomain template
+		return true, core.ResolveErrors{core.InvalidRandomSubdomainTemplateError(pc.SubField("dns").SubField("template"), template)}
+	}
+	return true, nil
+}
+
+func (s *SubdomainConfiguration) resolveDomain() {
 	conn, ok := s.Connections["domain"]
 	if !ok || conn.Block == nil {
 		return
@@ -80,7 +111,10 @@ func convertSubdomainConfigurations(parsed map[string]yaml.SubdomainConfiguratio
 		if subdomainNameTemplate == "" {
 			subdomainNameTemplate = value.DnsName
 		}
-		result[name] = &SubdomainConfiguration{BlockConfiguration: *bc, SubdomainNameTemplate: &subdomainNameTemplate}
+		result[name] = &SubdomainConfiguration{
+			BlockConfiguration:    *bc,
+			SubdomainNameTemplate: &subdomainNameTemplate,
+		}
 	}
 	return result
 }

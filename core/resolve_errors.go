@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+
 	"github.com/BSick7/go-api/errors"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )

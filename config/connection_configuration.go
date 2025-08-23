@@ -20,12 +20,16 @@ func (s ConnectionConfigurations) DesiredTargets() types.ConnectionTargets {
 	return targets
 }
 
-func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, pc core.ObjectPathContext,
+func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext,
 	blockManifest config.Manifest) core.ResolveErrors {
-	if len(s) == 0 {
-		return nil
+	var errs core.ResolveErrors
+	if !ic.IsOverrides {
+		for name, manifestConn := range blockManifest.Connections {
+			if _, inNsConfig := s[name]; !inNsConfig && !manifestConn.Optional {
+				errs = append(errs, core.MissingRequiredConnectionError(pc.SubField("connections"), name))
+			}
+		}
 	}
-	errs := core.ResolveErrors{}
 	for name, c := range s {
 		if schema, ok := blockManifest.Connections[name]; ok {
 			c.Schema = &schema
@@ -81,7 +85,7 @@ type ConnectionConfiguration struct {
 	Module          *types.Module          `json:"module"`
 }
 
-// Resolve resolves the connection's target (i.e. block) and matches the connection contract
+// Resolve resolves the connection's target (i.e., block) and matches the connection contract
 func (c *ConnectionConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, pc core.ObjectPathContext) *core.ResolveError {
 	if c.Schema == nil || c.DesiredTarget.BlockName == "" {
 		// There is nothing to resolve

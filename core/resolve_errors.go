@@ -82,6 +82,13 @@ func MissingModuleVersionError(pc ObjectPathContext, source, version string) *Re
 	}
 }
 
+func MissingRequiredConnectionError(pc ObjectPathContext, connName string) ResolveError {
+	return ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Connection (%s) is required", connName),
+	}
+}
+
 func MissingConnectionTargetError(pc ObjectPathContext, err error) *ResolveError {
 	return &ResolveError{
 		ObjectPathContext: pc,

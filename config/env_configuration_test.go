@@ -466,6 +466,18 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: core.ValidateErrors(nil),
 		},
 		{
+			name:     "missing required connection",
+			filename: "test-fixtures/config.invalid13.yml",
+			want:     nil,
+			resolveErrors: core.ResolveErrors{
+				{
+					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs", Field: "connections"},
+					ErrorMessage:      "Connection (cluster-namespace) is required",
+				},
+			},
+			validationErrors: core.ValidateErrors(nil),
+		},
+		{
 			name:          "block doesn't match contract for capability connection",
 			filename:      "test-fixtures/config.invalid11.yml",
 			want:          nil,

@@ -130,3 +130,17 @@ func ToolChannelLookupFailedError(pc ObjectPathContext, tool string, err error) 
 		ErrorMessage:      fmt.Sprintf("Failed to look up %s channels: %s", tool, err),
 	}
 }
+
+func InvalidRandomSubdomainTemplateError(pc ObjectPathContext, template string) ResolveError {
+	return ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Invalid subdomain template %q: cannot have specify additional text when using `{{ random() }}`.", template),
+	}
+}
+
+func FailedSubdomainReservationError(pc ObjectPathContext, requested string, err error) ResolveError {
+	return ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Failed to reserve subdomain %q: %s", requested, err),
+	}
+}

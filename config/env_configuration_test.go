@@ -2,6 +2,8 @@ package config
 
 import (
 	"context"
+	"encoding/json"
+	apierrors "github.com/BSick7/go-api/errors"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
 	"github.com/nullstone-io/iac/core"
@@ -12,7 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
+	"net/http"
 	"os"
+	"strconv"
 	"testing"
 )
 
@@ -42,8 +46,8 @@ func TestConvertConfiguration(t *testing.T) {
 		{
 			OrgName:       defaults.OrgName,
 			Name:          "aws-fargate-service",
-			Category:      "app",
-			Subcategory:   "container",
+			Category:      types.CategoryApp,
+			Subcategory:   types.SubcategoryAppContainer,
 			ProviderTypes: []string{"aws"},
 			Platform:      "ecs",
 			Subplatform:   "",
@@ -76,8 +80,8 @@ func TestConvertConfiguration(t *testing.T) {
 		{
 			OrgName:       defaults.OrgName,
 			Name:          "aws-s3-site",
-			Category:      "app",
-			Subcategory:   "static-site",
+			Category:      types.CategoryApp,
+			Subcategory:   types.SubcategoryAppStaticSite,
 			ProviderTypes: []string{"aws"},
 			Platform:      "s3",
 			Subplatform:   "",
@@ -109,7 +113,8 @@ func TestConvertConfiguration(t *testing.T) {
 		{
 			OrgName:       defaults.OrgName,
 			Name:          "aws-load-balancer",
-			Category:      "capability",
+			Category:      types.CategoryCapability,
+			Subcategory:   types.SubcategoryCapabilityIngress,
 			ProviderTypes: []string{"aws"},
 			AppCategories: []string{"container"},
 			LatestVersion: &types.ModuleVersion{
@@ -160,7 +165,8 @@ func TestConvertConfiguration(t *testing.T) {
 		{
 			OrgName:       defaults.OrgName,
 			Name:          "aws-s3-cdn",
-			Category:      "capability",
+			Category:      types.CategoryCapability,
+			Subcategory:   types.SubcategoryCapabilityIngress,
 			ProviderTypes: []string{"aws"},
 			AppCategories: []string{"static-site"},
 			LatestVersion: &types.ModuleVersion{
@@ -189,7 +195,8 @@ func TestConvertConfiguration(t *testing.T) {
 		{
 			OrgName:       defaults.OrgName,
 			Name:          "aws-postgres-access",
-			Category:      "capability",
+			Category:      types.CategoryCapability,
+			Subcategory:   types.SubcategoryCapabilityDatastores,
 			ProviderTypes: []string{"aws"},
 			AppCategories: []string{"container", "serverless", "server"},
 			LatestVersion: &types.ModuleVersion{
@@ -213,7 +220,7 @@ func TestConvertConfiguration(t *testing.T) {
 		{
 			OrgName:       defaults.OrgName,
 			Name:          "aws-rds-postgres",
-			Category:      "datastore",
+			Category:      types.CategoryDatastore,
 			Platform:      "postgres",
 			Subplatform:   "rds",
 			ProviderTypes: []string{"aws"},
@@ -226,6 +233,17 @@ func TestConvertConfiguration(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+		{
+			OrgName:       defaults.OrgName,
+			Name:          "nullstone-aws-subdomain",
+			Category:      types.CategorySubdomain,
+			Platform:      "route53",
+			ProviderTypes: []string{"aws"},
+			LatestVersion: &types.ModuleVersion{
+				Version:  "0.0.1",
+				Manifest: config.Manifest{},
 			},
 		},
 	}
@@ -253,13 +271,22 @@ func TestConvertConfiguration(t *testing.T) {
 		ModuleSource:        "nullstone/aws-rds-postgres",
 		ModuleSourceVersion: latest,
 	}
-	blocksById := map[int64]types.Block{namespaceBlock.Id: namespaceBlock, subdomainBlock.Id: subdomainBlock, postgresBlock.Id: postgresBlock}
-	blocksByName := map[string]types.Block{namespaceBlock.Name: namespaceBlock, subdomainBlock.Name: subdomainBlock, postgresBlock.Name: postgresBlock}
+	apiSubdomainBlock := types.Block{
+		IdModel:             types.IdModel{Id: 98},
+		OrgName:             defaults.OrgName,
+		StackId:             defaults.StackId,
+		Name:                "api-subdomain",
+		ModuleSource:        "nullstone/nullstone-aws-subdomain",
+		ModuleSourceVersion: latest,
+	}
+	blocksById := map[int64]types.Block{namespaceBlock.Id: namespaceBlock, subdomainBlock.Id: subdomainBlock, postgresBlock.Id: postgresBlock, apiSubdomainBlock.Id: apiSubdomainBlock}
+	blocksByName := map[string]types.Block{namespaceBlock.Name: namespaceBlock, subdomainBlock.Name: subdomainBlock, postgresBlock.Name: postgresBlock, apiSubdomainBlock.Name: apiSubdomainBlock}
 
 	tests := []struct {
 		name             string
 		filename         string
 		isOverrides      bool
+		setup            func(t *testing.T, router *mux.Router)
 		want             *EnvConfiguration
 		resolveErrors    core.ResolveErrors
 		validationErrors core.ValidateErrors
@@ -376,7 +403,7 @@ func TestConvertConfiguration(t *testing.T) {
 			resolveErrors: core.ResolveErrors{
 				{
 					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs", Field: "module"},
-					ErrorMessage:      "Module (nullstone/aws-s3-cdn) must be app module and match the contract (app/*/*), it is defined as capability/aws/",
+					ErrorMessage:      "Module (nullstone/aws-s3-cdn) must be app module and match the contract (app/*/*), it is defined as capability:ingress/aws/",
 				},
 			},
 			validationErrors: core.ValidateErrors(nil),
@@ -473,6 +500,47 @@ func TestConvertConfiguration(t *testing.T) {
 				{
 					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs", Field: "connections"},
 					ErrorMessage:      "Connection (cluster-namespace) is required",
+				},
+			},
+			validationErrors: core.ValidateErrors(nil),
+		},
+		{
+			name:     "invalid random subdomain template",
+			filename: "test-fixtures/config.invalid14.yml",
+			want:     nil,
+			resolveErrors: core.ResolveErrors{
+				{
+					ObjectPathContext: core.ObjectPathContext{Path: "subdomains.api-subdomain.dns", Field: "template"},
+					ErrorMessage:      "Invalid subdomain template \"{{ random() }}.xyz\": cannot have specify additional text when using `{{ random() }}`.",
+				},
+			},
+			validationErrors: core.ValidateErrors(nil),
+		},
+		{
+			name:     "failed random() subdomain reservation",
+			filename: "test-fixtures/config.invalid15.yml",
+			setup: func(t *testing.T, router *mux.Router) {
+				router.Path("/orgs/{orgName}/stacks/{stackId}/subdomains/{subdomainId}/envs/{envId}/nullstone_reservation").
+					HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						vars := mux.Vars(r)
+						orgName := vars["orgName"]
+						stackId, _ := strconv.ParseInt(vars["stackId"], 10, 64)
+						subdomainId, _ := strconv.ParseInt(vars["subdomainId"], 10, 64)
+						envId, _ := strconv.ParseInt(vars["envId"], 10, 64)
+						if orgName != apiSubdomainBlock.OrgName || stackId != apiSubdomainBlock.StackId ||
+							subdomainId != apiSubdomainBlock.Id || envId != defaults.EnvId {
+							http.NotFound(w, r)
+							return
+						}
+						rawErr, _ := json.Marshal(apierrors.NewBadRequestMessageError(0, "reached random subdomain limit for organization"))
+						http.Error(w, string(rawErr), http.StatusBadRequest)
+					})
+			},
+			want: nil,
+			resolveErrors: core.ResolveErrors{
+				{
+					ObjectPathContext: core.ObjectPathContext{Path: "subdomains.api-subdomain"},
+					ErrorMessage:      "Failed to reserve subdomain \"random()\": [Bad Request]\n  - reached random subdomain limit for organization",
 				},
 			},
 			validationErrors: core.ValidateErrors(nil),
@@ -580,12 +648,15 @@ func TestConvertConfiguration(t *testing.T) {
 		},
 	}
 
-	router := mux.NewRouter()
-	oracle.MockGetModuleVersions(router, modules...)
-	apiHub := services.MockApiHub(t, router)
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			router := mux.NewRouter()
+			oracle.MockGetModuleVersions(router, modules...)
+			if test.setup != nil {
+				test.setup(t, router)
+			}
+			apiHub := services.MockApiHub(t, router)
+
 			buf, err := os.ReadFile(test.filename)
 			assert.NoError(t, err)
 

@@ -184,10 +184,12 @@ func TestApplyChanges(t *testing.T) {
 			got := mustClone(t, test.input)
 
 			updater := workspace.ConfigUpdater{
-				Config:    &got,
-				OrgName:   test.env.OrgName,
-				StackName: "apply-changes-test",
-				EnvName:   test.env.Name,
+				Config: &got,
+				TemplateVars: workspace.TemplateVars{
+					OrgName:   test.env.OrgName,
+					StackName: "apply-changes-test",
+					EnvName:   test.env.Name,
+				},
 			}
 			err = ApplyChangesTo(*pmr, test.block, test.env, updater)
 			require.NoError(t, err, "unexpected error")

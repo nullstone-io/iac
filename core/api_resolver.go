@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"fmt"
 	"gopkg.in/nullstone-io/go-api-client.v0"
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
@@ -68,4 +69,20 @@ func (a *ApiResolver) ListChannels(ctx context.Context, tool string) ([]map[stri
 		return nil, ErrEventChannelsNotInitialized
 	}
 	return a.EventChannelResolver.ListChannels(ctx, tool)
+}
+
+func (a *ApiResolver) ReserveNullstoneSubdomain(ctx context.Context, blockName string, requested string) (*types.SubdomainReservation, error) {
+	block, err := a.ResolveBlock(ctx, types.ConnectionTarget{BlockName: blockName})
+	if err != nil {
+		return nil, err
+	}
+	envId := a.ResourceResolver.CurEnvId
+	reservation, err := a.ApiClient.Subdomains().ReserveNullstone(ctx, block.StackId, block.Id, envId, requested)
+	if err != nil {
+		return nil, err
+	}
+	if reservation == nil {
+		return nil, fmt.Errorf("nullstone reservation returned no result")
+	}
+	return reservation, nil
 }

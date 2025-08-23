@@ -8,7 +8,7 @@ type SubdomainConfiguration struct {
 	Dns SubdomainDnsConfiguration `yaml:"dns" json:"dns"`
 
 	// DnsName
-	// Deprecated: Use SubdomainName instead
+	// Deprecated: Use Dns.Template instead
 	DnsName string `yaml:"dns_name,omitempty" json:"dnsName"`
 }
 

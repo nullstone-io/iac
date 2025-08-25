@@ -118,7 +118,7 @@ func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ResolveR
 	}
 
 	errs = append(errs, b.Variables.Resolve(manifest)...)
-	errs = append(errs, b.Connections.Resolve(ctx, resolver, pc, manifest)...)
+	errs = append(errs, b.Connections.Resolve(ctx, resolver, ic, pc, manifest)...)
 	return errs
 }
 

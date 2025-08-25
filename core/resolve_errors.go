@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+
 	"github.com/BSick7/go-api/errors"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
@@ -82,6 +83,13 @@ func MissingModuleVersionError(pc ObjectPathContext, source, version string) *Re
 	}
 }
 
+func MissingRequiredConnectionError(pc ObjectPathContext, connName string) ResolveError {
+	return ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Connection (%s) is required", connName),
+	}
+}
+
 func MissingConnectionTargetError(pc ObjectPathContext, err error) *ResolveError {
 	return &ResolveError{
 		ObjectPathContext: pc,
@@ -121,5 +129,19 @@ func ToolChannelLookupFailedError(pc ObjectPathContext, tool string, err error) 
 	return ResolveError{
 		ObjectPathContext: pc,
 		ErrorMessage:      fmt.Sprintf("Failed to look up %s channels: %s", tool, err),
+	}
+}
+
+func InvalidRandomSubdomainTemplateError(pc ObjectPathContext, template string) ResolveError {
+	return ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Invalid subdomain template %q: cannot have specify additional text when using `{{ random() }}`.", template),
+	}
+}
+
+func FailedSubdomainReservationError(pc ObjectPathContext, requested string, err error) ResolveError {
+	return ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Failed to reserve subdomain %q: %s", requested, err),
 	}
 }

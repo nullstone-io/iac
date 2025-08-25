@@ -1,0 +1,7 @@
+version: "0.1"
+
+subdomains:
+  api-subdomain:
+    module: nullstone/nullstone-aws-subdomain
+    dns:
+      template: "awesome"

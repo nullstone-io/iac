@@ -160,7 +160,7 @@ func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.Res
 		manifest = mv.Manifest
 	}
 	errs = append(errs, c.Variables.Resolve(manifest)...)
-	errs = append(errs, c.Connections.Resolve(ctx, resolver, pc, manifest)...)
+	errs = append(errs, c.Connections.Resolve(ctx, resolver, ic, pc, manifest)...)
 	return errs
 }
 

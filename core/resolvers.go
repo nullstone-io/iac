@@ -11,6 +11,7 @@ type ResolveResolver interface {
 	ModuleResolver
 	ModuleVersionResolver
 	EventChannelResolver
+	SubdomainReserver
 }
 
 type NormalizeResolver interface {
@@ -27,6 +28,10 @@ type BlockResolver interface {
 type ConnectionResolver interface {
 	// ResolveConnection resolves and backfills any missing fields from input types.ConnectionTarget
 	ResolveConnection(ctx context.Context, ct types.ConnectionTarget) (types.ConnectionTarget, error)
+}
+
+type SubdomainReserver interface {
+	ReserveNullstoneSubdomain(ctx context.Context, blockName string, requested string) (*types.SubdomainReservation, error)
 }
 
 type ModuleResolver interface {

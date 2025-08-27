@@ -7,8 +7,8 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/gorilla/mux v1.8.1
 	github.com/nullstone-io/module v0.2.10
-	github.com/stretchr/testify v1.10.0
-	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20250827154519-d5ec22b88a75
+	github.com/stretchr/testify v1.11.1
+	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20250827190547-23e095f2d482
 	gopkg.in/yaml.v3 v3.0.1
 )
 

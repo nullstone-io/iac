@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 	"reflect"
@@ -15,6 +16,7 @@ var (
 
 type ConfigUpdater struct {
 	Config *types.WorkspaceConfig
+	TemplateVars
 }
 
 func (w ConfigUpdater) UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion) {
@@ -133,6 +135,50 @@ func (w ConfigUpdater) RemoveCapabilitiesNotIn(identities core.CapabilityIdentit
 		}
 	}
 	w.Config.Capabilities = result
+}
+
+func (w ConfigUpdater) UpdateDomainName(domainNameTemplate *string) {
+	extra := w.Config.Extra
+
+	if domainNameTemplate != nil {
+		domainName := w.TemplateVars.ReplaceSpecificVars(*domainNameTemplate, "NULLSTONE_ORG")
+		extra.Domain = &types.ExtraDomainConfig{
+			DomainNameTemplate: *domainNameTemplate,
+			DomainName:         domainName,
+			Fqdn:               fmt.Sprintf("%s.", extra.Domain.DomainName),
+		}
+	}
+
+	w.Config.Extra = extra
+}
+
+func (w ConfigUpdater) UpdateSubdomainName(domainNameTemplate, subdomainNameTemplate *string, reservation *types.SubdomainReservation) {
+	extra := w.Config.Extra
+
+	if extra.Subdomain == nil {
+		extra.Subdomain = &types.ExtraSubdomainConfig{}
+	}
+
+	if domainNameTemplate != nil {
+		extra.Subdomain.DomainName = w.TemplateVars.ReplaceSpecificVars(*domainNameTemplate, "NULLSTONE_ORG")
+	} else if reservation != nil {
+		extra.Subdomain.DomainName = reservation.DomainName
+	}
+
+	if subdomainNameTemplate != nil {
+		extra.Subdomain.SubdomainNameTemplate = *subdomainNameTemplate
+		if reservation != nil {
+			extra.Subdomain.SubdomainName = reservation.SubdomainName
+		} else {
+			extra.Subdomain.SubdomainName = w.TemplateVars.ReplaceVars(*subdomainNameTemplate)
+		}
+	}
+
+	if domainNameTemplate != nil || subdomainNameTemplate != nil || reservation != nil {
+		extra.Subdomain.Fqdn = extra.Subdomain.CalculateFqdn()
+	}
+
+	w.Config.Extra = extra
 }
 
 type CapabilityConfigUpdater struct {

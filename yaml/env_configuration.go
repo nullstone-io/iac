@@ -51,12 +51,12 @@ func EnvConfigurationFromWorkspaceConfig(stackId, envId int64, block types.Block
 		if result.Subdomains == nil {
 			result.Subdomains = map[string]SubdomainConfiguration{}
 		}
-		result.Subdomains[block.Name] = SubdomainConfigurationFromWorkspaceConfig(stackId, envId, block, config)
+		result.Subdomains[block.Name] = SubdomainConfigurationFromWorkspaceConfig(stackId, envId, config)
 	case string(types.BlockTypeDomain):
 		if result.Domains == nil {
 			result.Domains = map[string]DomainConfiguration{}
 		}
-		result.Domains[block.Name] = DomainConfigurationFromWorkspaceConfig(stackId, envId, block, config)
+		result.Domains[block.Name] = DomainConfigurationFromWorkspaceConfig(stackId, envId, config)
 	case string(types.BlockTypeIngress):
 		if result.Ingresses == nil {
 			result.Ingresses = map[string]IngressConfiguration{}

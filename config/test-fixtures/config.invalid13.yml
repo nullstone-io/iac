@@ -1,0 +1,18 @@
+version: "0.1"
+
+apps:
+  acme-docs:
+    module: nullstone/aws-fargate-service
+    vars:
+      num_tasks: 2
+    environment:
+      TESTING: abc123
+      BLAH: blahblahblah
+    capabilities:
+      - module: nullstone/aws-load-balancer
+        vars:
+          health_check_path: "/status"
+        connections:
+          subdomain:
+            block_name: ns-sub-for-acme-docs
+        namespace: primary

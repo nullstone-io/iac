@@ -2,16 +2,29 @@ package yaml
 
 import "gopkg.in/nullstone-io/go-api-client.v0/types"
 
-// TODO: Implement DnsName in types.WorkspaceConfig
 type SubdomainConfiguration struct {
 	BlockConfiguration `yaml:",inline" json:",inline"`
 
+	Dns SubdomainDnsConfiguration `yaml:"dns" json:"dns"`
+
+	// DnsName
+	// Deprecated: Use Dns.Template instead
 	DnsName string `yaml:"dns_name,omitempty" json:"dnsName"`
 }
 
-func SubdomainConfigurationFromWorkspaceConfig(stackId, envId int64, block types.Block, config types.WorkspaceConfig) SubdomainConfiguration {
+type SubdomainDnsConfiguration struct {
+	Template string `yaml:"template" json:"template"`
+}
+
+func SubdomainConfigurationFromWorkspaceConfig(stackId, envId int64, config types.WorkspaceConfig) SubdomainConfiguration {
+	subdomainTemplate := ""
+	if config.Extra.Subdomain != nil {
+		subdomainTemplate = config.Extra.Subdomain.SubdomainNameTemplate
+	}
 	return SubdomainConfiguration{
 		BlockConfiguration: BlockConfigurationFromWorkspaceConfig(stackId, envId, config),
-		DnsName:            block.DnsName,
+		Dns: SubdomainDnsConfiguration{
+			Template: subdomainTemplate,
+		},
 	}
 }

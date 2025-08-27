@@ -140,7 +140,7 @@ func TestConvertConfiguration(t *testing.T) {
 	}
 	subdomainModule := types.Module{
 		OrgName:       defaults.OrgName,
-		Name:          "nullstone-aws-subdomain",
+		Name:          "aws-nullstone-subdomain",
 		Category:      types.CategorySubdomain,
 		Platform:      "route53",
 		ProviderTypes: []string{"aws"},
@@ -290,7 +290,7 @@ func TestConvertConfiguration(t *testing.T) {
 		OrgName:             defaults.OrgName,
 		StackId:             defaults.StackId,
 		Name:                "api-subdomain",
-		ModuleSource:        "nullstone/nullstone-aws-subdomain",
+		ModuleSource:        "nullstone/aws-nullstone-subdomain",
 		ModuleSourceVersion: latest,
 	}
 	blocksById := map[int64]types.Block{namespaceBlock.Id: namespaceBlock, subdomainBlock.Id: subdomainBlock, postgresBlock.Id: postgresBlock, apiSubdomainBlock.Id: apiSubdomainBlock}
@@ -644,7 +644,7 @@ func TestConvertConfiguration(t *testing.T) {
 							Type:             BlockTypeSubdomain,
 							Category:         types.CategorySubdomain,
 							Name:             "api-subdomain",
-							ModuleSource:     "nullstone/nullstone-aws-subdomain",
+							ModuleSource:     "nullstone/aws-nullstone-subdomain",
 							ModuleConstraint: "latest",
 							Variables:        VariableConfigurations{},
 							Connections:      ConnectionConfigurations{},

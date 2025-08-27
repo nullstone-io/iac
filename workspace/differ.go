@@ -2,8 +2,9 @@ package workspace
 
 import (
 	"fmt"
-	"gopkg.in/nullstone-io/go-api-client.v0/types"
 	"reflect"
+
+	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
 // DiffWorkspaceConfig performs a difference between two WorkspaceConfig and produces a set of []types.WorkspaceChange
@@ -270,8 +271,8 @@ func diffExtra(changes IndexedChanges, cur, des types.ExtraWorkspaceConfig) {
 	}
 
 	changes.Add(types.WorkspaceChange{
-		ChangeType: types.ChangeTypeExtra,
-		Identifier: "extra",
+		ChangeType: types.ChangeTypeExtraSubdomain,
+		Identifier: "extra_subdomain",
 		Action:     types.ChangeActionUpdate,
 		Current:    cur,
 		Desired:    des,

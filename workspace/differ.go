@@ -2,7 +2,6 @@ package workspace
 
 import (
 	"fmt"
-	"reflect"
 
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
@@ -26,7 +25,7 @@ func DiffWorkspaceConfig(cur, des types.WorkspaceConfig) IndexedChanges {
 	diffEnvVariables(changes, cur.EnvVariables, des.EnvVariables)
 	diffConnections(changes, cur.Connections, des.Connections)
 	diffCapabilities(changes, cur, des)
-	diffExtra(changes, cur.Extra, des.Extra)
+	diffExtra(changes, cur, des)
 	return changes
 }
 
@@ -265,16 +264,28 @@ func diffCapNamespace(changes IndexedChanges, cur, des types.CapabilityConfig) {
 	}
 }
 
-func diffExtra(changes IndexedChanges, cur, des types.ExtraWorkspaceConfig) {
-	if reflect.DeepEqual(cur, des) {
+func diffExtra(changes IndexedChanges, current, desired types.WorkspaceConfig) {
+	diffExtraSubdomain(changes, current.Extra.Subdomain, desired.Extra.Subdomain)
+}
+
+func diffExtraSubdomain(changes IndexedChanges, current, desired *types.ExtraSubdomainConfig) {
+	var cur, des types.ExtraSubdomainConfig
+	// Assume a nil config is a blank config
+	if current != nil {
+		cur = *current
+	}
+	if desired != nil {
+		des = *desired
+	}
+	if cur.Equal(des) {
 		return
 	}
 
 	changes.Add(types.WorkspaceChange{
+		Action:     types.ChangeActionUpdate,
 		ChangeType: types.ChangeTypeExtraSubdomain,
 		Identifier: "extra_subdomain",
-		Action:     types.ChangeActionUpdate,
-		Current:    cur,
-		Desired:    des,
+		Current:    current,
+		Desired:    desired,
 	})
 }

@@ -2,9 +2,11 @@ package workspace
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"reflect"
 )
 
 var (
@@ -170,7 +172,7 @@ func (w ConfigUpdater) UpdateSubdomainName(domainNameTemplate, subdomainNameTemp
 		if reservation != nil {
 			extra.Subdomain.SubdomainName = reservation.SubdomainName
 		} else {
-			extra.Subdomain.SubdomainName = w.TemplateVars.ReplaceVars(*subdomainNameTemplate)
+			extra.Subdomain.SubdomainName = strings.TrimSuffix(w.TemplateVars.ReplaceVars(*subdomainNameTemplate), ".")
 		}
 	}
 

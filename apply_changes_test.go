@@ -2,13 +2,14 @@ package iac
 
 import (
 	"encoding/json"
+	"path/filepath"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/nullstone-io/iac/workspace"
 	moduleConfig "github.com/nullstone-io/module/config"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"path/filepath"
-	"testing"
 )
 
 func TestApplyChanges(t *testing.T) {
@@ -189,6 +190,7 @@ func TestApplyChanges(t *testing.T) {
 					OrgName:   test.env.OrgName,
 					StackName: "apply-changes-test",
 					EnvName:   test.env.Name,
+					EnvIsProd: false,
 				},
 			}
 			err = ApplyChangesTo(*pmr, test.block, test.env, updater)

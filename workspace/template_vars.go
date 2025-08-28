@@ -18,6 +18,7 @@ type TemplateVars struct {
 	OrgName   string
 	StackName string
 	EnvName   string
+	EnvIsProd bool
 }
 
 func (v TemplateVars) ReplaceVars(input string) string {
@@ -43,6 +44,9 @@ func (v TemplateVars) value(key string) string {
 	case "NULLSTONE_STACK":
 		return v.StackName
 	case "NULLSTONE_ENV":
+		if v.EnvIsProd {
+			return ""
+		}
 		return v.EnvName
 	default:
 		return "{{ " + key + " }}"

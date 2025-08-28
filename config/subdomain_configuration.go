@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 
 	"github.com/nullstone-io/iac/core"
@@ -109,7 +110,8 @@ func convertSubdomainConfigurations(parsed map[string]yaml.SubdomainConfiguratio
 		bc := blockConfigFromYaml(name, value.BlockConfiguration, BlockTypeSubdomain, types.CategorySubdomain)
 		subdomainNameTemplate := value.Dns.Template
 		if subdomainNameTemplate == "" {
-			subdomainNameTemplate = value.DnsName
+			// If a user is using old syntax, we're going to add `.{{ NULLSTONE_ENV }}` suffix to the template
+			subdomainNameTemplate = fmt.Sprintf("%s.{{ NULLSTONE_ENV }}", value.DnsName)
 		}
 		result[name] = &SubdomainConfiguration{
 			BlockConfiguration:    *bc,

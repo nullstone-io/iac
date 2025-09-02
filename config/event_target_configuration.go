@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -26,6 +27,12 @@ func convertEventTargetConfigurations(parsed yaml.EventTargetConfiguration) Even
 		events[string(types.EventTargetSlack)] = &EventTargetConfiguration{
 			Target:    string(types.EventTargetSlack),
 			SlackData: slackEventTargetDataFromYaml(parsed.Slack),
+		}
+	}
+	if parsed.Webhook != nil {
+		events[string(types.EventTargetWebhook)] = &EventTargetConfiguration{
+			Target:      string(types.EventTargetWebhook),
+			WebhookData: webhookEventTargetDataFromYaml(parsed.Webhook),
 		}
 	}
 	return events
@@ -58,12 +65,16 @@ func (s EventTargetConfigurations) Channels() map[types.IntegrationTool]types.Ch
 type EventTargetConfiguration struct {
 	Target string `json:"target"`
 
-	SlackData *SlackEventTargetData `json:"slackData"`
+	SlackData   *SlackEventTargetData   `json:"slackData"`
+	WebhookData *WebhookEventTargetData `json:"webhookData"`
 }
 
 func (c *EventTargetConfiguration) ChannelData() map[string]any {
 	if c.SlackData != nil {
 		return c.SlackData.ChannelData()
+	}
+	if c.WebhookData != nil {
+		return c.WebhookData.ChannelData()
 	}
 	return nil
 }
@@ -83,6 +94,7 @@ func (c *EventTargetConfiguration) Validate(ic core.IacContext, pc core.ObjectPa
 		errs = append(errs, core.InvalidEventTargetError(pc, c.Target))
 	} else {
 		errs = append(errs, c.SlackData.Validate(ic, pc)...)
+		errs = append(errs, c.WebhookData.Validate(ic, pc)...)
 	}
 	return errs
 }

@@ -21,5 +21,5 @@ type EventTargetSlackConfiguration struct {
 }
 
 type EventTargetWebhookConfiguration struct {
-	Urls []string `yaml:"urls" json:"urls"`
+	Url string `yaml:"url" json:"url"`
 }

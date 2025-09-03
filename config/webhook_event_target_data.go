@@ -10,14 +10,14 @@ import (
 )
 
 type WebhookEventTargetData struct {
-	Urls []string `json:"urls"`
+	Url string `json:"url"`
 }
 
 func webhookEventTargetDataFromYaml(yml *yaml.EventTargetWebhookConfiguration) *WebhookEventTargetData {
 	if yml == nil {
 		return nil
 	}
-	return &WebhookEventTargetData{Urls: yml.Urls}
+	return &WebhookEventTargetData{Url: yml.Url}
 }
 
 func (d *WebhookEventTargetData) Resolve(ctx context.Context, resolver core.EventChannelResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
@@ -29,22 +29,21 @@ func (d *WebhookEventTargetData) Validate(ic core.IacContext, pc core.ObjectPath
 		return nil
 	}
 	errs := core.ValidateErrors{}
-	if len(d.Urls) == 0 {
+	if d.Url == "" {
 		errs = append(errs, core.ValidateError{
 			ObjectPathContext: pc,
-			ErrorMessage:      fmt.Sprintf("When specifying `webhook`, it must have at least one url in 'urls'"),
+			ErrorMessage:      fmt.Sprintf("When specifying `webhook`, `url` is required"),
 		})
-	}
-	for i, val := range d.Urls {
-		parsed, err := url.Parse(val)
+	} else {
+		parsed, err := url.Parse(d.Url)
 		if err != nil {
 			errs = append(errs, core.ValidateError{
-				ObjectPathContext: pc.SubIndex("urls", i),
+				ObjectPathContext: pc.SubField("url"),
 				ErrorMessage:      fmt.Sprintf("Invalid webhook URL: %s", err.Error()),
 			})
 		} else if parsed.Scheme == "" {
 			errs = append(errs, core.ValidateError{
-				ObjectPathContext: pc.SubIndex("urls", i),
+				ObjectPathContext: pc.SubField("url"),
 				ErrorMessage:      fmt.Sprintf("Invalid webhook URL"),
 			})
 		}
@@ -54,8 +53,8 @@ func (d *WebhookEventTargetData) Validate(ic core.IacContext, pc core.ObjectPath
 
 func (d *WebhookEventTargetData) ChannelData() map[string]any {
 	connections := make([]map[string]any, 0)
-	for _, val := range d.Urls {
-		connections = append(connections, map[string]any{"incoming_webhook": map[string]any{"url": val}})
+	if d.Url != "" {
+		connections = append(connections, map[string]any{"url": d.Url})
 	}
 	return map[string]any{"connections": connections}
 }

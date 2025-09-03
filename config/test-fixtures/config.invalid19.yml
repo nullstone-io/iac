@@ -8,5 +8,4 @@ events:
       - completed
     targets:
       webhook:
-        urls:
-          - "invalid-url"
+        url: "invalid-url"

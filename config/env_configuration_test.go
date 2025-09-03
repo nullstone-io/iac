@@ -696,7 +696,7 @@ func TestConvertConfiguration(t *testing.T) {
 			validationErrors: core.ValidateErrors{
 				{
 					ObjectPathContext: core.ObjectPathContext{Path: "events.deployments", Field: "targets", Key: "webhook"},
-					ErrorMessage:      "When specifying `webhook`, it must have at least one url in 'urls'",
+					ErrorMessage:      "When specifying `webhook`, `url` is required",
 				},
 			},
 		},
@@ -707,7 +707,7 @@ func TestConvertConfiguration(t *testing.T) {
 			resolveErrors: core.ResolveErrors(nil),
 			validationErrors: core.ValidateErrors{
 				{
-					ObjectPathContext: core.ObjectPathContext{Path: "events.deployments.targets.webhook", Field: "urls", Index: ptr(0)},
+					ObjectPathContext: core.ObjectPathContext{Path: "events.deployments.targets.webhook", Field: "url"},
 					ErrorMessage:      "Invalid webhook URL",
 				},
 			},

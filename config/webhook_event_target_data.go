@@ -52,9 +52,8 @@ func (d *WebhookEventTargetData) Validate(ic core.IacContext, pc core.ObjectPath
 }
 
 func (d *WebhookEventTargetData) ChannelData() map[string]any {
-	connections := make([]map[string]any, 0)
-	if d.Url != "" {
-		connections = append(connections, map[string]any{"url": d.Url})
+	if d == nil || d.Url == "" {
+		return map[string]any{}
 	}
-	return map[string]any{"connections": connections}
+	return map[string]any{"url": d.Url}
 }

@@ -689,6 +689,30 @@ func TestConvertConfiguration(t *testing.T) {
 			},
 		},
 		{
+			name:          "required webhook urls",
+			filename:      "test-fixtures/config.invalid18.yml",
+			want:          nil,
+			resolveErrors: core.ResolveErrors(nil),
+			validationErrors: core.ValidateErrors{
+				{
+					ObjectPathContext: core.ObjectPathContext{Path: "events.deployments", Field: "targets", Key: "webhook"},
+					ErrorMessage:      "When specifying `webhook`, it must have at least one url in 'urls'",
+				},
+			},
+		},
+		{
+			name:          "invalid webhook url",
+			filename:      "test-fixtures/config.invalid19.yml",
+			want:          nil,
+			resolveErrors: core.ResolveErrors(nil),
+			validationErrors: core.ValidateErrors{
+				{
+					ObjectPathContext: core.ObjectPathContext{Path: "events.deployments.targets.webhook", Field: "urls", Index: ptr(0)},
+					ErrorMessage:      "Invalid webhook URL",
+				},
+			},
+		},
+		{
 			name:        "valid previews.yml",
 			filename:    "test-fixtures/previews.yml",
 			isOverrides: true,

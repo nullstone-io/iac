@@ -329,6 +329,12 @@ func TestConvertConfiguration(t *testing.T) {
 									ChannelIds: map[string]string{"deployments": "C01DBR86SRK"},
 								},
 							},
+							"webhook": {
+								Target: "webhook",
+								WebhookData: &WebhookEventTargetData{
+									Url: "https://example.com/webhook",
+								},
+							},
 						},
 						Blocks: nil,
 					},

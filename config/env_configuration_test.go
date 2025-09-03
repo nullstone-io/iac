@@ -329,6 +329,12 @@ func TestConvertConfiguration(t *testing.T) {
 									ChannelIds: map[string]string{"deployments": "C01DBR86SRK"},
 								},
 							},
+							"webhook": {
+								Target: "webhook",
+								WebhookData: &WebhookEventTargetData{
+									Url: "https://example.com/webhook",
+								},
+							},
 						},
 						Blocks: nil,
 					},
@@ -685,6 +691,30 @@ func TestConvertConfiguration(t *testing.T) {
 				core.ValidateError{
 					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs.capabilities[0]", Field: "connections", Key: "subdomain"},
 					ErrorMessage:      "Connection must have a block_name to identify which block it is connected to",
+				},
+			},
+		},
+		{
+			name:          "required webhook urls",
+			filename:      "test-fixtures/config.invalid18.yml",
+			want:          nil,
+			resolveErrors: core.ResolveErrors(nil),
+			validationErrors: core.ValidateErrors{
+				{
+					ObjectPathContext: core.ObjectPathContext{Path: "events.deployments", Field: "targets", Key: "webhook"},
+					ErrorMessage:      "When specifying `webhook`, `url` is required",
+				},
+			},
+		},
+		{
+			name:          "invalid webhook url",
+			filename:      "test-fixtures/config.invalid19.yml",
+			want:          nil,
+			resolveErrors: core.ResolveErrors(nil),
+			validationErrors: core.ValidateErrors{
+				{
+					ObjectPathContext: core.ObjectPathContext{Path: "events.deployments.targets.webhook", Field: "url"},
+					ErrorMessage:      "Invalid webhook URL",
 				},
 			},
 		},

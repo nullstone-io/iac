@@ -12,9 +12,14 @@ type EventConfiguration struct {
 }
 
 type EventTargetConfiguration struct {
-	Slack *EventTargetSlackConfiguration `yaml:"slack,omitempty" json:"slack,omitempty"`
+	Slack   *EventTargetSlackConfiguration   `yaml:"slack,omitempty" json:"slack,omitempty"`
+	Webhook *EventTargetWebhookConfiguration `yaml:"webhook,omitempty" json:"webhook,omitempty"`
 }
 
 type EventTargetSlackConfiguration struct {
 	Channels []string `yaml:"channels" json:"channels"`
+}
+
+type EventTargetWebhookConfiguration struct {
+	Url string `yaml:"url" json:"url"`
 }

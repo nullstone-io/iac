@@ -12,6 +12,8 @@ events:
       slack:
         channels:
           - deployments
+      webhook:
+        url: https://example.com/webhook
 
 apps:
   acme-docs:

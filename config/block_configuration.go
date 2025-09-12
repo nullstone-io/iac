@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"github.com/nullstone-io/module/config"
@@ -145,15 +146,12 @@ func (b *BlockConfiguration) Normalize(ctx context.Context, pc core.ObjectPathCo
 
 func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block {
 	block := types.Block{
-		Type:                string(b.Type),
-		OrgName:             orgName,
-		StackId:             stackId,
-		Name:                b.Name,
-		IsShared:            b.IsShared,
-		DnsName:             "",
-		ModuleSource:        b.ModuleSource,
-		ModuleSourceVersion: b.ModuleConstraint,
-		Connections:         b.Connections.DesiredTargets(),
+		Type:     string(b.Type),
+		OrgName:  orgName,
+		StackId:  stackId,
+		Name:     b.Name,
+		IsShared: b.IsShared,
+		DnsName:  "",
 	}
 	return block
 }

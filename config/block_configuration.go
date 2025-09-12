@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"github.com/nullstone-io/module/config"
@@ -153,7 +154,6 @@ func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block 
 		DnsName:             "",
 		ModuleSource:        b.ModuleSource,
 		ModuleSourceVersion: b.ModuleConstraint,
-		Connections:         b.Connections.DesiredTargets(),
 	}
 	return block
 }

@@ -54,23 +54,30 @@ func LookupConnectionTargetFailedError(pc ObjectPathContext, err error) *Resolve
 	}
 }
 
+func LookupWorkspaceModuleConfigError(pc ObjectPathContext, err error) *ResolveError {
+	return &ResolveError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Failed to lookup workspace module config: %s", err),
+	}
+}
+
 func ResolvedBlockMissingModuleError(pc ObjectPathContext, stackName, blockName string) *ResolveError {
 	return &ResolveError{
-		ObjectPathContext: pc.SubField("module"),
+		ObjectPathContext: pc,
 		ErrorMessage:      fmt.Sprintf("Module is required on block (%s/%s) that was resolved by a connection.", stackName, blockName),
 	}
 }
 
 func InvalidModuleFormatError(pc ObjectPathContext, moduleSource string) *ResolveError {
 	return &ResolveError{
-		ObjectPathContext: pc.SubField("module"),
+		ObjectPathContext: pc,
 		ErrorMessage:      fmt.Sprintf("Invalid module format (%s) - must be in the format \"<module-org>/<module-name>\"", moduleSource),
 	}
 }
 
 func ModuleLookupFailedError(pc ObjectPathContext, moduleSource string, err error) *ResolveError {
 	return &ResolveError{
-		ObjectPathContext: pc.SubField("module"),
+		ObjectPathContext: pc,
 		ErrorMessage:      fmt.Sprintf("Module (%s) lookup failed: %s", moduleSource, err),
 	}
 }

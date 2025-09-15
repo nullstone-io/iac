@@ -343,3 +343,56 @@ func (e *EnvConfiguration) BlockNames() map[string]bool {
 	}
 	return names
 }
+
+func (e *EnvConfiguration) FindBlockConfigurationByName(name string) *BlockConfiguration {
+	ptr := func(cur BlockConfiguration) *BlockConfiguration {
+		return &cur
+	}
+
+	for _, cur := range e.Applications {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Blocks {
+		if cur.Name == name {
+			return ptr(*cur)
+		}
+	}
+	for _, cur := range e.Clusters {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.ClusterNamespaces {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Datastores {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Domains {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Ingresses {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Networks {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Subdomains {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	return nil
+}

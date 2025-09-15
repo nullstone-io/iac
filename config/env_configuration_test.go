@@ -50,6 +50,15 @@ func TestConvertConfiguration(t *testing.T) {
 	}
 	latest := "latest"
 	primary := "primary"
+	dev := types.Environment{
+		IdModel: types.IdModel{Id: 1},
+		Type:    types.EnvTypePipeline,
+		Name:    "dev",
+		OrgName: defaults.OrgName,
+		StackId: defaults.StackId,
+		Status:  types.EnvStatusActive,
+		IsProd:  false,
+	}
 	subdomainName := "ns-sub-for-acme-docs"
 	fargateServiceModule := types.Module{
 		OrgName:       defaults.OrgName,
@@ -265,35 +274,86 @@ func TestConvertConfiguration(t *testing.T) {
 		OrgName: defaults.OrgName,
 		StackId: defaults.StackId,
 		Name:    "namespace0",
-		//ModuleSource:        "nullstone/aws-fargate-namespace",
-		//ModuleSourceVersion: latest,
 	}
 	subdomainBlock := types.Block{
 		IdModel: types.IdModel{Id: 98},
 		OrgName: defaults.OrgName,
 		StackId: defaults.StackId,
 		Name:    subdomainName,
-		//ModuleSource:        "nullstone/aws-autogen-subdomain",
-		//ModuleSourceVersion: latest,
 	}
 	postgresBlock := types.Block{
 		IdModel: types.IdModel{Id: 97},
 		OrgName: defaults.OrgName,
 		StackId: defaults.StackId,
 		Name:    "postgres",
-		//ModuleSource:        "nullstone/aws-rds-postgres",
-		//ModuleSourceVersion: latest,
 	}
 	apiSubdomainBlock := types.Block{
-		IdModel: types.IdModel{Id: 98},
+		IdModel: types.IdModel{Id: 99},
 		OrgName: defaults.OrgName,
 		StackId: defaults.StackId,
 		Name:    "api-subdomain",
-		//ModuleSource:        "nullstone/aws-nullstone-subdomain",
-		//ModuleSourceVersion: latest,
 	}
-	blocksById := map[int64]types.Block{namespaceBlock.Id: namespaceBlock, subdomainBlock.Id: subdomainBlock, postgresBlock.Id: postgresBlock, apiSubdomainBlock.Id: apiSubdomainBlock}
-	blocksByName := map[string]types.Block{namespaceBlock.Name: namespaceBlock, subdomainBlock.Name: subdomainBlock, postgresBlock.Name: postgresBlock, apiSubdomainBlock.Name: apiSubdomainBlock}
+	acmeApiBlock := types.Block{
+		IdModel: types.IdModel{Id: 132},
+		Type:    string(types.BlockTypeApplication),
+		OrgName: defaults.OrgName,
+		StackId: defaults.StackId,
+		Name:    "acme-api",
+	}
+	blocksById := map[int64]types.Block{namespaceBlock.Id: namespaceBlock, subdomainBlock.Id: subdomainBlock, postgresBlock.Id: postgresBlock, apiSubdomainBlock.Id: apiSubdomainBlock, acmeApiBlock.Id: acmeApiBlock}
+	blocksByName := map[string]types.Block{namespaceBlock.Name: namespaceBlock, subdomainBlock.Name: subdomainBlock, postgresBlock.Name: postgresBlock, apiSubdomainBlock.Name: apiSubdomainBlock, acmeApiBlock.Name: acmeApiBlock}
+	latestConfigs := []services.MockWorkspaceConfigEntry{
+		{
+			StackId: namespaceBlock.StackId,
+			BlockId: namespaceBlock.Id,
+			EnvId:   dev.Id,
+			Config: types.WorkspaceConfig{
+				Source:           "nullstone/aws-fargate-namespace",
+				SourceConstraint: "latest",
+			},
+		},
+		{
+			StackId: subdomainBlock.StackId,
+			BlockId: subdomainBlock.Id,
+			EnvId:   dev.Id,
+			Config: types.WorkspaceConfig{
+				Source:           "nullstone/aws-autogen-subdomain",
+				SourceConstraint: "latest",
+			},
+		},
+		{
+			StackId: postgresBlock.StackId,
+			BlockId: postgresBlock.Id,
+			EnvId:   dev.Id,
+			Config: types.WorkspaceConfig{
+				Source:           "nullstone/aws-rds-postgres",
+				SourceConstraint: "latest",
+			},
+		},
+		{
+			StackId: apiSubdomainBlock.StackId,
+			BlockId: apiSubdomainBlock.Id,
+			EnvId:   dev.Id,
+			Config: types.WorkspaceConfig{
+				Source:           "nullstone/aws-nullstone-subdomain",
+				SourceConstraint: "latest",
+			},
+		},
+	}
+
+	syncBlocks := func(base *EnvConfiguration, resolver *find.ResourceResolver) {
+		backfill := make([]types.Block, 0)
+		for _, block := range base.ToBlocks(defaults.OrgName, resolver.CurStackId) {
+			if _, err := resolver.FindBlock(context.TODO(), types.ConnectionTarget{BlockName: block.Name}); err != nil {
+				if find.IsMissingResource(err) {
+					backfill = append(backfill, block)
+				}
+			}
+		}
+		if len(backfill) > 0 {
+			resolver.BackfillMissingBlocks(context.TODO(), backfill)
+		}
+	}
 
 	tests := []struct {
 		name             string
@@ -302,6 +362,7 @@ func TestConvertConfiguration(t *testing.T) {
 		setup            func(t *testing.T, router *mux.Router)
 		want             *EnvConfiguration
 		initializeErrors core.InitializeErrors
+		normalizeErrors  core.NormalizeErrors
 		resolveErrors    core.ResolveErrors
 		validationErrors core.ValidateErrors
 	}{
@@ -336,7 +397,14 @@ func TestConvertConfiguration(t *testing.T) {
 								},
 							},
 						},
-						Blocks: nil,
+						Blocks: types.Blocks{
+							{
+								OrgName: defaults.OrgName,
+								StackId: defaults.StackId,
+								Name:    "acme-docs",
+								Type:    string(types.BlockTypeApplication),
+							},
+						},
 					},
 				},
 				Applications: map[string]*AppConfiguration{
@@ -353,7 +421,18 @@ func TestConvertConfiguration(t *testing.T) {
 							Connections: ConnectionConfigurations{
 								"cluster-namespace": {
 									DesiredTarget: types.ConnectionTarget{
+										StackId:   defaults.StackId,
+										StackName: "core",
+										BlockId:   100,
 										BlockName: "namespace0",
+									},
+									EffectiveTarget: types.ConnectionTarget{
+										StackId:   defaults.StackId,
+										StackName: "core",
+										BlockId:   100,
+										BlockName: "namespace0",
+										EnvId:     ptr(int64(1)),
+										EnvName:   "dev",
 									},
 									Schema: &config.Connection{Contract: "cluster-namespace/aws/fargate"},
 									Block:  &namespaceBlock,
@@ -376,10 +455,21 @@ func TestConvertConfiguration(t *testing.T) {
 								Connections: ConnectionConfigurations{
 									"subdomain": {
 										DesiredTarget: types.ConnectionTarget{
+											StackId:   defaults.StackId,
+											StackName: "core",
+											BlockId:   98,
 											BlockName: subdomainName,
 										},
+										EffectiveTarget: types.ConnectionTarget{
+											StackId:   defaults.StackId,
+											StackName: "core",
+											BlockId:   98,
+											BlockName: subdomainName,
+											EnvId:     ptr(int64(1)),
+											EnvName:   "dev",
+										},
 										Schema: &config.Connection{Contract: "subdomain/aws/route53"},
-										Block:  &subdomainBlock,
+										Block:  ptr(subdomainBlock),
 									},
 								},
 								Namespace:     &primary,
@@ -524,12 +614,13 @@ func TestConvertConfiguration(t *testing.T) {
 			filename:         "test-fixtures/config.invalid10.yml",
 			want:             nil,
 			initializeErrors: core.InitializeErrors(nil),
-			resolveErrors: core.ResolveErrors{
+			normalizeErrors: core.NormalizeErrors{
 				{
 					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs.capabilities[0]", Field: "connections", Key: "subdomain"},
 					ErrorMessage:      "Connection is invalid, block core/ns-sub-for-blah does not exist",
 				},
 			},
+			resolveErrors:    core.ResolveErrors(nil),
 			validationErrors: core.ValidateErrors(nil),
 		},
 		{
@@ -764,7 +855,7 @@ func TestConvertConfiguration(t *testing.T) {
 								},
 							},
 						},
-						Blocks: nil,
+						Blocks: types.Blocks{acmeApiBlock},
 					},
 				},
 				Applications: map[string]*AppConfiguration{
@@ -791,15 +882,21 @@ func TestConvertConfiguration(t *testing.T) {
 								Connections: ConnectionConfigurations{
 									"subdomain": {
 										DesiredTarget: types.ConnectionTarget{
-											StackId:   0,
-											StackName: "",
-											BlockId:   0,
-											BlockName: "ns-sub-for-acme-docs",
-											EnvId:     nil,
-											EnvName:   "",
+											StackId:   defaults.StackId,
+											StackName: "core",
+											BlockId:   subdomainBlock.Id,
+											BlockName: subdomainBlock.Name,
+										},
+										EffectiveTarget: types.ConnectionTarget{
+											StackId:   defaults.StackId,
+											StackName: "core",
+											BlockId:   subdomainBlock.Id,
+											BlockName: subdomainBlock.Name,
+											EnvId:     ptr(defaults.EnvId),
+											EnvName:   "dev",
 										},
 										Schema: &config.Connection{Contract: "subdomain/aws/route53"},
-										Block:  &subdomainBlock,
+										Block:  ptr(subdomainBlock),
 									},
 								},
 								Module:        ptr(comparable(awsS3CdnModule)),
@@ -827,6 +924,7 @@ func TestConvertConfiguration(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			router := mux.NewRouter()
 			oracle.MockGetModuleVersions(router, modules...)
+			services.MockLatestWorkspaceConfigs(router, latestConfigs)
 			if test.setup != nil {
 				test.setup(t, router)
 			}
@@ -839,17 +937,25 @@ func TestConvertConfiguration(t *testing.T) {
 			assert.NoError(t, err)
 
 			got := ConvertConfiguration("https://github.com/acme/api", "acme/api", "config.yml", test.isOverrides, *parsed)
+			var base *EnvConfiguration
+			var overrides *EnvConfiguration
+			if test.isOverrides {
+				overrides = got
+			} else {
+				base = got
+			}
 
 			sr := &find.StackResolver{
 				ApiClient:           apiHub.Client(defaults.OrgName),
-				Stack:               types.Stack{Name: "core", ProviderType: providerType},
+				Stack:               types.Stack{IdModel: types.IdModel{Id: defaults.StackId}, Name: "core", ProviderType: providerType},
 				PreviewsSharedEnvId: 0,
-				EnvsById:            map[int64]types.Environment{},
-				EnvsByName:          map[string]types.Environment{},
+				EnvsById:            map[int64]types.Environment{dev.Id: dev},
+				EnvsByName:          map[string]types.Environment{dev.Name: dev},
 				BlocksById:          blocksById,
 				BlocksByName:        blocksByName,
 			}
-			resolver := core.NewApiResolver(apiHub.Client(defaults.OrgName), defaults.StackId, defaults.EnvId)
+			iacResolver := NewIacFinder(base, overrides, defaults.StackId, "core", defaults.EnvId, "dev")
+			resolver := core.NewApiResolver(apiHub.Client(defaults.OrgName), iacResolver, defaults.StackId, defaults.EnvId)
 			resolver.ResourceResolver.StacksById[defaults.StackId] = sr
 			resolver.ResourceResolver.StacksByName["core"] = sr
 			resolver.EventChannelResolver = core.StaticEventChannelResolver{
@@ -868,12 +974,15 @@ func TestConvertConfiguration(t *testing.T) {
 			}
 
 			ctx := context.Background()
+			syncBlocks(base, resolver.ResourceResolver)
 			err1 := got.Initialize(ctx, resolver)
 			assert.Equal(t, test.initializeErrors, err1)
-			err2 := got.Resolve(ctx, resolver)
-			assert.Equal(t, test.resolveErrors, err2)
-			err3 := got.Validate()
-			assert.Equal(t, test.validationErrors, err3)
+			err2 := got.Normalize(ctx, resolver)
+			assert.Equal(t, test.normalizeErrors, err2)
+			err3 := got.Resolve(ctx, resolver)
+			assert.Equal(t, test.resolveErrors, err3)
+			err4 := got.Validate()
+			assert.Equal(t, test.validationErrors, err4)
 			if test.want != nil {
 				opts := cmp.Options{
 					cmpopts.IgnoreTypes(types.Module{}, types.ModuleVersion{}),

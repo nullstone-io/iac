@@ -13,6 +13,8 @@ type InitializeResolver interface {
 
 type ResolveResolver interface {
 	BlockResolver
+	IacFinder
+	WorkspaceModuleConfigResolver
 	ModuleResolver
 	ModuleVersionResolver
 	EventChannelResolver
@@ -30,9 +32,24 @@ type BlockResolver interface {
 	ResolveBlock(ctx context.Context, ct types.ConnectionTarget) (types.Block, error)
 }
 
+type IacFinder interface {
+	// FindBlockModuleInIac looks for a BlockConfiguration in the iac configuration files for this IacFinder
+	// This expects the input connection target to be fully resolved (all fields populated)
+	FindBlockModuleInIac(ctx context.Context, ct types.ConnectionTarget) *types.Module
+}
+
 type ConnectionResolver interface {
 	// ResolveConnection resolves and backfills any missing fields from input types.ConnectionTarget
 	ResolveConnection(ctx context.Context, ct types.ConnectionTarget) (types.ConnectionTarget, error)
+}
+
+type WorkspaceModuleConfig struct {
+	Module           string
+	ModuleConstraint string
+}
+
+type WorkspaceModuleConfigResolver interface {
+	ResolveWorkspaceModuleConfig(ctx context.Context, ct types.ConnectionTarget) (WorkspaceModuleConfig, error)
 }
 
 type SubdomainReserver interface {

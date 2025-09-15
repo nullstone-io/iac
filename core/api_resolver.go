@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"gopkg.in/nullstone-io/go-api-client.v0"
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
@@ -21,9 +22,11 @@ type ApiResolver struct {
 	ApiClient            *api.Client
 	ResourceResolver     *find.ResourceResolver
 	EventChannelResolver EventChannelResolver
+	// IacFinder helps lookups for resources contained within the IaC file
+	IacFinder IacFinder
 }
 
-func NewApiResolver(apiClient *api.Client, stackId, envId int64) *ApiResolver {
+func NewApiResolver(apiClient *api.Client, iacResolver IacFinder, stackId, envId int64) *ApiResolver {
 	return &ApiResolver{
 		ApiClient: apiClient,
 		ResourceResolver: &find.ResourceResolver{
@@ -34,11 +37,33 @@ func NewApiResolver(apiClient *api.Client, stackId, envId int64) *ApiResolver {
 			StacksByName: map[string]*find.StackResolver{},
 		},
 		EventChannelResolver: &ApiEventChannelResolver{ApiClient: apiClient},
+		IacFinder:            iacResolver,
 	}
 }
 
 func (a *ApiResolver) ResolveBlock(ctx context.Context, ct types.ConnectionTarget) (types.Block, error) {
 	return a.ResourceResolver.FindBlock(ctx, ct)
+}
+
+func (a *ApiResolver) FindBlockModuleInIac(ctx context.Context, ct types.ConnectionTarget) *types.Module {
+	return a.IacFinder.FindBlockModuleInIac(ctx, ct)
+}
+
+func (a *ApiResolver) ResolveWorkspaceModuleConfig(ctx context.Context, ct types.ConnectionTarget) (WorkspaceModuleConfig, error) {
+	effective, err := a.ResourceResolver.Resolve(ctx, ct)
+	if err != nil {
+		return WorkspaceModuleConfig{}, err
+	}
+	wc, err := a.ApiClient.WorkspaceConfigs().GetLatest(ctx, effective.StackId, effective.BlockId, *effective.EnvId)
+	if err != nil {
+		return WorkspaceModuleConfig{}, err
+	} else if wc == nil {
+		return WorkspaceModuleConfig{}, nil
+	}
+	return WorkspaceModuleConfig{
+		Module:           wc.Source,
+		ModuleConstraint: wc.SourceConstraint,
+	}, nil
 }
 
 func (a *ApiResolver) ResolveConnection(ctx context.Context, ct types.ConnectionTarget) (types.ConnectionTarget, error) {

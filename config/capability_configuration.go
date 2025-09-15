@@ -3,10 +3,11 @@ package config
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/module/config"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"strings"
 )
 
 var (
@@ -85,14 +86,29 @@ func (c CapabilityConfigurations) ApplyChangesTo(ic core.IacContext, updater cor
 	return nil
 }
 
-func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext,
-	pc core.ObjectPathContext, appModule *types.Module) core.ResolveErrors {
+func (c CapabilityConfigurations) Initialize(ctx context.Context, resolver core.InitializeResolver, ic core.IacContext,
+	pc core.ObjectPathContext, appModule *types.Module) core.InitializeErrors {
+	if len(c) == 0 {
+		return nil
+	}
+	errs := core.InitializeErrors{}
+	for i, iacCap := range c {
+		errs = append(errs, iacCap.Initialize(ctx, resolver, ic, pc.SubIndex("capabilities", i), appModule)...)
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
+
+func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	if len(c) == 0 {
 		return nil
 	}
 	errs := core.ResolveErrors{}
 	for i, iacCap := range c {
-		errs = append(errs, iacCap.Resolve(ctx, resolver, ic, pc.SubIndex("capabilities", i), appModule)...)
+		errs = append(errs, iacCap.Resolve(ctx, resolver, ic, pc.SubIndex("capabilities", i))...)
 	}
 
 	if len(errs) > 0 {
@@ -126,8 +142,7 @@ func (c *CapabilityConfiguration) Identity() core.CapabilityIdentity {
 	}
 }
 
-func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext,
-	pc core.ObjectPathContext, appModule *types.Module) core.ResolveErrors {
+func (c *CapabilityConfiguration) Initialize(ctx context.Context, resolver core.InitializeResolver, ic core.IacContext, pc core.ObjectPathContext, appModule *types.Module) core.InitializeErrors {
 	if c.Variables == nil {
 		c.Variables = VariableConfigurations{}
 	}
@@ -139,7 +154,7 @@ func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.Res
 		return nil
 	}
 
-	errs := core.ResolveErrors{}
+	errs := core.InitializeErrors{}
 
 	contract := types.ModuleContractName{
 		Category: string(types.CategoryCapability),
@@ -151,7 +166,7 @@ func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.Res
 	}
 
 	manifest := config.Manifest{Variables: map[string]config.Variable{}, Connections: map[string]config.Connection{}}
-	m, mv, err := core.ResolveModule(ctx, resolver, pc, c.ModuleSource, c.ModuleConstraint, contract)
+	m, mv, err := core.GetModuleVersion(ctx, resolver, pc, c.ModuleSource, c.ModuleConstraint, contract)
 	if err != nil {
 		errs = append(errs, *err)
 	} else {
@@ -159,8 +174,14 @@ func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.Res
 		c.ModuleVersion = mv
 		manifest = mv.Manifest
 	}
-	errs = append(errs, c.Variables.Resolve(manifest)...)
-	errs = append(errs, c.Connections.Resolve(ctx, resolver, ic, pc, manifest)...)
+	errs = append(errs, c.Variables.Initialize(manifest)...)
+	errs = append(errs, c.Connections.Initialize(ctx, ic, pc, manifest)...)
+	return errs
+}
+
+func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+	errs := core.ResolveErrors{}
+	errs = append(errs, c.Connections.Resolve(ctx, resolver, ic, pc)...)
 	return errs
 }
 

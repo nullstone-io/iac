@@ -2,9 +2,14 @@ package core
 
 import (
 	"context"
+
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
+
+type InitializeResolver interface {
+	ModuleVersionResolver
+}
 
 type ResolveResolver interface {
 	BlockResolver

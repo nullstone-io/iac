@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -44,6 +45,52 @@ func ConvertConfiguration(repoUrl, repoName, filename string, isOverrides bool, 
 	result.Networks = convertNetworkConfigurations(parsed.Networks)
 	result.Subdomains = convertSubdomainConfigurations(parsed.Subdomains)
 	return result
+}
+
+func (e *EnvConfiguration) Initialize(ctx context.Context, resolver core.InitializeResolver) core.InitializeErrors {
+	errs := core.InitializeErrors{}
+
+	for _, app := range e.Applications {
+		pc := core.NewObjectPathContextKey("apps", app.Name)
+		errs = append(errs, app.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, block := range e.Blocks {
+		pc := core.NewObjectPathContextKey("blocks", block.Name)
+		errs = append(errs, block.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, cluster := range e.Clusters {
+		pc := core.NewObjectPathContextKey("clusters", cluster.Name)
+		errs = append(errs, cluster.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, clusterNamespace := range e.ClusterNamespaces {
+		pc := core.NewObjectPathContextKey("cluster_namespaces", clusterNamespace.Name)
+		errs = append(errs, clusterNamespace.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, ds := range e.Datastores {
+		pc := core.NewObjectPathContextKey("networks", ds.Name)
+		errs = append(errs, ds.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, domain := range e.Domains {
+		pc := core.NewObjectPathContextKey("domains", domain.Name)
+		errs = append(errs, domain.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, ingress := range e.Ingresses {
+		pc := core.NewObjectPathContextKey("ingresses", ingress.Name)
+		errs = append(errs, ingress.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, network := range e.Networks {
+		pc := core.NewObjectPathContextKey("networks", network.Name)
+		errs = append(errs, network.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, sub := range e.Subdomains {
+		pc := core.NewObjectPathContextKey("subdomains", sub.Name)
+		errs = append(errs, sub.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver) core.ResolveErrors {

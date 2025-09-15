@@ -2,14 +2,12 @@ package iac
 
 import (
 	"context"
+
 	"github.com/nullstone-io/iac/core"
 )
 
-// Resolve performs resolution on all blocks and capabilities
-// This resolves the following:
-// - Module schema (variables + connections)
-// - Connection target block and verify connection contract
-// - Capability module schema (variables + connections)
+// Resolve performs resolution on all blocks and capabilities:
+// - Connection targets and verify connection contract
 // - Capability connection target block and verify connection contract
 func Resolve(ctx context.Context, input ConfigFiles, resolver core.ResolveResolver) core.ResolveErrors {
 	errs := core.ResolveErrors{}

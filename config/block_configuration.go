@@ -93,7 +93,7 @@ func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType B
 	}
 }
 
-func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+func (b *BlockConfiguration) Initialize(ctx context.Context, resolver core.InitializeResolver, ic core.IacContext, pc core.ObjectPathContext) core.InitializeErrors {
 	if b.Variables == nil {
 		b.Variables = VariableConfigurations{}
 	}
@@ -105,11 +105,11 @@ func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ResolveR
 		return nil
 	}
 
-	errs := core.ResolveErrors{}
+	errs := core.InitializeErrors{}
 
 	contract := types.ModuleContractName{Category: string(b.Category), Provider: "*", Platform: "*"}
 	manifest := config.Manifest{Variables: map[string]config.Variable{}, Connections: map[string]config.Connection{}}
-	m, mv, err := core.ResolveModule(ctx, resolver, pc, b.ModuleSource, b.ModuleConstraint, contract)
+	m, mv, err := core.GetModuleVersion(ctx, resolver, pc, b.ModuleSource, b.ModuleConstraint, contract)
 	if err != nil {
 		errs = append(errs, *err)
 	} else {
@@ -118,8 +118,14 @@ func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ResolveR
 		manifest = mv.Manifest
 	}
 
-	errs = append(errs, b.Variables.Resolve(manifest)...)
-	errs = append(errs, b.Connections.Resolve(ctx, resolver, ic, pc, manifest)...)
+	errs = append(errs, b.Variables.Initialize(manifest)...)
+	errs = append(errs, b.Connections.Initialize(ctx, ic, pc, manifest)...)
+	return errs
+}
+
+func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+	errs := core.ResolveErrors{}
+	errs = append(errs, b.Connections.Resolve(ctx, resolver, ic, pc)...)
 	return errs
 }
 

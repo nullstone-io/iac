@@ -2,13 +2,14 @@ package core
 
 import (
 	"context"
+	"strings"
+
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"strings"
 )
 
-func ResolveModule(ctx context.Context, resolver ModuleVersionResolver, pc ObjectPathContext,
-	source, version string, contract types.ModuleContractName) (*types.Module, *types.ModuleVersion, *ResolveError) {
+func GetModuleVersion(ctx context.Context, resolver ModuleVersionResolver, pc ObjectPathContext,
+	source, version string, contract types.ModuleContractName) (*types.Module, *types.ModuleVersion, *InitializeError) {
 
 	if source == "" {
 		return nil, nil, RequiredModuleError(pc)

@@ -20,9 +20,8 @@ func (s ConnectionConfigurations) DesiredTargets() types.ConnectionTargets {
 	return targets
 }
 
-func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext,
-	blockManifest config.Manifest) core.ResolveErrors {
-	var errs core.ResolveErrors
+func (s ConnectionConfigurations) Initialize(ctx context.Context, ic core.IacContext, pc core.ObjectPathContext, blockManifest config.Manifest) core.InitializeErrors {
+	var errs core.InitializeErrors
 	if !ic.IsOverrides {
 		for name, manifestConn := range blockManifest.Connections {
 			if _, inNsConfig := s[name]; !inNsConfig && !manifestConn.Optional {
@@ -34,6 +33,16 @@ func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.Res
 		if schema, ok := blockManifest.Connections[name]; ok {
 			c.Schema = &schema
 		}
+	}
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
+
+func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+	var errs core.ResolveErrors
+	for name, c := range s {
 		if err := c.Resolve(ctx, resolver, pc.SubKey("connections", name)); err != nil {
 			errs = append(errs, *err)
 		}

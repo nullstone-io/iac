@@ -102,13 +102,13 @@ func (c CapabilityConfigurations) Initialize(ctx context.Context, resolver core.
 	return nil
 }
 
-func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	if len(c) == 0 {
 		return nil
 	}
 	errs := core.ResolveErrors{}
 	for i, iacCap := range c {
-		errs = append(errs, iacCap.Resolve(ctx, resolver, ic, pc.SubIndex("capabilities", i))...)
+		errs = append(errs, iacCap.Resolve(ctx, resolver, finder, ic, pc.SubIndex("capabilities", i))...)
 	}
 
 	if len(errs) > 0 {
@@ -179,9 +179,9 @@ func (c *CapabilityConfiguration) Initialize(ctx context.Context, resolver core.
 	return errs
 }
 
-func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+func (c *CapabilityConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	errs := core.ResolveErrors{}
-	errs = append(errs, c.Connections.Resolve(ctx, resolver, ic, pc)...)
+	errs = append(errs, c.Connections.Resolve(ctx, resolver, finder, ic, pc)...)
 	return errs
 }
 

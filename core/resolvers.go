@@ -13,7 +13,6 @@ type InitializeResolver interface {
 
 type ResolveResolver interface {
 	BlockResolver
-	IacFinder
 	WorkspaceModuleConfigResolver
 	ModuleResolver
 	ModuleVersionResolver

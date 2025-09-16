@@ -22,11 +22,9 @@ type ApiResolver struct {
 	ApiClient            *api.Client
 	ResourceResolver     *find.ResourceResolver
 	EventChannelResolver EventChannelResolver
-	// IacFinder helps lookups for resources contained within the IaC file
-	IacFinder IacFinder
 }
 
-func NewApiResolver(apiClient *api.Client, iacResolver IacFinder, stackId, envId int64) *ApiResolver {
+func NewApiResolver(apiClient *api.Client, stackId, envId int64) *ApiResolver {
 	return &ApiResolver{
 		ApiClient: apiClient,
 		ResourceResolver: &find.ResourceResolver{
@@ -37,16 +35,11 @@ func NewApiResolver(apiClient *api.Client, iacResolver IacFinder, stackId, envId
 			StacksByName: map[string]*find.StackResolver{},
 		},
 		EventChannelResolver: &ApiEventChannelResolver{ApiClient: apiClient},
-		IacFinder:            iacResolver,
 	}
 }
 
 func (a *ApiResolver) ResolveBlock(ctx context.Context, ct types.ConnectionTarget) (types.Block, error) {
 	return a.ResourceResolver.FindBlock(ctx, ct)
-}
-
-func (a *ApiResolver) FindBlockModuleInIac(ctx context.Context, ct types.ConnectionTarget) *types.Module {
-	return a.IacFinder.FindBlockModuleInIac(ctx, ct)
 }
 
 func (a *ApiResolver) ResolveWorkspaceModuleConfig(ctx context.Context, ct types.ConnectionTarget) (WorkspaceModuleConfig, error) {

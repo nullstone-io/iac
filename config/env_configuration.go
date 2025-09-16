@@ -93,49 +93,49 @@ func (e *EnvConfiguration) Initialize(ctx context.Context, resolver core.Initial
 	return nil
 }
 
-func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver) core.ResolveErrors {
+func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder) core.ResolveErrors {
 	errs := core.ResolveErrors{}
 
 	for name, evt := range e.Events {
 		pc := core.NewObjectPathContextKey("events", name)
-		errs = append(errs, evt.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, evt.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 
 	for _, app := range e.Applications {
 		pc := core.NewObjectPathContextKey("apps", app.Name)
-		errs = append(errs, app.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, app.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, block := range e.Blocks {
 		pc := core.NewObjectPathContextKey("blocks", block.Name)
-		errs = append(errs, block.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, block.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, cluster := range e.Clusters {
 		pc := core.NewObjectPathContextKey("clusters", cluster.Name)
-		errs = append(errs, cluster.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, cluster.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
 		pc := core.NewObjectPathContextKey("cluster_namespaces", clusterNamespace.Name)
-		errs = append(errs, clusterNamespace.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, clusterNamespace.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, ds := range e.Datastores {
 		pc := core.NewObjectPathContextKey("networks", ds.Name)
-		errs = append(errs, ds.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, ds.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, domain := range e.Domains {
 		pc := core.NewObjectPathContextKey("domains", domain.Name)
-		errs = append(errs, domain.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, domain.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, ingress := range e.Ingresses {
 		pc := core.NewObjectPathContextKey("ingresses", ingress.Name)
-		errs = append(errs, ingress.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, ingress.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, network := range e.Networks {
 		pc := core.NewObjectPathContextKey("networks", network.Name)
-		errs = append(errs, network.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, network.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, sub := range e.Subdomains {
 		pc := core.NewObjectPathContextKey("subdomains", sub.Name)
-		errs = append(errs, sub.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, sub.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 
 	if len(errs) > 0 {

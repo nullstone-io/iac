@@ -29,8 +29,8 @@ func (s *SubdomainConfiguration) ToBlock(orgName string, stackId int64) types.Bl
 	return block
 }
 
-func (s *SubdomainConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
-	errs := s.BlockConfiguration.Resolve(ctx, resolver, ic, pc)
+func (s *SubdomainConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+	errs := s.BlockConfiguration.Resolve(ctx, resolver, finder, ic, pc)
 	errs = append(errs, s.reserve(ctx, resolver, pc)...)
 	s.resolveDomain()
 	return errs

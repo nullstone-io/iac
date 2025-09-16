@@ -60,9 +60,9 @@ func (a *AppConfiguration) Initialize(ctx context.Context, resolver core.Initial
 	return errs
 }
 
-func (a *AppConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
-	errs := a.BlockConfiguration.Resolve(ctx, resolver, ic, pc)
-	errs = append(errs, a.Capabilities.Resolve(ctx, resolver, ic, pc)...)
+func (a *AppConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+	errs := a.BlockConfiguration.Resolve(ctx, resolver, finder, ic, pc)
+	errs = append(errs, a.Capabilities.Resolve(ctx, resolver, finder, ic, pc)...)
 	return errs
 }
 

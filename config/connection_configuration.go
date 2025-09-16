@@ -42,10 +42,10 @@ func (s ConnectionConfigurations) Initialize(ctx context.Context, ic core.IacCon
 	return nil
 }
 
-func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	var errs core.ResolveErrors
 	for name, c := range s {
-		if err := c.Resolve(ctx, resolver, pc.SubKey("connections", name)); err != nil {
+		if err := c.Resolve(ctx, resolver, finder, pc.SubKey("connections", name)); err != nil {
 			errs = append(errs, *err)
 		}
 	}
@@ -97,7 +97,7 @@ type ConnectionConfiguration struct {
 }
 
 // Resolve resolves the connection's target (i.e., block) and matches the connection contract
-func (c *ConnectionConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, pc core.ObjectPathContext) *core.ResolveError {
+func (c *ConnectionConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, pc core.ObjectPathContext) *core.ResolveError {
 	if c.Schema == nil || c.EffectiveTarget.BlockName == "" {
 		// There is nothing to resolve
 		// Validate will report errors
@@ -108,7 +108,7 @@ func (c *ConnectionConfiguration) Resolve(ctx context.Context, resolver core.Res
 		return err
 	}
 
-	return c.resolveModule(ctx, resolver, pc)
+	return c.resolveModule(ctx, resolver, finder, pc)
 }
 
 func (c *ConnectionConfiguration) resolveTarget(ctx context.Context, resolver core.ResolveResolver, pc core.ObjectPathContext) *core.ResolveError {
@@ -123,9 +123,9 @@ func (c *ConnectionConfiguration) resolveTarget(ctx context.Context, resolver co
 	return nil
 }
 
-func (c *ConnectionConfiguration) resolveModule(ctx context.Context, resolver core.ResolveResolver, pc core.ObjectPathContext) *core.ResolveError {
+func (c *ConnectionConfiguration) resolveModule(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, pc core.ObjectPathContext) *core.ResolveError {
 	// First, attempt to find the module in the current IaC configuration (this avoids extra API calls since we might have it already)
-	module := resolver.FindBlockModuleInIac(ctx, c.EffectiveTarget)
+	module := finder.FindBlockModuleInIac(ctx, c.EffectiveTarget)
 	if module != nil {
 		c.Module = module
 		return nil

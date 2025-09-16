@@ -123,9 +123,9 @@ func (b *BlockConfiguration) Initialize(ctx context.Context, resolver core.Initi
 	return errs
 }
 
-func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	errs := core.ResolveErrors{}
-	errs = append(errs, b.Connections.Resolve(ctx, resolver, ic, pc)...)
+	errs = append(errs, b.Connections.Resolve(ctx, resolver, finder, ic, pc)...)
 	return errs
 }
 

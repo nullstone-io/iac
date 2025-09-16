@@ -2,6 +2,7 @@ package iac
 
 import (
 	"github.com/nullstone-io/iac/config"
+	"github.com/nullstone-io/iac/core"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
@@ -41,4 +42,8 @@ func (r ConfigFiles) GetOverrides(env types.Environment) *config.EnvConfiguratio
 	}
 	ec, _ := r.Overrides[env.Name]
 	return ec
+}
+
+func (r ConfigFiles) NewIacFinder(env types.Environment) core.IacFinder {
+	return config.NewIacFinder(r.Config, r.GetOverrides(env), env.StackId, env.Id)
 }

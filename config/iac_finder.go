@@ -11,13 +11,11 @@ var (
 	_ core.IacFinder = IacFinder{}
 )
 
-func NewIacFinder(config, overrides *EnvConfiguration, stackId int64, stackName string, envId int64, envName string) *IacFinder {
+func NewIacFinder(config, overrides *EnvConfiguration, stackId int64, envId int64) *IacFinder {
 	return &IacFinder{
 		Config:    config,
 		Overrides: overrides,
-		StackName: stackName,
 		StackId:   stackId,
-		EnvName:   envName,
 		EnvId:     envId,
 	}
 }
@@ -26,9 +24,7 @@ type IacFinder struct {
 	Config    *EnvConfiguration
 	Overrides *EnvConfiguration
 	StackId   int64
-	StackName string
 	EnvId     int64
-	EnvName   string
 }
 
 // FindBlockModuleInIac looks for a BlockConfiguration in the iac configuration files for this IacFinder

@@ -954,8 +954,7 @@ func TestConvertConfiguration(t *testing.T) {
 				BlocksById:          blocksById,
 				BlocksByName:        blocksByName,
 			}
-			iacResolver := NewIacFinder(base, overrides, defaults.StackId, "core", defaults.EnvId, "dev")
-			resolver := core.NewApiResolver(apiHub.Client(defaults.OrgName), iacResolver, defaults.StackId, defaults.EnvId)
+			resolver := core.NewApiResolver(apiHub.Client(defaults.OrgName), defaults.StackId, defaults.EnvId)
 			resolver.ResourceResolver.StacksById[defaults.StackId] = sr
 			resolver.ResourceResolver.StacksByName["core"] = sr
 			resolver.EventChannelResolver = core.StaticEventChannelResolver{
@@ -979,7 +978,7 @@ func TestConvertConfiguration(t *testing.T) {
 			assert.Equal(t, test.initializeErrors, err1)
 			err2 := got.Normalize(ctx, resolver)
 			assert.Equal(t, test.normalizeErrors, err2)
-			err3 := got.Resolve(ctx, resolver)
+			err3 := got.Resolve(ctx, resolver, NewIacFinder(base, overrides, defaults.StackId, defaults.EnvId))
 			assert.Equal(t, test.resolveErrors, err3)
 			err4 := got.Validate()
 			assert.Equal(t, test.validationErrors, err4)

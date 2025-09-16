@@ -152,12 +152,15 @@ func (b *BlockConfiguration) Normalize(ctx context.Context, pc core.ObjectPathCo
 
 func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block {
 	block := types.Block{
-		Type:     string(b.Type),
-		OrgName:  orgName,
-		StackId:  stackId,
-		Name:     b.Name,
-		IsShared: b.IsShared,
-		DnsName:  "",
+		Type:                string(b.Type),
+		OrgName:             orgName,
+		StackId:             stackId,
+		Name:                b.Name,
+		IsShared:            b.IsShared,
+		DnsName:             "",
+		ModuleSource:        b.ModuleSource,
+		ModuleSourceVersion: b.ModuleConstraint,
+		Connections:         b.Connections.DesiredTargets(),
 	}
 	return block
 }

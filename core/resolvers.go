@@ -48,6 +48,8 @@ type WorkspaceModuleConfig struct {
 }
 
 type WorkspaceModuleConfigResolver interface {
+	// ResolveWorkspaceModuleConfig fetches the latest WorkspaceConfig based on the connection target
+	// The input connection target *must* be fully qualified
 	ResolveWorkspaceModuleConfig(ctx context.Context, ct types.ConnectionTarget) (WorkspaceModuleConfig, error)
 }
 

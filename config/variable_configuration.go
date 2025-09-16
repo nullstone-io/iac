@@ -7,11 +7,11 @@ import (
 
 type VariableConfigurations map[string]*VariableConfiguration
 
-func (s VariableConfigurations) Resolve(blockManifest config.Manifest) core.ResolveErrors {
+func (s VariableConfigurations) Initialize(blockManifest config.Manifest) core.InitializeErrors {
 	if len(s) == 0 {
 		return nil
 	}
-	errs := core.ResolveErrors{}
+	errs := core.InitializeErrors{}
 	for key, c := range s {
 		if schema, ok := blockManifest.Variables[key]; ok {
 			c.Schema = &schema

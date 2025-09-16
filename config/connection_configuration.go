@@ -2,12 +2,14 @@ package config
 
 import (
 	"context"
+	"fmt"
+	"strings"
+
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/module/config"
 	"gopkg.in/nullstone-io/go-api-client.v0/artifacts"
 	"gopkg.in/nullstone-io/go-api-client.v0/find"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"strings"
 )
 
 type ConnectionConfigurations map[string]*ConnectionConfiguration
@@ -20,9 +22,8 @@ func (s ConnectionConfigurations) DesiredTargets() types.ConnectionTargets {
 	return targets
 }
 
-func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext,
-	blockManifest config.Manifest) core.ResolveErrors {
-	var errs core.ResolveErrors
+func (s ConnectionConfigurations) Initialize(ctx context.Context, ic core.IacContext, pc core.ObjectPathContext, blockManifest config.Manifest) core.InitializeErrors {
+	var errs core.InitializeErrors
 	if !ic.IsOverrides {
 		for name, manifestConn := range blockManifest.Connections {
 			if _, inNsConfig := s[name]; !inNsConfig && !manifestConn.Optional {
@@ -34,7 +35,17 @@ func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.Res
 		if schema, ok := blockManifest.Connections[name]; ok {
 			c.Schema = &schema
 		}
-		if err := c.Resolve(ctx, resolver, pc.SubKey("connections", name)); err != nil {
+	}
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
+
+func (s ConnectionConfigurations) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+	var errs core.ResolveErrors
+	for name, c := range s {
+		if err := c.Resolve(ctx, resolver, finder, pc.SubKey("connections", name)); err != nil {
 			errs = append(errs, *err)
 		}
 	}
@@ -86,14 +97,22 @@ type ConnectionConfiguration struct {
 }
 
 // Resolve resolves the connection's target (i.e., block) and matches the connection contract
-func (c *ConnectionConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, pc core.ObjectPathContext) *core.ResolveError {
-	if c.Schema == nil || c.DesiredTarget.BlockName == "" {
+func (c *ConnectionConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, pc core.ObjectPathContext) *core.ResolveError {
+	if c.Schema == nil || c.EffectiveTarget.BlockName == "" {
 		// There is nothing to resolve
 		// Validate will report errors
 		return nil
 	}
 
-	found, err := resolver.ResolveBlock(ctx, c.DesiredTarget)
+	if err := c.resolveTarget(ctx, resolver, pc); err != nil {
+		return err
+	}
+
+	return c.resolveModule(ctx, resolver, finder, pc)
+}
+
+func (c *ConnectionConfiguration) resolveTarget(ctx context.Context, resolver core.ResolveResolver, pc core.ObjectPathContext) *core.ResolveError {
+	found, err := resolver.ResolveBlock(ctx, c.EffectiveTarget)
 	if err != nil {
 		if find.IsMissingResource(err) {
 			return core.MissingConnectionTargetError(pc, err)
@@ -101,18 +120,33 @@ func (c *ConnectionConfiguration) Resolve(ctx context.Context, resolver core.Res
 		return core.LookupConnectionTargetFailedError(pc, err)
 	}
 	c.Block = &found
+	return nil
+}
 
-	if found.ModuleSource == "" {
-		return core.ResolvedBlockMissingModuleError(pc, c.DesiredTarget.StackName, c.DesiredTarget.BlockName)
+func (c *ConnectionConfiguration) resolveModule(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, pc core.ObjectPathContext) *core.ResolveError {
+	// First, attempt to find the module in the current IaC configuration (this avoids extra API calls since we might have it already)
+	module := finder.FindBlockModuleInIac(ctx, c.EffectiveTarget)
+	if module != nil {
+		c.Module = module
+		return nil
 	}
 
-	ms, err := artifacts.ParseSource(found.ModuleSource)
+	// If it's not in our IaC
+	moduleConfig, err := resolver.ResolveWorkspaceModuleConfig(ctx, c.EffectiveTarget)
 	if err != nil {
-		return core.InvalidModuleFormatError(pc, found.ModuleSource)
+		return core.LookupWorkspaceModuleConfigError(pc, err)
+	}
+	if moduleConfig.Module == "" {
+		return core.ResolvedBlockMissingModuleError(pc, c.EffectiveTarget.StackName, c.EffectiveTarget.BlockName)
+	}
+
+	ms, err := artifacts.ParseSource(moduleConfig.Module)
+	if err != nil {
+		return core.InvalidModuleFormatError(pc, moduleConfig.Module)
 	}
 	m, mErr := resolver.ResolveModule(ctx, *ms)
 	if mErr != nil {
-		return core.ModuleLookupFailedError(pc, found.ModuleSource, mErr)
+		return core.ModuleLookupFailedError(pc, moduleConfig.Module, mErr)
 	}
 	c.Module = m
 	return nil
@@ -159,7 +193,7 @@ func (c *ConnectionConfiguration) Normalize(ctx context.Context, pc core.ObjectP
 	if err != nil {
 		return &core.NormalizeError{
 			ObjectPathContext: pc,
-			ErrorMessage:      err.Error(),
+			ErrorMessage:      fmt.Sprintf("Connection is invalid, %s", err),
 		}
 	}
 	c.DesiredTarget.StackId = ct.StackId

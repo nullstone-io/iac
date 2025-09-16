@@ -2,10 +2,11 @@ package config
 
 import (
 	"context"
+	"strings"
+
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"strings"
 )
 
 var (
@@ -53,9 +54,15 @@ func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[strin
 	return apps
 }
 
-func (a *AppConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
-	errs := a.BlockConfiguration.Resolve(ctx, resolver, ic, pc)
-	errs = append(errs, a.Capabilities.Resolve(ctx, resolver, ic, pc, a.Module)...)
+func (a *AppConfiguration) Initialize(ctx context.Context, resolver core.InitializeResolver, ic core.IacContext, pc core.ObjectPathContext) core.InitializeErrors {
+	errs := a.BlockConfiguration.Initialize(ctx, resolver, ic, pc)
+	errs = append(errs, a.Capabilities.Initialize(ctx, resolver, ic, pc, a.Module)...)
+	return errs
+}
+
+func (a *AppConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+	errs := a.BlockConfiguration.Resolve(ctx, resolver, finder, ic, pc)
+	errs = append(errs, a.Capabilities.Resolve(ctx, resolver, finder, ic, pc)...)
 	return errs
 }
 

@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
@@ -46,49 +47,95 @@ func ConvertConfiguration(repoUrl, repoName, filename string, isOverrides bool, 
 	return result
 }
 
-func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver) core.ResolveErrors {
+func (e *EnvConfiguration) Initialize(ctx context.Context, resolver core.InitializeResolver) core.InitializeErrors {
+	errs := core.InitializeErrors{}
+
+	for _, app := range e.Applications {
+		pc := core.NewObjectPathContextKey("apps", app.Name)
+		errs = append(errs, app.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, block := range e.Blocks {
+		pc := core.NewObjectPathContextKey("blocks", block.Name)
+		errs = append(errs, block.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, cluster := range e.Clusters {
+		pc := core.NewObjectPathContextKey("clusters", cluster.Name)
+		errs = append(errs, cluster.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, clusterNamespace := range e.ClusterNamespaces {
+		pc := core.NewObjectPathContextKey("cluster_namespaces", clusterNamespace.Name)
+		errs = append(errs, clusterNamespace.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, ds := range e.Datastores {
+		pc := core.NewObjectPathContextKey("networks", ds.Name)
+		errs = append(errs, ds.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, domain := range e.Domains {
+		pc := core.NewObjectPathContextKey("domains", domain.Name)
+		errs = append(errs, domain.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, ingress := range e.Ingresses {
+		pc := core.NewObjectPathContextKey("ingresses", ingress.Name)
+		errs = append(errs, ingress.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, network := range e.Networks {
+		pc := core.NewObjectPathContextKey("networks", network.Name)
+		errs = append(errs, network.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+	for _, sub := range e.Subdomains {
+		pc := core.NewObjectPathContextKey("subdomains", sub.Name)
+		errs = append(errs, sub.Initialize(ctx, resolver, e.IacContext, pc)...)
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
+
+func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder) core.ResolveErrors {
 	errs := core.ResolveErrors{}
 
 	for name, evt := range e.Events {
 		pc := core.NewObjectPathContextKey("events", name)
-		errs = append(errs, evt.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, evt.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 
 	for _, app := range e.Applications {
 		pc := core.NewObjectPathContextKey("apps", app.Name)
-		errs = append(errs, app.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, app.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, block := range e.Blocks {
 		pc := core.NewObjectPathContextKey("blocks", block.Name)
-		errs = append(errs, block.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, block.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, cluster := range e.Clusters {
 		pc := core.NewObjectPathContextKey("clusters", cluster.Name)
-		errs = append(errs, cluster.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, cluster.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, clusterNamespace := range e.ClusterNamespaces {
 		pc := core.NewObjectPathContextKey("cluster_namespaces", clusterNamespace.Name)
-		errs = append(errs, clusterNamespace.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, clusterNamespace.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, ds := range e.Datastores {
 		pc := core.NewObjectPathContextKey("networks", ds.Name)
-		errs = append(errs, ds.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, ds.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, domain := range e.Domains {
 		pc := core.NewObjectPathContextKey("domains", domain.Name)
-		errs = append(errs, domain.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, domain.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, ingress := range e.Ingresses {
 		pc := core.NewObjectPathContextKey("ingresses", ingress.Name)
-		errs = append(errs, ingress.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, ingress.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, network := range e.Networks {
 		pc := core.NewObjectPathContextKey("networks", network.Name)
-		errs = append(errs, network.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, network.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, sub := range e.Subdomains {
 		pc := core.NewObjectPathContextKey("subdomains", sub.Name)
-		errs = append(errs, sub.Resolve(ctx, resolver, e.IacContext, pc)...)
+		errs = append(errs, sub.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 
 	if len(errs) > 0 {
@@ -295,4 +342,57 @@ func (e *EnvConfiguration) BlockNames() map[string]bool {
 		names[cur.Name] = true
 	}
 	return names
+}
+
+func (e *EnvConfiguration) FindBlockConfigurationByName(name string) *BlockConfiguration {
+	ptr := func(cur BlockConfiguration) *BlockConfiguration {
+		return &cur
+	}
+
+	for _, cur := range e.Applications {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Blocks {
+		if cur.Name == name {
+			return ptr(*cur)
+		}
+	}
+	for _, cur := range e.Clusters {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.ClusterNamespaces {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Datastores {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Domains {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Ingresses {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Networks {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	for _, cur := range e.Subdomains {
+		if cur.Name == name {
+			return ptr(cur.BlockConfiguration)
+		}
+	}
+	return nil
 }

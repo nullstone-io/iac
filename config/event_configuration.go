@@ -3,10 +3,11 @@ package config
 import (
 	"context"
 	"fmt"
+	"slices"
+
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
-	"slices"
 )
 
 func convertEventConfigurations(parsed yaml.EventConfigurations) EventConfigurations {
@@ -44,7 +45,7 @@ type EventConfiguration struct {
 	Blocks types.Blocks `json:"blocks"`
 }
 
-func (c *EventConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
+func (c *EventConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {
 	errs := core.ResolveErrors{}
 	errs = append(errs, c.Targets.Resolve(ctx, resolver, ic, pc)...)
 	return errs

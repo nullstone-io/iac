@@ -120,7 +120,6 @@ func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.Res
 type CapabilityConfiguration struct {
 	// Id refers the Capability Id stored in Nullstone
 	// It is not used in the IaC representation
-	// It is used primarily to identify the capability when generating infrastructure code
 	Id int64 `json:"id"`
 
 	Name             string                   `json:"name"`

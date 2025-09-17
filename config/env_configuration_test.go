@@ -399,10 +399,13 @@ func TestConvertConfiguration(t *testing.T) {
 						},
 						Blocks: types.Blocks{
 							{
-								OrgName: defaults.OrgName,
-								StackId: defaults.StackId,
-								Name:    "acme-docs",
-								Type:    string(types.BlockTypeApplication),
+								OrgName:             defaults.OrgName,
+								StackId:             defaults.StackId,
+								Name:                "acme-docs",
+								Type:                string(types.BlockTypeApplication),
+								ModuleSource:        "nullstone/aws-fargate-service",
+								ModuleSourceVersion: "latest",
+								Connections:         types.ConnectionTargets{"cluster-namespace": {BlockName: "namespace0"}},
 							},
 						},
 					},

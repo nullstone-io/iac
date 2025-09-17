@@ -55,7 +55,6 @@ func (c CapabilityConfigurations) ToCapabilities() []types.Capability {
 	for _, cur := range c {
 		capability := types.Capability{
 			IdModel:             types.IdModel{Id: cur.Id},
-			TfId:                cur.TfId,
 			Name:                cur.Name,
 			ModuleSource:        cur.ModuleSource,
 			ModuleSourceVersion: cur.ModuleConstraint,
@@ -121,11 +120,7 @@ func (c CapabilityConfigurations) Resolve(ctx context.Context, resolver core.Res
 type CapabilityConfiguration struct {
 	// Id refers the Capability Id stored in Nullstone
 	// It is not used in the IaC representation
-	// It is used primarily to identify the capability when generating infrastructure code
-	// Deprecated - Use TfId instead to generate infrastructure code
 	Id int64 `json:"id"`
-
-	TfId string `json:"tfId"`
 
 	Name             string                   `json:"name"`
 	ModuleSource     string                   `json:"moduleSource"`

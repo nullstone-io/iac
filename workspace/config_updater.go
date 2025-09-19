@@ -188,6 +188,14 @@ type CapabilityConfigUpdater struct {
 	Index           int
 }
 
+func (c CapabilityConfigUpdater) UpdateTfId(tfId string) {
+	c.doOperation(func(cc *types.CapabilityConfig) {
+		if tfId != "" {
+			cc.TfId = tfId
+		}
+	})
+}
+
 func (c CapabilityConfigUpdater) UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion) {
 	c.doOperation(func(cc *types.CapabilityConfig) {
 		if moduleVersion == nil {

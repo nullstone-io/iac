@@ -33,7 +33,7 @@ func TestApplyChanges(t *testing.T) {
 		},
 		Capabilities: types.CapabilityConfigs{
 			types.CapabilityConfig{
-				Id:            3,
+				Name:          "fake-cap",
 				Source:        "nullstone/fake-cap",
 				SourceVersion: "0.1.2",
 				Variables: types.Variables{
@@ -92,7 +92,7 @@ func TestApplyChanges(t *testing.T) {
 				Capabilities: types.CapabilityConfigs{
 					types.CapabilityConfig{
 						// changed by overrides
-						Id:            3,
+						Name:          "fake-cap",
 						Source:        "nullstone/fake-cap",
 						SourceVersion: "0.1.2",
 						Variables: types.Variables{
@@ -163,7 +163,7 @@ func TestApplyChanges(t *testing.T) {
 				Capabilities: types.CapabilityConfigs{
 					types.CapabilityConfig{
 						// preserved in config.yml
-						Id:            3,
+						Name:          "fake-cap",
 						Source:        "nullstone/fake-cap",
 						SourceVersion: "0.1.2",
 						Variables: types.Variables{

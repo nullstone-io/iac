@@ -1,8 +1,6 @@
 package workspace
 
 import (
-	"fmt"
-
 	"gopkg.in/nullstone-io/go-api-client.v0/types"
 )
 
@@ -178,12 +176,12 @@ func diffConnections(changes IndexedChanges, cur, des types.Connections) {
 
 func diffCapabilities(changes IndexedChanges, cur, des types.WorkspaceConfig) {
 	for _, b := range des.Capabilities {
-		a := cur.Capabilities.FindById(b.Id)
+		a := cur.Capabilities.FindByName(b.Name)
 		if a == nil || (a.NeedsDestroyed == true && b.NeedsDestroyed == false) {
 			// add capability
 			changes.Add(types.WorkspaceChange{
 				ChangeType: types.ChangeTypeCapability,
-				Identifier: fmt.Sprintf("%d", b.Id),
+				Identifier: b.Name,
 				Action:     types.ChangeActionAdd,
 				Current:    nil,
 				Desired:    b,
@@ -196,7 +194,7 @@ func diffCapabilities(changes IndexedChanges, cur, des types.WorkspaceConfig) {
 			// delete capability
 			changes.Add(types.WorkspaceChange{
 				ChangeType: types.ChangeTypeCapability,
-				Identifier: fmt.Sprintf("%d", b.Id),
+				Identifier: b.Name,
 				Action:     types.ChangeActionDelete,
 				Current:    *a,
 				Desired:    nil,
@@ -207,7 +205,7 @@ func diffCapabilities(changes IndexedChanges, cur, des types.WorkspaceConfig) {
 			// update capability
 			changes.Add(types.WorkspaceChange{
 				ChangeType: types.ChangeTypeCapability,
-				Identifier: fmt.Sprintf("%d", b.Id),
+				Identifier: b.Name,
 				Action:     types.ChangeActionUpdate,
 				Current:    *a,
 				Desired:    b,
@@ -215,13 +213,13 @@ func diffCapabilities(changes IndexedChanges, cur, des types.WorkspaceConfig) {
 		}
 	}
 	for _, a := range cur.Capabilities {
-		b := des.Capabilities.FindById(a.Id)
+		b := des.Capabilities.FindByName(a.Name)
 		// if a capability was added and then deleted from the desired config and never applied, delete it
 		// if the existing capability was marked as needs destroyed, then we don't need to do anything here
 		if b == nil && !a.NeedsDestroyed {
 			changes.Add(types.WorkspaceChange{
 				ChangeType: types.ChangeTypeCapability,
-				Identifier: fmt.Sprintf("%d", a.Id),
+				Identifier: a.Name,
 				Action:     types.ChangeActionDelete,
 				Current:    a,
 				Desired:    nil,

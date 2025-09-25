@@ -28,7 +28,6 @@ type ExtraWorkspaceConfigInput struct {
 }
 
 type CapabilityConfigUpdater interface {
-	UpdateTfId(tfId string)
 	UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion)
 	UpdateVariableValue(name string, value any)
 	UpdateConnectionTarget(name string, desired, effective types.ConnectionTarget)

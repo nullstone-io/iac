@@ -122,8 +122,6 @@ type CapabilityConfiguration struct {
 	// It is not used in the IaC representation
 	Id int64 `json:"id"`
 
-	TfId string `json:"tfId"`
-
 	Name             string                   `json:"name"`
 	ModuleSource     string                   `json:"moduleSource"`
 	ModuleConstraint string                   `json:"moduleConstraint"`
@@ -250,7 +248,6 @@ func (c *CapabilityConfiguration) doUpdateCapability(capUpdater core.CapabilityC
 	if capUpdater == nil {
 		return
 	}
-	capUpdater.UpdateTfId(c.TfId)
 	capUpdater.UpdateSchema(c.ModuleSource, c.ModuleConstraint, c.ModuleVersion)
 	capUpdater.UpdateNamespace(c.Namespace)
 	for name, vc := range c.Variables {

@@ -115,7 +115,7 @@ func (w ConfigUpdater) GetCapabilityUpdater(identity core.CapabilityIdentity) co
 }
 
 func (w ConfigUpdater) AddCapability(id int64, name string) core.CapabilityConfigUpdater {
-	w.Config.Capabilities = append(w.Config.Capabilities, types.CapabilityConfig{Id: id, Name: name})
+	w.Config.Capabilities = append(w.Config.Capabilities, types.CapabilityConfig{Id: id, Name: name, TfId: name})
 	ccu := CapabilityConfigUpdater{
 		WorkspaceConfig: w.Config,
 		Index:           len(w.Config.Capabilities) - 1,
@@ -186,14 +186,6 @@ func (w ConfigUpdater) UpdateSubdomainName(domainNameTemplate, subdomainNameTemp
 type CapabilityConfigUpdater struct {
 	WorkspaceConfig *types.WorkspaceConfig
 	Index           int
-}
-
-func (c CapabilityConfigUpdater) UpdateTfId(tfId string) {
-	c.doOperation(func(cc *types.CapabilityConfig) {
-		if tfId != "" {
-			cc.TfId = tfId
-		}
-	})
 }
 
 func (c CapabilityConfigUpdater) UpdateSchema(moduleSource, moduleConstraint string, moduleVersion *types.ModuleVersion) {

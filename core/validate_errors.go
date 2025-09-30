@@ -2,8 +2,9 @@ package core
 
 import (
 	"fmt"
-	"github.com/BSick7/go-api/errors"
 	"strings"
+
+	"github.com/BSick7/go-api/errors"
 )
 
 var (
@@ -93,6 +94,13 @@ func EnvVariableKeyInvalidCharsError(pc ObjectPathContext) ValidateError {
 	return ValidateError{
 		ObjectPathContext: pc,
 		ErrorMessage:      "Invalid environment variable, key must contain only letters, numbers, and underscores",
+	}
+}
+
+func MissingSubdomainTemplateError(pc ObjectPathContext) ValidateError {
+	return ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      "Subdomain template is required",
 	}
 }
 

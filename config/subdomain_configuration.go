@@ -98,7 +98,7 @@ func (s *SubdomainConfiguration) resolveDomain() {
 }
 func (s *SubdomainConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
 	errs := s.BlockConfiguration.Validate(ic, pc)
-	if s.SubdomainNameTemplate == nil {
+	if !ic.IsOverrides && s.SubdomainNameTemplate == nil {
 		errs = append(errs, core.MissingSubdomainTemplateError(pc.SubField("dns").SubField("template")))
 	}
 	return errs

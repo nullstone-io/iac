@@ -96,6 +96,13 @@ func (s *SubdomainConfiguration) resolveDomain() {
 	s.DomainNameTemplate = &dnsName
 	return
 }
+func (s *SubdomainConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
+	errs := s.BlockConfiguration.Validate(ic, pc)
+	if !ic.IsOverrides && s.SubdomainNameTemplate == nil {
+		errs = append(errs, core.MissingSubdomainTemplateError(pc.SubField("dns").SubField("template")))
+	}
+	return errs
+}
 
 func (s *SubdomainConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {
 	if err := s.BlockConfiguration.ApplyChangesTo(ic, updater); err != nil {

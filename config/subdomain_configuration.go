@@ -26,6 +26,9 @@ type SubdomainConfiguration struct {
 
 func (s *SubdomainConfiguration) ToBlock(orgName string, stackId int64) types.Block {
 	block := s.BlockConfiguration.ToBlock(orgName, stackId)
+	if s.SubdomainNameTemplate != nil {
+		block.DnsName = *s.SubdomainNameTemplate
+	}
 	return block
 }
 
@@ -96,6 +99,7 @@ func (s *SubdomainConfiguration) resolveDomain() {
 	s.DomainNameTemplate = &dnsName
 	return
 }
+
 func (s *SubdomainConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
 	errs := s.BlockConfiguration.Validate(ic, pc)
 	if !ic.IsOverrides && s.SubdomainNameTemplate == nil {

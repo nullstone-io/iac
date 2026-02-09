@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/nullstone-io/module v0.2.10
 	github.com/stretchr/testify v1.11.1
-	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20260107210645-d2637ddb1cf8
+	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20260209212858-e55cbde912b7
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -35,6 +35,6 @@ require (
 	go.opentelemetry.io/otel v1.39.0 // indirect
 	go.opentelemetry.io/otel/metric v1.39.0 // indirect
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect
-	golang.org/x/mod v0.31.0 // indirect
+	golang.org/x/mod v0.32.0 // indirect
 	golang.org/x/text v0.3.8 // indirect
 )

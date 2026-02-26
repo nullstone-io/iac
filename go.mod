@@ -1,6 +1,6 @@
 module github.com/nullstone-io/iac
 
-go 1.24.0
+go 1.25.5
 
 require (
 	github.com/BSick7/go-api v0.18.3

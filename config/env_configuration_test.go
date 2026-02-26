@@ -833,6 +833,32 @@ func TestConvertConfiguration(t *testing.T) {
 			},
 		},
 		{
+			name:             "app var type mismatch (string for number)",
+			filename:         "test-fixtures/config.invalid20.yml",
+			want:             nil,
+			initializeErrors: core.InitializeErrors(nil),
+			resolveErrors:    core.ResolveErrors(nil),
+			validationErrors: core.ValidateErrors{
+				{
+					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs", Field: "vars", Key: "num_tasks"},
+					ErrorMessage:      "Specified variable value (string) is incompatible with expected variable type (number)",
+				},
+			},
+		},
+		{
+			name:             "capability var type mismatch (string for bool)",
+			filename:         "test-fixtures/config.invalid21.yml",
+			want:             nil,
+			initializeErrors: core.InitializeErrors(nil),
+			resolveErrors:    core.ResolveErrors(nil),
+			validationErrors: core.ValidateErrors{
+				{
+					ObjectPathContext: core.ObjectPathContext{Path: "apps.acme-docs.capabilities[0]", Field: "vars", Key: "enable_https"},
+					ErrorMessage:      "Specified variable value (string) is incompatible with expected variable type (bool)",
+				},
+			},
+		},
+		{
 			name:        "valid previews.yml",
 			filename:    "test-fixtures/previews.yml",
 			isOverrides: true,

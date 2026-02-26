@@ -99,7 +99,7 @@ func isValueCompatibleWithType(value any, varType string) bool {
 //	"tuple([string, number])"         → "tuple"
 func extractBaseType(varType string) string {
 	varType = strings.TrimSpace(varType)
-	if idx := strings.IndexAny(varType, "(["); idx != -1 {
+	if idx := strings.Index(varType, "("); idx != -1 {
 		return strings.TrimSpace(varType[:idx])
 	}
 	return varType

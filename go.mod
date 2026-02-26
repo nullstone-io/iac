@@ -1,6 +1,6 @@
 module github.com/nullstone-io/iac
 
-go 1.24.0
+go 1.25.5
 
 require (
 	github.com/BSick7/go-api v0.18.3
@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/nullstone-io/module v0.2.10
 	github.com/stretchr/testify v1.11.1
-	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20260209212858-e55cbde912b7
+	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20260226154126-0920042cac6a
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -21,6 +21,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/hcl/v2 v2.6.0 // indirect

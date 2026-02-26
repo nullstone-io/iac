@@ -48,6 +48,13 @@ func VariableDoesNotExistError(pc ObjectPathContext, moduleName string) *Validat
 	}
 }
 
+func VariableIncompatibleTypeError(pc ObjectPathContext, varType string, value any) *ValidateError {
+	return &ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Specified variable value (%T) is incompatible with expected variable type (%s)", value, varType),
+	}
+}
+
 func ConnectionDoesNotExistError(pc ObjectPathContext, moduleName string) *ValidateError {
 	return &ValidateError{
 		ObjectPathContext: pc,

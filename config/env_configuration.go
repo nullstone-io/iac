@@ -67,7 +67,7 @@ func (e *EnvConfiguration) Initialize(ctx context.Context, resolver core.Initial
 		errs = append(errs, clusterNamespace.Initialize(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, ds := range e.Datastores {
-		pc := core.NewObjectPathContextKey("networks", ds.Name)
+		pc := core.NewObjectPathContextKey("datastores", ds.Name)
 		errs = append(errs, ds.Initialize(ctx, resolver, e.IacContext, pc)...)
 	}
 	for _, domain := range e.Domains {
@@ -118,7 +118,7 @@ func (e *EnvConfiguration) Resolve(ctx context.Context, resolver core.ResolveRes
 		errs = append(errs, clusterNamespace.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, ds := range e.Datastores {
-		pc := core.NewObjectPathContextKey("networks", ds.Name)
+		pc := core.NewObjectPathContextKey("datastores", ds.Name)
 		errs = append(errs, ds.Resolve(ctx, resolver, finder, e.IacContext, pc)...)
 	}
 	for _, domain := range e.Domains {
@@ -169,7 +169,7 @@ func (e *EnvConfiguration) Validate() core.ValidateErrors {
 		errs = append(errs, clusterNamespace.Validate(e.IacContext, pc)...)
 	}
 	for _, ds := range e.Datastores {
-		pc := core.NewObjectPathContextKey("networks", ds.Name)
+		pc := core.NewObjectPathContextKey("datastores", ds.Name)
 		errs = append(errs, ds.Validate(e.IacContext, pc)...)
 	}
 	for _, domain := range e.Domains {
@@ -220,7 +220,7 @@ func (e *EnvConfiguration) Normalize(ctx context.Context, resolver core.Normaliz
 		errs = append(errs, clusterNamespace.Normalize(ctx, pc, resolver)...)
 	}
 	for _, ds := range e.Datastores {
-		pc := core.NewObjectPathContextKey("networks", ds.Name)
+		pc := core.NewObjectPathContextKey("datastores", ds.Name)
 		errs = append(errs, ds.Normalize(ctx, pc, resolver)...)
 	}
 	for _, domain := range e.Domains {

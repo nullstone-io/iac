@@ -147,7 +147,7 @@ func (w ConfigUpdater) UpdateDomainName(domainNameTemplate *string) {
 		extra.Domain = &types.ExtraDomainConfig{
 			DomainNameTemplate: *domainNameTemplate,
 			DomainName:         domainName,
-			Fqdn:               fmt.Sprintf("%s.", extra.Domain.DomainName),
+			Fqdn:               fmt.Sprintf("%s.", domainName),
 		}
 	}
 

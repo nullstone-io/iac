@@ -37,10 +37,18 @@ type BlockConfiguration struct {
 	Variables        VariableConfigurations   `json:"vars"`
 	Connections      ConnectionConfigurations `json:"connections"`
 	IsShared         bool                     `json:"isShared"`
+	Metadata         MetadataConfiguration    `json:"metadata"`
 
 	// These fields are populated via Resolve()
 	Module        *types.Module        `json:"module"`
 	ModuleVersion *types.ModuleVersion `json:"moduleVersion"`
+}
+
+// MetadataConfiguration is the resolved governance/descriptive metadata for a
+// block. It mirrors yaml.MetadataConfiguration with typed values. An empty
+// DataClassification means unclassified.
+type MetadataConfiguration struct {
+	DataClassification types.ClassificationLevel `json:"dataClassification,omitempty"`
 }
 
 func convertVariables(parsed map[string]any) VariableConfigurations {
@@ -90,7 +98,16 @@ func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType B
 		Variables:        convertVariables(value.Variables),
 		Connections:      convertConnections(value.Connections),
 		IsShared:         value.IsShared,
+		Metadata:         convertMetadata(value.Metadata),
 	}
+}
+
+func convertMetadata(metadata *yaml.MetadataConfiguration) MetadataConfiguration {
+	result := MetadataConfiguration{}
+	if metadata != nil && metadata.DataClassification != nil {
+		result.DataClassification = types.ClassificationLevel(*metadata.DataClassification)
+	}
+	return result
 }
 
 func (b *BlockConfiguration) Initialize(ctx context.Context, resolver core.InitializeResolver, ic core.IacContext, pc core.ObjectPathContext) core.InitializeErrors {
@@ -140,10 +157,27 @@ func (b *BlockConfiguration) Validate(ic core.IacContext, pc core.ObjectPathCont
 	errs := core.ValidateErrors{}
 	errs = append(errs, b.Variables.Validate(pc, moduleName)...)
 	errs = append(errs, b.Connections.Validate(pc, moduleName)...)
+	errs = append(errs, b.validateDataClassification(pc)...)
 	if len(errs) > 0 {
 		return errs
 	}
 	return nil
+}
+
+// validateDataClassification ensures any provided level is a known taxonomy
+// slug. An empty value is allowed (leaves the workspace unclassified).
+func (b *BlockConfiguration) validateDataClassification(pc core.ObjectPathContext) core.ValidateErrors {
+	level := b.Metadata.DataClassification
+	if level == "" || level.Valid() {
+		return nil
+	}
+	allowed := make([]string, 0, len(types.AllClassificationLevels()))
+	for _, l := range types.AllClassificationLevels() {
+		allowed = append(allowed, string(l))
+	}
+	return core.ValidateErrors{
+		*core.InvalidDataClassificationError(pc.SubField("metadata").SubField("dataclassification"), string(level), allowed),
+	}
 }
 
 func (b *BlockConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) core.NormalizeErrors {
@@ -173,5 +207,6 @@ func (b *BlockConfiguration) ApplyChangesTo(ic core.IacContext, updater core.Wor
 	for name, cc := range b.Connections {
 		updater.UpdateConnectionTarget(name, cc.DesiredTarget, cc.EffectiveTarget)
 	}
+	updater.UpdateDataClassification(b.Metadata.DataClassification)
 	return nil
 }

@@ -183,6 +183,10 @@ func (w ConfigUpdater) UpdateSubdomainName(domainNameTemplate, subdomainNameTemp
 	w.Config.Extra = extra
 }
 
+func (w ConfigUpdater) UpdateDataClassification(level types.ClassificationLevel) {
+	w.Config.Metadata.DataClassification = level
+}
+
 type CapabilityConfigUpdater struct {
 	WorkspaceConfig *types.WorkspaceConfig
 	Index           int

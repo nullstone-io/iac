@@ -10,6 +10,15 @@ type BlockConfiguration struct {
 	Variables        map[string]any        `yaml:"vars,omitempty" json:"vars"`
 	Connections      ConnectionConstraints `yaml:"connections,omitempty" json:"connections"`
 	IsShared         bool                  `yaml:"is_shared,omitempty" json:"isShared"`
+	// Metadata holds governance/descriptive metadata (e.g. data classification).
+	Metadata *MetadataConfiguration `yaml:"metadata,omitempty" json:"metadata,omitempty"`
+}
+
+// MetadataConfiguration is the IaC representation of a block's metadata container.
+type MetadataConfiguration struct {
+	// DataClassification is the data sensitivity level slug (e.g. "customer-content").
+	// Omitted/empty leaves the workspace unclassified.
+	DataClassification *string `yaml:"dataclassification,omitempty" json:"dataclassification,omitempty"`
 }
 
 func BlockConfigurationFromWorkspaceConfig(stackId, envId int64, config types.WorkspaceConfig) BlockConfiguration {
@@ -18,7 +27,17 @@ func BlockConfigurationFromWorkspaceConfig(stackId, envId int64, config types.Wo
 		ModuleConstraint: &config.SourceConstraint,
 		Variables:        VariablesFromWorkspaceConfig(config.Variables),
 		Connections:      ConnectionsFromWorkspaceConfig(stackId, envId, config.Connections),
+		Metadata:         MetadataFromWorkspaceConfig(config.Metadata),
 	}
+}
+
+func MetadataFromWorkspaceConfig(metadata types.WorkspaceMetadata) *MetadataConfiguration {
+	mc := &MetadataConfiguration{}
+	if metadata.DataClassification != "" {
+		s := string(metadata.DataClassification)
+		mc.DataClassification = &s
+	}
+	return mc
 }
 
 func VariablesFromWorkspaceConfig(variables types.Variables) map[string]any {

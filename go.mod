@@ -8,13 +8,13 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/nullstone-io/module v0.2.10
 	github.com/stretchr/testify v1.11.1
-	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20260424183812-f221aacd1df3
+	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20260622221049-cc34b037aee6
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	github.com/agext/levenshtein v1.2.1 // indirect
-	github.com/apparentlymart/go-textseg/v12 v12.0.0 // indirect
+	github.com/agext/levenshtein v1.2.3 // indirect
+	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cristalhq/jwt/v3 v3.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -24,18 +24,20 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/hashicorp/hcl/v2 v2.6.0 // indirect
+	github.com/hashicorp/hcl/v2 v2.24.0 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
-	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
+	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/spf13/afero v1.2.2 // indirect
-	github.com/tmccombs/hcl2json v0.3.2-0.20201111174327-c96737926b76 // indirect
-	github.com/zclconf/go-cty v1.6.1 // indirect
+	github.com/spf13/afero v1.15.0 // indirect
+	github.com/tmccombs/hcl2json v0.6.9 // indirect
+	github.com/zclconf/go-cty v1.18.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0 // indirect
-	go.opentelemetry.io/otel v1.42.0 // indirect
-	go.opentelemetry.io/otel/metric v1.42.0 // indirect
-	go.opentelemetry.io/otel/trace v1.42.0 // indirect
-	golang.org/x/mod v0.34.0 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0 // indirect
+	go.opentelemetry.io/otel v1.44.0 // indirect
+	go.opentelemetry.io/otel/metric v1.44.0 // indirect
+	go.opentelemetry.io/otel/trace v1.44.0 // indirect
+	golang.org/x/mod v0.37.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/tools v0.45.0 // indirect
 )

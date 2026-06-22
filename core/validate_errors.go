@@ -111,6 +111,13 @@ func MissingSubdomainTemplateError(pc ObjectPathContext) ValidateError {
 	}
 }
 
+func InvalidDataClassificationError(pc ObjectPathContext, value string, allowed []string) *ValidateError {
+	return &ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Invalid data classification value (%s), must be one of: %s", value, strings.Join(allowed, ", ")),
+	}
+}
+
 func UnsupportedAppCategoryError(pc ObjectPathContext, moduleSource, subcategory string) ValidateError {
 	return ValidateError{
 		ObjectPathContext: pc,

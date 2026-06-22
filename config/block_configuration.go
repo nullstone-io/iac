@@ -29,14 +29,15 @@ const (
 )
 
 type BlockConfiguration struct {
-	Type             BlockType                `json:"type"`
-	Category         types.CategoryName       `json:"category"`
-	Name             string                   `json:"name"`
-	ModuleSource     string                   `json:"moduleSource"`
-	ModuleConstraint string                   `json:"moduleConstraint"`
-	Variables        VariableConfigurations   `json:"vars"`
-	Connections      ConnectionConfigurations `json:"connections"`
-	IsShared         bool                     `json:"isShared"`
+	Type               BlockType                  `json:"type"`
+	Category           types.CategoryName         `json:"category"`
+	Name               string                     `json:"name"`
+	ModuleSource       string                     `json:"moduleSource"`
+	ModuleConstraint   string                     `json:"moduleConstraint"`
+	Variables          VariableConfigurations     `json:"vars"`
+	Connections        ConnectionConfigurations   `json:"connections"`
+	IsShared           bool                       `json:"isShared"`
+	DataClassification *types.ClassificationLevel `json:"dataClassification"`
 
 	// These fields are populated via Resolve()
 	Module        *types.Module        `json:"module"`
@@ -82,15 +83,24 @@ func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType B
 		moduleConstraint = "latest"
 	}
 	return &BlockConfiguration{
-		Type:             blockType,
-		Category:         blockCategory,
-		Name:             name,
-		ModuleSource:     value.ModuleSource,
-		ModuleConstraint: moduleConstraint,
-		Variables:        convertVariables(value.Variables),
-		Connections:      convertConnections(value.Connections),
-		IsShared:         value.IsShared,
+		Type:               blockType,
+		Category:           blockCategory,
+		Name:               name,
+		ModuleSource:       value.ModuleSource,
+		ModuleConstraint:   moduleConstraint,
+		Variables:          convertVariables(value.Variables),
+		Connections:        convertConnections(value.Connections),
+		IsShared:           value.IsShared,
+		DataClassification: convertDataClassification(value.Metadata),
 	}
+}
+
+func convertDataClassification(metadata *yaml.MetadataConfiguration) *types.ClassificationLevel {
+	if metadata == nil || metadata.DataClassification == nil {
+		return nil
+	}
+	level := types.ClassificationLevel(*metadata.DataClassification)
+	return &level
 }
 
 func (b *BlockConfiguration) Initialize(ctx context.Context, resolver core.InitializeResolver, ic core.IacContext, pc core.ObjectPathContext) core.InitializeErrors {
@@ -130,20 +140,41 @@ func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ResolveR
 }
 
 func (b *BlockConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
+	errs := core.ValidateErrors{}
 	if b.Module == nil {
 		// TODO: Add support for validating variables and connections in an overrides file that has no module source
+		if len(errs) > 0 {
+			return errs
+		}
 		return nil
 	}
 
 	moduleName := fmt.Sprintf("%s/%s@%s", b.Module.OrgName, b.Module.Name, b.ModuleVersion.Version)
 
-	errs := core.ValidateErrors{}
 	errs = append(errs, b.Variables.Validate(pc, moduleName)...)
 	errs = append(errs, b.Connections.Validate(pc, moduleName)...)
+	errs = append(errs, b.validateDataClassification(pc)...)
 	if len(errs) > 0 {
 		return errs
 	}
 	return nil
+}
+
+// validateDataClassification ensures any provided level is a known taxonomy
+// slug. An empty value is allowed (leaves the workspace unclassified).
+func (b *BlockConfiguration) validateDataClassification(pc core.ObjectPathContext) core.ValidateErrors {
+	if b.DataClassification == nil {
+		return nil
+	}
+	errs := core.ValidateErrors{}
+	if level := *b.DataClassification; level != "" && !level.Valid() {
+		allowed := make([]string, 0, len(types.AllClassificationLevels()))
+		for _, l := range types.AllClassificationLevels() {
+			allowed = append(allowed, string(l))
+		}
+		errs = append(errs, *core.InvalidDataClassificationError(pc.SubField("metadata").SubField("dataclassification"), string(level), allowed))
+	}
+	return errs
 }
 
 func (b *BlockConfiguration) Normalize(ctx context.Context, pc core.ObjectPathContext, resolver core.ConnectionResolver) core.NormalizeErrors {
@@ -172,6 +203,9 @@ func (b *BlockConfiguration) ApplyChangesTo(ic core.IacContext, updater core.Wor
 	}
 	for name, cc := range b.Connections {
 		updater.UpdateConnectionTarget(name, cc.DesiredTarget, cc.EffectiveTarget)
+	}
+	if b.DataClassification != nil {
+		updater.UpdateDataClassification(*b.DataClassification)
 	}
 	return nil
 }

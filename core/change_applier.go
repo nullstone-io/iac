@@ -19,6 +19,9 @@ type WorkspaceConfigUpdater interface {
 	RemoveCapabilitiesNotIn(identities CapabilityIdentities)
 	UpdateDomainName(domainNameTemplate *string)
 	UpdateSubdomainName(domainNameTemplate, subdomainNameTemplate *string, reservation *types.SubdomainReservation)
+	// UpdateDataClassification sets the workspace's data-classification level
+	// (empty clears it).
+	UpdateDataClassification(level types.ClassificationLevel)
 }
 
 type ExtraWorkspaceConfigInput struct {

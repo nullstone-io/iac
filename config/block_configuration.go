@@ -147,17 +147,14 @@ func (b *BlockConfiguration) Resolve(ctx context.Context, resolver core.ResolveR
 }
 
 func (b *BlockConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
-	errs := core.ValidateErrors{}
 	if b.Module == nil {
 		// TODO: Add support for validating variables and connections in an overrides file that has no module source
-		if len(errs) > 0 {
-			return errs
-		}
 		return nil
 	}
 
 	moduleName := fmt.Sprintf("%s/%s@%s", b.Module.OrgName, b.Module.Name, b.ModuleVersion.Version)
 
+	errs := core.ValidateErrors{}
 	errs = append(errs, b.Variables.Validate(pc, moduleName)...)
 	errs = append(errs, b.Connections.Validate(pc, moduleName)...)
 	errs = append(errs, b.validateDataClassification(pc)...)

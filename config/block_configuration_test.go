@@ -12,19 +12,19 @@ import (
 )
 
 // blockConfigFromYaml should mirror the YAML's nesting: metadata.dataclassification
-// becomes Metadata.DataClassification (and Metadata stays nil when absent).
+// becomes Metadata.DataClassification (empty when absent).
 func TestBlockConfiguration_metadataFromYaml(t *testing.T) {
 	tests := []struct {
 		name string
 		meta *yaml.MetadataConfiguration
-		want *MetadataConfiguration
+		want MetadataConfiguration
 	}{
-		{name: "no metadata", meta: nil, want: nil},
-		{name: "empty metadata", meta: &yaml.MetadataConfiguration{}, want: &MetadataConfiguration{}},
+		{name: "no metadata", meta: nil, want: MetadataConfiguration{}},
+		{name: "empty metadata", meta: &yaml.MetadataConfiguration{}, want: MetadataConfiguration{}},
 		{
 			name: "level set",
 			meta: &yaml.MetadataConfiguration{DataClassification: ptr("customer-content")},
-			want: &MetadataConfiguration{DataClassification: ptr(types.ClassificationCustomerContent)},
+			want: MetadataConfiguration{DataClassification: types.ClassificationCustomerContent},
 		},
 	}
 	for _, tt := range tests {
@@ -43,17 +43,15 @@ func TestBlockConfiguration_metadataFromYaml(t *testing.T) {
 func TestBlockConfiguration_validateDataClassification(t *testing.T) {
 	pc := core.ObjectPathContext{Path: "datastores.customer-db"}
 	tests := []struct {
-		name string
-		meta *MetadataConfiguration
-		want core.ValidateErrors
+		name  string
+		level types.ClassificationLevel
+		want  core.ValidateErrors
 	}{
-		{name: "no metadata", meta: nil, want: core.ValidateErrors(nil)},
-		{name: "no level", meta: &MetadataConfiguration{}, want: core.ValidateErrors(nil)},
-		{name: "empty is allowed", meta: &MetadataConfiguration{DataClassification: ptr(types.ClassificationLevel(""))}, want: core.ValidateErrors{}},
-		{name: "valid level", meta: &MetadataConfiguration{DataClassification: ptr(types.ClassificationRestricted)}, want: core.ValidateErrors{}},
+		{name: "empty is allowed", level: "", want: core.ValidateErrors(nil)},
+		{name: "valid level", level: types.ClassificationRestricted, want: core.ValidateErrors(nil)},
 		{
-			name: "invalid level",
-			meta: &MetadataConfiguration{DataClassification: ptr(types.ClassificationLevel("top-secret"))},
+			name:  "invalid level",
+			level: types.ClassificationLevel("top-secret"),
 			want: core.ValidateErrors{
 				{
 					ObjectPathContext: core.ObjectPathContext{Path: "datastores.customer-db.metadata", Field: "dataclassification"},
@@ -64,7 +62,7 @@ func TestBlockConfiguration_validateDataClassification(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bc := &BlockConfiguration{Metadata: tt.meta}
+			bc := &BlockConfiguration{Metadata: MetadataConfiguration{DataClassification: tt.level}}
 			assert.Equal(t, tt.want, bc.validateDataClassification(pc))
 		})
 	}
@@ -76,25 +74,16 @@ func TestBlockConfiguration_ApplyChangesTo_dataClassification(t *testing.T) {
 	t.Run("sets the level on the workspace config", func(t *testing.T) {
 		wc := &types.WorkspaceConfig{}
 		updater := workspace.ConfigUpdater{Config: wc}
-		bc := &BlockConfiguration{Metadata: &MetadataConfiguration{DataClassification: ptr(types.ClassificationCustomerContent)}}
+		bc := &BlockConfiguration{Metadata: MetadataConfiguration{DataClassification: types.ClassificationCustomerContent}}
 		require.NoError(t, bc.ApplyChangesTo(core.IacContext{}, updater))
 		assert.Equal(t, types.ClassificationCustomerContent, wc.Metadata.DataClassification)
 	})
 
-	t.Run("absent leaves the existing level unchanged", func(t *testing.T) {
+	t.Run("empty level clears the existing classification", func(t *testing.T) {
 		wc := &types.WorkspaceConfig{}
 		wc.Metadata.DataClassification = types.ClassificationRestricted
 		updater := workspace.ConfigUpdater{Config: wc}
-		bc := &BlockConfiguration{Metadata: nil}
-		require.NoError(t, bc.ApplyChangesTo(core.IacContext{}, updater))
-		assert.Equal(t, types.ClassificationRestricted, wc.Metadata.DataClassification)
-	})
-
-	t.Run("empty string clears the level", func(t *testing.T) {
-		wc := &types.WorkspaceConfig{}
-		wc.Metadata.DataClassification = types.ClassificationRestricted
-		updater := workspace.ConfigUpdater{Config: wc}
-		bc := &BlockConfiguration{Metadata: &MetadataConfiguration{DataClassification: ptr(types.ClassificationLevel(""))}}
+		bc := &BlockConfiguration{Metadata: MetadataConfiguration{}}
 		require.NoError(t, bc.ApplyChangesTo(core.IacContext{}, updater))
 		assert.Equal(t, types.ClassificationLevel(""), wc.Metadata.DataClassification)
 	})

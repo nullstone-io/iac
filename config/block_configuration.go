@@ -29,19 +29,25 @@ const (
 )
 
 type BlockConfiguration struct {
-	Type               BlockType                  `json:"type"`
-	Category           types.CategoryName         `json:"category"`
-	Name               string                     `json:"name"`
-	ModuleSource       string                     `json:"moduleSource"`
-	ModuleConstraint   string                     `json:"moduleConstraint"`
-	Variables          VariableConfigurations     `json:"vars"`
-	Connections        ConnectionConfigurations   `json:"connections"`
-	IsShared           bool                       `json:"isShared"`
-	DataClassification *types.ClassificationLevel `json:"dataClassification"`
+	Type             BlockType                `json:"type"`
+	Category         types.CategoryName       `json:"category"`
+	Name             string                   `json:"name"`
+	ModuleSource     string                   `json:"moduleSource"`
+	ModuleConstraint string                   `json:"moduleConstraint"`
+	Variables        VariableConfigurations   `json:"vars"`
+	Connections      ConnectionConfigurations `json:"connections"`
+	IsShared         bool                     `json:"isShared"`
+	Metadata         *MetadataConfiguration   `json:"metadata,omitempty"`
 
 	// These fields are populated via Resolve()
 	Module        *types.Module        `json:"module"`
 	ModuleVersion *types.ModuleVersion `json:"moduleVersion"`
+}
+
+// MetadataConfiguration is the resolved governance/descriptive metadata for a
+// block. It mirrors yaml.MetadataConfiguration with typed values.
+type MetadataConfiguration struct {
+	DataClassification *types.ClassificationLevel `json:"dataClassification,omitempty"`
 }
 
 func convertVariables(parsed map[string]any) VariableConfigurations {
@@ -83,24 +89,28 @@ func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType B
 		moduleConstraint = "latest"
 	}
 	return &BlockConfiguration{
-		Type:               blockType,
-		Category:           blockCategory,
-		Name:               name,
-		ModuleSource:       value.ModuleSource,
-		ModuleConstraint:   moduleConstraint,
-		Variables:          convertVariables(value.Variables),
-		Connections:        convertConnections(value.Connections),
-		IsShared:           value.IsShared,
-		DataClassification: convertDataClassification(value.Metadata),
+		Type:             blockType,
+		Category:         blockCategory,
+		Name:             name,
+		ModuleSource:     value.ModuleSource,
+		ModuleConstraint: moduleConstraint,
+		Variables:        convertVariables(value.Variables),
+		Connections:      convertConnections(value.Connections),
+		IsShared:         value.IsShared,
+		Metadata:         convertMetadata(value.Metadata),
 	}
 }
 
-func convertDataClassification(metadata *yaml.MetadataConfiguration) *types.ClassificationLevel {
-	if metadata == nil || metadata.DataClassification == nil {
+func convertMetadata(metadata *yaml.MetadataConfiguration) *MetadataConfiguration {
+	if metadata == nil {
 		return nil
 	}
-	level := types.ClassificationLevel(*metadata.DataClassification)
-	return &level
+	result := &MetadataConfiguration{}
+	if metadata.DataClassification != nil {
+		level := types.ClassificationLevel(*metadata.DataClassification)
+		result.DataClassification = &level
+	}
+	return result
 }
 
 func (b *BlockConfiguration) Initialize(ctx context.Context, resolver core.InitializeResolver, ic core.IacContext, pc core.ObjectPathContext) core.InitializeErrors {
@@ -163,11 +173,11 @@ func (b *BlockConfiguration) Validate(ic core.IacContext, pc core.ObjectPathCont
 // validateDataClassification ensures any provided level is a known taxonomy
 // slug. An empty value is allowed (leaves the workspace unclassified).
 func (b *BlockConfiguration) validateDataClassification(pc core.ObjectPathContext) core.ValidateErrors {
-	if b.DataClassification == nil {
+	if b.Metadata == nil || b.Metadata.DataClassification == nil {
 		return nil
 	}
 	errs := core.ValidateErrors{}
-	if level := *b.DataClassification; level != "" && !level.Valid() {
+	if level := *b.Metadata.DataClassification; level != "" && !level.Valid() {
 		allowed := make([]string, 0, len(types.AllClassificationLevels()))
 		for _, l := range types.AllClassificationLevels() {
 			allowed = append(allowed, string(l))
@@ -204,8 +214,8 @@ func (b *BlockConfiguration) ApplyChangesTo(ic core.IacContext, updater core.Wor
 	for name, cc := range b.Connections {
 		updater.UpdateConnectionTarget(name, cc.DesiredTarget, cc.EffectiveTarget)
 	}
-	if b.DataClassification != nil {
-		updater.UpdateDataClassification(*b.DataClassification)
+	if b.Metadata != nil && b.Metadata.DataClassification != nil {
+		updater.UpdateDataClassification(*b.Metadata.DataClassification)
 	}
 	return nil
 }

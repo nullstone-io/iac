@@ -1,5 +1,3 @@
-NAME := deployment-sdk
-
 .PHONY: test
 
 test:

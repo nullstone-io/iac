@@ -136,17 +136,24 @@ func (c *ConnectionConfiguration) resolveModule(ctx context.Context, resolver co
 	if err != nil {
 		return core.LookupWorkspaceModuleConfigError(pc, err)
 	}
-	if moduleConfig.Module == "" {
+	moduleSource := moduleConfig.Module
+	if moduleSource == "" && c.Block != nil {
+		// A workspace that has never been launched has no desired config yet;
+		// the block record still carries the intended module.
+		// Deprecated: block.ModuleSource is being phased out; the desired config remains the priority.
+		moduleSource = c.Block.ModuleSource
+	}
+	if moduleSource == "" {
 		return core.ResolvedBlockMissingModuleError(pc, c.EffectiveTarget.StackName, c.EffectiveTarget.BlockName)
 	}
 
-	ms, err := artifacts.ParseSource(moduleConfig.Module)
+	ms, err := artifacts.ParseSource(moduleSource)
 	if err != nil {
-		return core.InvalidModuleFormatError(pc, moduleConfig.Module)
+		return core.InvalidModuleFormatError(pc, moduleSource)
 	}
 	m, mErr := resolver.ResolveModule(ctx, *ms)
 	if mErr != nil {
-		return core.ModuleLookupFailedError(pc, moduleConfig.Module, mErr)
+		return core.ModuleLookupFailedError(pc, moduleSource, mErr)
 	}
 	c.Module = m
 	return nil

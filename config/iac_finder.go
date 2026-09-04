@@ -38,10 +38,9 @@ func (r IacFinder) FindBlockModuleInIac(ctx context.Context, ct types.Connection
 	if ct.StackId != r.StackId {
 		return nil
 	}
-	// We cannot resolve module configs for workspaces that resolve to a different environment
-	if ct.EnvId != nil && *ct.EnvId != r.EnvId {
-		return nil
-	}
+	// The target may resolve to a different environment than this session
+	// (e.g. shared blocks resolve to `previews-shared` from a preview env).
+	// A block's module identity is env-agnostic, so a same-stack match is still authoritative.
 
 	if r.Config != nil {
 		base := r.Config.FindBlockConfigurationByName(ct.BlockName)

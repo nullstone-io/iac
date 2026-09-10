@@ -36,8 +36,9 @@ type BlockConfiguration struct {
 	ModuleConstraint string                   `json:"moduleConstraint"`
 	Variables        VariableConfigurations   `json:"vars"`
 	Connections      ConnectionConfigurations `json:"connections"`
-	IsShared         bool                     `json:"isShared"`
-	Metadata         MetadataConfiguration    `json:"metadata"`
+	// IsShared is nil when the file does not specify is_shared.
+	IsShared *bool                 `json:"isShared,omitempty"`
+	Metadata MetadataConfiguration `json:"metadata"`
 
 	// These fields are populated via Resolve()
 	Module        *types.Module        `json:"module"`
@@ -184,13 +185,15 @@ func (b *BlockConfiguration) Normalize(ctx context.Context, pc core.ObjectPathCo
 	return b.Connections.Normalize(ctx, pc, resolver)
 }
 
+// ToBlock flattens the configuration into an API block.
+// IsShared collapses to false when the file did not specify it; EnvConfiguration.ToBlockDefinitions keeps the distinction.
 func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block {
 	block := types.Block{
 		Type:                string(b.Type),
 		OrgName:             orgName,
 		StackId:             stackId,
 		Name:                b.Name,
-		IsShared:            b.IsShared,
+		IsShared:            b.IsShared != nil && *b.IsShared,
 		DnsName:             "",
 		ModuleSource:        b.ModuleSource,
 		ModuleSourceVersion: b.ModuleConstraint,

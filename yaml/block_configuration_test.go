@@ -40,3 +40,30 @@ func TestMetadataFromWorkspaceConfig(t *testing.T) {
 		assert.Equal(t, "restricted", *got.DataClassification)
 	})
 }
+
+// is_shared is tristate: absent must stay distinguishable from an explicit false.
+func TestBlockConfiguration_UnmarshalIsShared(t *testing.T) {
+	tests := []struct {
+		name string
+		yaml string
+		want *bool
+	}{
+		{name: "absent", yaml: "module: nullstone/aws-rds-postgres\n", want: nil},
+		{name: "true", yaml: "module: nullstone/aws-rds-postgres\nis_shared: true\n", want: ptr(true)},
+		{name: "false", yaml: "module: nullstone/aws-rds-postgres\nis_shared: false\n", want: ptr(false)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var bc BlockConfiguration
+			require.NoError(t, goyaml.Unmarshal([]byte(tt.yaml), &bc))
+			if tt.want == nil {
+				assert.Nil(t, bc.IsShared)
+			} else {
+				require.NotNil(t, bc.IsShared)
+				assert.Equal(t, *tt.want, *bc.IsShared)
+			}
+		})
+	}
+}
+
+func ptr[T any](v T) *T { return &v }

@@ -246,41 +246,64 @@ func (e *EnvConfiguration) Normalize(ctx context.Context, resolver core.Normaliz
 	return nil
 }
 
+// BlockDefinition is a block as declared in config.yml, carrying the fields that
+// the flattened types.Block cannot express as "unspecified".
+type BlockDefinition struct {
+	Block types.Block
+	// IsShared is nil when config.yml does not declare is_shared for this block.
+	IsShared *bool
+}
+
+// ToBlocks flattens every block in the file into API blocks.
+// An unspecified is_shared collapses to false; use ToBlockDefinitions when that matters.
 func (e *EnvConfiguration) ToBlocks(orgName string, stackId int64) types.Blocks {
-	blocks := make([]types.Block, 0)
+	defs := e.ToBlockDefinitions(orgName, stackId)
+	blocks := make([]types.Block, 0, len(defs))
+	for _, def := range defs {
+		blocks = append(blocks, def.Block)
+	}
+	return blocks
+}
+
+// ToBlockDefinitions flattens every block in the file, preserving whether is_shared was specified.
+func (e *EnvConfiguration) ToBlockDefinitions(orgName string, stackId int64) []BlockDefinition {
+	defs := make([]BlockDefinition, 0)
 	if e == nil {
-		return blocks
+		return defs
+	}
+	add := func(block types.Block, bc BlockConfiguration) {
+		defs = append(defs, BlockDefinition{Block: block, IsShared: bc.IsShared})
 	}
 
 	for _, app := range e.Applications {
-		blocks = append(blocks, app.ToBlock(orgName, stackId))
+		add(app.ToBlock(orgName, stackId), app.BlockConfiguration)
 	}
 	for _, ds := range e.Datastores {
-		blocks = append(blocks, ds.ToBlock(orgName, stackId))
+		add(ds.ToBlock(orgName, stackId), ds.BlockConfiguration)
 	}
 	for _, sub := range e.Subdomains {
-		blocks = append(blocks, sub.ToBlock(orgName, stackId))
+		add(sub.ToBlock(orgName, stackId), sub.BlockConfiguration)
 	}
 	for _, d := range e.Domains {
-		blocks = append(blocks, d.ToBlock(orgName, stackId))
+		add(d.ToBlock(orgName, stackId), d.BlockConfiguration)
 	}
 	for _, i := range e.Ingresses {
-		blocks = append(blocks, i.ToBlock(orgName, stackId))
+		add(i.ToBlock(orgName, stackId), i.BlockConfiguration)
 	}
 	for _, cn := range e.ClusterNamespaces {
-		blocks = append(blocks, cn.ToBlock(orgName, stackId))
+		add(cn.ToBlock(orgName, stackId), cn.BlockConfiguration)
 	}
 	for _, c := range e.Clusters {
-		blocks = append(blocks, c.ToBlock(orgName, stackId))
+		add(c.ToBlock(orgName, stackId), c.BlockConfiguration)
 	}
 	for _, n := range e.Networks {
-		blocks = append(blocks, n.ToBlock(orgName, stackId))
+		add(n.ToBlock(orgName, stackId), n.BlockConfiguration)
 	}
 	for _, b := range e.Blocks {
-		blocks = append(blocks, b.ToBlock(orgName, stackId))
+		add(b.ToBlock(orgName, stackId), *b)
 	}
 
-	return blocks
+	return defs
 }
 
 func (e *EnvConfiguration) ApplyChangesTo(block types.Block, updater core.WorkspaceConfigUpdater) error {

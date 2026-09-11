@@ -110,10 +110,10 @@ func (a *AppConfiguration) Normalize(ctx context.Context, pc core.ObjectPathCont
 	return errs
 }
 
-func (a *AppConfiguration) ToBlock(orgName string, stackId int64) types.Block {
-	block := a.BlockConfiguration.ToBlock(orgName, stackId)
-	block.Framework = a.Framework
-	return block
+func (a *AppConfiguration) toBlockDefinition(orgName string, stackId int64) BlockDefinition {
+	def := a.BlockConfiguration.toBlockDefinition(orgName, stackId)
+	def.Block.Framework = a.Framework
+	return def
 }
 
 func (a *AppConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {

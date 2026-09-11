@@ -104,8 +104,9 @@ func TestBlockConfiguration_isSharedFromYaml(t *testing.T) {
 			bc := blockConfigFromYaml("db", yaml.BlockConfiguration{ModuleSource: "nullstone/aws-rds-postgres", IsShared: tt.in}, BlockTypeDatastore, types.CategoryDatastore)
 			assert.Equal(t, tt.in, bc.IsShared)
 
-			block := bc.ToBlock("acme", 100)
-			assert.Equal(t, tt.in != nil && *tt.in, block.IsShared, "ToBlock collapses unspecified to false")
+			def := bc.toBlockDefinition("acme", 100)
+			assert.Equal(t, tt.in, def.IsShared, "definition keeps the tristate")
+			assert.Equal(t, tt.in != nil && *tt.in, def.Block.IsShared, "flat block collapses unspecified to false")
 		})
 	}
 }

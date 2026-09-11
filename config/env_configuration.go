@@ -261,36 +261,33 @@ func (e *EnvConfiguration) ToBlockDefinitions(orgName string, stackId int64) []B
 	if e == nil {
 		return defs
 	}
-	add := func(block types.Block, bc BlockConfiguration) {
-		defs = append(defs, BlockDefinition{Block: block, IsShared: bc.IsShared})
-	}
 
 	for _, app := range e.Applications {
-		add(app.ToBlock(orgName, stackId), app.BlockConfiguration)
+		defs = append(defs, app.toBlockDefinition(orgName, stackId))
 	}
 	for _, ds := range e.Datastores {
-		add(ds.ToBlock(orgName, stackId), ds.BlockConfiguration)
+		defs = append(defs, ds.toBlockDefinition(orgName, stackId))
 	}
 	for _, sub := range e.Subdomains {
-		add(sub.ToBlock(orgName, stackId), sub.BlockConfiguration)
+		defs = append(defs, sub.toBlockDefinition(orgName, stackId))
 	}
 	for _, d := range e.Domains {
-		add(d.ToBlock(orgName, stackId), d.BlockConfiguration)
+		defs = append(defs, d.toBlockDefinition(orgName, stackId))
 	}
 	for _, i := range e.Ingresses {
-		add(i.ToBlock(orgName, stackId), i.BlockConfiguration)
+		defs = append(defs, i.toBlockDefinition(orgName, stackId))
 	}
 	for _, cn := range e.ClusterNamespaces {
-		add(cn.ToBlock(orgName, stackId), cn.BlockConfiguration)
+		defs = append(defs, cn.toBlockDefinition(orgName, stackId))
 	}
 	for _, c := range e.Clusters {
-		add(c.ToBlock(orgName, stackId), c.BlockConfiguration)
+		defs = append(defs, c.toBlockDefinition(orgName, stackId))
 	}
 	for _, n := range e.Networks {
-		add(n.ToBlock(orgName, stackId), n.BlockConfiguration)
+		defs = append(defs, n.toBlockDefinition(orgName, stackId))
 	}
 	for _, b := range e.Blocks {
-		add(b.ToBlock(orgName, stackId), *b)
+		defs = append(defs, b.toBlockDefinition(orgName, stackId))
 	}
 
 	return defs

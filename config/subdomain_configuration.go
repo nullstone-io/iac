@@ -24,12 +24,12 @@ type SubdomainConfiguration struct {
 	Reservation           *types.SubdomainReservation `json:"reservation,omitempty"`
 }
 
-func (s *SubdomainConfiguration) ToBlock(orgName string, stackId int64) types.Block {
-	block := s.BlockConfiguration.ToBlock(orgName, stackId)
+func (s *SubdomainConfiguration) toBlockDefinition(orgName string, stackId int64) BlockDefinition {
+	def := s.BlockConfiguration.toBlockDefinition(orgName, stackId)
 	if s.SubdomainNameTemplate != nil {
-		block.DnsName = *s.SubdomainNameTemplate
+		def.Block.DnsName = *s.SubdomainNameTemplate
 	}
-	return block
+	return def
 }
 
 func (s *SubdomainConfiguration) Resolve(ctx context.Context, resolver core.ResolveResolver, finder core.IacFinder, ic core.IacContext, pc core.ObjectPathContext) core.ResolveErrors {

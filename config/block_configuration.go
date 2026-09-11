@@ -185,21 +185,23 @@ func (b *BlockConfiguration) Normalize(ctx context.Context, pc core.ObjectPathCo
 	return b.Connections.Normalize(ctx, pc, resolver)
 }
 
-// ToBlock flattens the configuration into an API block.
-// IsShared collapses to false when the file did not specify it; EnvConfiguration.ToBlockDefinitions keeps the distinction.
-func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block {
-	block := types.Block{
-		Type:                string(b.Type),
-		OrgName:             orgName,
-		StackId:             stackId,
-		Name:                b.Name,
-		IsShared:            b.IsShared != nil && *b.IsShared,
-		DnsName:             "",
-		ModuleSource:        b.ModuleSource,
-		ModuleSourceVersion: b.ModuleConstraint,
-		Connections:         b.Connections.DesiredTargets(),
+// toBlockDefinition flattens the configuration into an API block plus the tristate is_shared.
+// The flat block's IsShared collapses to false when the file did not specify it.
+func (b *BlockConfiguration) toBlockDefinition(orgName string, stackId int64) BlockDefinition {
+	return BlockDefinition{
+		Block: types.Block{
+			Type:                string(b.Type),
+			OrgName:             orgName,
+			StackId:             stackId,
+			Name:                b.Name,
+			IsShared:            b.IsShared != nil && *b.IsShared,
+			DnsName:             "",
+			ModuleSource:        b.ModuleSource,
+			ModuleSourceVersion: b.ModuleConstraint,
+			Connections:         b.Connections.DesiredTargets(),
+		},
+		IsShared: b.IsShared,
 	}
-	return block
 }
 
 func (b *BlockConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {

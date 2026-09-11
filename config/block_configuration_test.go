@@ -154,7 +154,5 @@ func TestEnvConfiguration_ToBlockDefinitions(t *testing.T) {
 	assert.Nil(t, byName["queue"].IsShared)
 	assert.Equal(t, string(BlockTypeBlock), byName["queue"].Block.Type)
 
-	// ToBlocks is the flattened view of the same definitions
-	assert.Len(t, ec.ToBlocks("acme", 100), 4)
 	assert.Empty(t, (*EnvConfiguration)(nil).ToBlockDefinitions("acme", 100))
 }

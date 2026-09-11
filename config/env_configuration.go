@@ -254,18 +254,8 @@ type BlockDefinition struct {
 	IsShared *bool
 }
 
-// ToBlocks flattens every block in the file into API blocks.
-// An unspecified is_shared collapses to false; use ToBlockDefinitions when that matters.
-func (e *EnvConfiguration) ToBlocks(orgName string, stackId int64) types.Blocks {
-	defs := e.ToBlockDefinitions(orgName, stackId)
-	blocks := make([]types.Block, 0, len(defs))
-	for _, def := range defs {
-		blocks = append(blocks, def.Block)
-	}
-	return blocks
-}
-
 // ToBlockDefinitions flattens every block in the file, preserving whether is_shared was specified.
+// Callers that only need the API shape read Block off each definition.
 func (e *EnvConfiguration) ToBlockDefinitions(orgName string, stackId int64) []BlockDefinition {
 	defs := make([]BlockDefinition, 0)
 	if e == nil {

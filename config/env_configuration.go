@@ -246,15 +246,14 @@ func (e *EnvConfiguration) Normalize(ctx context.Context, resolver core.Normaliz
 	return nil
 }
 
-// BlockDefinition is a block as declared in config.yml, carrying the fields that
-// the flattened types.Block cannot express as "unspecified".
+// BlockDefinition is a block as declared in config.yml. Block carries only the fields IaC
+// governs; anything IaC does not declare is left at its zero value. It is a struct so that
+// declared-only information which the flat types.Block cannot express can be added later.
 type BlockDefinition struct {
 	Block types.Block
-	// IsShared is nil when config.yml does not declare is_shared for this block.
-	IsShared *bool
 }
 
-// ToBlockDefinitions flattens every block in the file, preserving whether is_shared was specified.
+// ToBlockDefinitions flattens every block in the file into sync definitions.
 // Callers that only need the API shape read Block off each definition.
 func (e *EnvConfiguration) ToBlockDefinitions(orgName string, stackId int64) []BlockDefinition {
 	defs := make([]BlockDefinition, 0)

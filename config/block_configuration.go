@@ -36,9 +36,7 @@ type BlockConfiguration struct {
 	ModuleConstraint string                   `json:"moduleConstraint"`
 	Variables        VariableConfigurations   `json:"vars"`
 	Connections      ConnectionConfigurations `json:"connections"`
-	// IsShared is nil when the file does not specify is_shared.
-	IsShared *bool                 `json:"isShared,omitempty"`
-	Metadata MetadataConfiguration `json:"metadata"`
+	Metadata         MetadataConfiguration    `json:"metadata"`
 
 	// These fields are populated via Resolve()
 	Module        *types.Module        `json:"module"`
@@ -98,7 +96,6 @@ func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType B
 		ModuleConstraint: moduleConstraint,
 		Variables:        convertVariables(value.Variables),
 		Connections:      convertConnections(value.Connections),
-		IsShared:         value.IsShared,
 		Metadata:         convertMetadata(value.Metadata),
 	}
 }
@@ -185,8 +182,9 @@ func (b *BlockConfiguration) Normalize(ctx context.Context, pc core.ObjectPathCo
 	return b.Connections.Normalize(ctx, pc, resolver)
 }
 
-// toBlockDefinition flattens the configuration into an API block plus the tristate is_shared.
-// The flat block's IsShared collapses to false when the file did not specify it.
+// toBlockDefinition flattens the configuration into an API block.
+// Fields IaC does not govern (IsShared, Repo, Framework for non-apps, ...) stay zero so a
+// consumer syncing blocks can tell "not declared" from a declared value.
 func (b *BlockConfiguration) toBlockDefinition(orgName string, stackId int64) BlockDefinition {
 	return BlockDefinition{
 		Block: types.Block{
@@ -194,13 +192,11 @@ func (b *BlockConfiguration) toBlockDefinition(orgName string, stackId int64) Bl
 			OrgName:             orgName,
 			StackId:             stackId,
 			Name:                b.Name,
-			IsShared:            b.IsShared != nil && *b.IsShared,
 			DnsName:             "",
 			ModuleSource:        b.ModuleSource,
 			ModuleSourceVersion: b.ModuleConstraint,
 			Connections:         b.Connections.DesiredTargets(),
 		},
-		IsShared: b.IsShared,
 	}
 }
 

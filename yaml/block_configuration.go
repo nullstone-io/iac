@@ -9,9 +9,6 @@ type BlockConfiguration struct {
 	ModuleConstraint *string               `yaml:"module_version,omitempty" json:"moduleVersion"`
 	Variables        map[string]any        `yaml:"vars,omitempty" json:"vars"`
 	Connections      ConnectionConstraints `yaml:"connections,omitempty" json:"connections"`
-	// IsShared marks the block as shared across preview environments.
-	// nil means the file does not specify it, which leaves the block's current setting alone.
-	IsShared *bool `yaml:"is_shared,omitempty" json:"isShared,omitempty"`
 	// Metadata holds governance/descriptive metadata (e.g. data classification).
 	Metadata *MetadataConfiguration `yaml:"metadata,omitempty" json:"metadata,omitempty"`
 }

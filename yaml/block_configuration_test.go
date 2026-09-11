@@ -41,29 +41,10 @@ func TestMetadataFromWorkspaceConfig(t *testing.T) {
 	})
 }
 
-// is_shared is tristate: absent must stay distinguishable from an explicit false.
-func TestBlockConfiguration_UnmarshalIsShared(t *testing.T) {
-	tests := []struct {
-		name string
-		yaml string
-		want *bool
-	}{
-		{name: "absent", yaml: "module: nullstone/aws-rds-postgres\n", want: nil},
-		{name: "true", yaml: "module: nullstone/aws-rds-postgres\nis_shared: true\n", want: ptr(true)},
-		{name: "false", yaml: "module: nullstone/aws-rds-postgres\nis_shared: false\n", want: ptr(false)},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var bc BlockConfiguration
-			require.NoError(t, goyaml.Unmarshal([]byte(tt.yaml), &bc))
-			if tt.want == nil {
-				assert.Nil(t, bc.IsShared)
-			} else {
-				require.NotNil(t, bc.IsShared)
-				assert.Equal(t, *tt.want, *bc.IsShared)
-			}
-		})
-	}
+// is_shared is not an IaC setting (sharing is chosen in the UI); a stray key parses without error
+// and has no effect, matching the lenient decoder used for every other unknown key.
+func TestBlockConfiguration_IgnoresIsShared(t *testing.T) {
+	var bc BlockConfiguration
+	require.NoError(t, goyaml.Unmarshal([]byte("module: nullstone/aws-rds-postgres\nis_shared: true\n"), &bc))
+	assert.Equal(t, "nullstone/aws-rds-postgres", bc.ModuleSource)
 }
-
-func ptr[T any](v T) *T { return &v }

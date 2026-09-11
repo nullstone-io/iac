@@ -246,41 +246,50 @@ func (e *EnvConfiguration) Normalize(ctx context.Context, resolver core.Normaliz
 	return nil
 }
 
-func (e *EnvConfiguration) ToBlocks(orgName string, stackId int64) types.Blocks {
-	blocks := make([]types.Block, 0)
+// BlockDefinition is a block as declared in config.yml. Block carries only the fields IaC
+// governs; anything IaC does not declare is left at its zero value. It is a struct so that
+// declared-only information which the flat types.Block cannot express can be added later.
+type BlockDefinition struct {
+	Block types.Block
+}
+
+// ToBlockDefinitions flattens every block in the file into sync definitions.
+// Callers that only need the API shape read Block off each definition.
+func (e *EnvConfiguration) ToBlockDefinitions(orgName string, stackId int64) []BlockDefinition {
+	defs := make([]BlockDefinition, 0)
 	if e == nil {
-		return blocks
+		return defs
 	}
 
 	for _, app := range e.Applications {
-		blocks = append(blocks, app.ToBlock(orgName, stackId))
+		defs = append(defs, app.toBlockDefinition(orgName, stackId))
 	}
 	for _, ds := range e.Datastores {
-		blocks = append(blocks, ds.ToBlock(orgName, stackId))
+		defs = append(defs, ds.toBlockDefinition(orgName, stackId))
 	}
 	for _, sub := range e.Subdomains {
-		blocks = append(blocks, sub.ToBlock(orgName, stackId))
+		defs = append(defs, sub.toBlockDefinition(orgName, stackId))
 	}
 	for _, d := range e.Domains {
-		blocks = append(blocks, d.ToBlock(orgName, stackId))
+		defs = append(defs, d.toBlockDefinition(orgName, stackId))
 	}
 	for _, i := range e.Ingresses {
-		blocks = append(blocks, i.ToBlock(orgName, stackId))
+		defs = append(defs, i.toBlockDefinition(orgName, stackId))
 	}
 	for _, cn := range e.ClusterNamespaces {
-		blocks = append(blocks, cn.ToBlock(orgName, stackId))
+		defs = append(defs, cn.toBlockDefinition(orgName, stackId))
 	}
 	for _, c := range e.Clusters {
-		blocks = append(blocks, c.ToBlock(orgName, stackId))
+		defs = append(defs, c.toBlockDefinition(orgName, stackId))
 	}
 	for _, n := range e.Networks {
-		blocks = append(blocks, n.ToBlock(orgName, stackId))
+		defs = append(defs, n.toBlockDefinition(orgName, stackId))
 	}
 	for _, b := range e.Blocks {
-		blocks = append(blocks, b.ToBlock(orgName, stackId))
+		defs = append(defs, b.toBlockDefinition(orgName, stackId))
 	}
 
-	return blocks
+	return defs
 }
 
 func (e *EnvConfiguration) ApplyChangesTo(block types.Block, updater core.WorkspaceConfigUpdater) error {

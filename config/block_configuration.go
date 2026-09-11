@@ -36,7 +36,6 @@ type BlockConfiguration struct {
 	ModuleConstraint string                   `json:"moduleConstraint"`
 	Variables        VariableConfigurations   `json:"vars"`
 	Connections      ConnectionConfigurations `json:"connections"`
-	IsShared         bool                     `json:"isShared"`
 	Metadata         MetadataConfiguration    `json:"metadata"`
 
 	// These fields are populated via Resolve()
@@ -97,7 +96,6 @@ func blockConfigFromYaml(name string, value yaml.BlockConfiguration, blockType B
 		ModuleConstraint: moduleConstraint,
 		Variables:        convertVariables(value.Variables),
 		Connections:      convertConnections(value.Connections),
-		IsShared:         value.IsShared,
 		Metadata:         convertMetadata(value.Metadata),
 	}
 }
@@ -184,19 +182,22 @@ func (b *BlockConfiguration) Normalize(ctx context.Context, pc core.ObjectPathCo
 	return b.Connections.Normalize(ctx, pc, resolver)
 }
 
-func (b *BlockConfiguration) ToBlock(orgName string, stackId int64) types.Block {
-	block := types.Block{
-		Type:                string(b.Type),
-		OrgName:             orgName,
-		StackId:             stackId,
-		Name:                b.Name,
-		IsShared:            b.IsShared,
-		DnsName:             "",
-		ModuleSource:        b.ModuleSource,
-		ModuleSourceVersion: b.ModuleConstraint,
-		Connections:         b.Connections.DesiredTargets(),
+// toBlockDefinition flattens the configuration into an API block.
+// Fields IaC does not govern (IsShared, Repo, Framework for non-apps, ...) stay zero so a
+// consumer syncing blocks can tell "not declared" from a declared value.
+func (b *BlockConfiguration) toBlockDefinition(orgName string, stackId int64) BlockDefinition {
+	return BlockDefinition{
+		Block: types.Block{
+			Type:                string(b.Type),
+			OrgName:             orgName,
+			StackId:             stackId,
+			Name:                b.Name,
+			DnsName:             "",
+			ModuleSource:        b.ModuleSource,
+			ModuleSourceVersion: b.ModuleConstraint,
+			Connections:         b.Connections.DesiredTargets(),
+		},
 	}
-	return block
 }
 
 func (b *BlockConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {

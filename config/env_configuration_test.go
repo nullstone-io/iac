@@ -343,10 +343,10 @@ func TestConvertConfiguration(t *testing.T) {
 
 	syncBlocks := func(base *EnvConfiguration, resolver *find.ResourceResolver) {
 		backfill := make([]types.Block, 0)
-		for _, block := range base.ToBlocks(defaults.OrgName, resolver.CurStackId) {
-			if _, err := resolver.FindBlock(context.TODO(), types.ConnectionTarget{BlockName: block.Name}); err != nil {
+		for _, def := range base.ToBlockDefinitions(defaults.OrgName, resolver.CurStackId) {
+			if _, err := resolver.FindBlock(context.TODO(), types.ConnectionTarget{BlockName: def.Block.Name}); err != nil {
 				if find.IsMissingResource(err) {
-					backfill = append(backfill, block)
+					backfill = append(backfill, def.Block)
 				}
 			}
 		}

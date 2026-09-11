@@ -40,3 +40,11 @@ func TestMetadataFromWorkspaceConfig(t *testing.T) {
 		assert.Equal(t, "restricted", *got.DataClassification)
 	})
 }
+
+// is_shared is not an IaC setting (sharing is chosen in the UI); a stray key parses without error
+// and has no effect, matching the lenient decoder used for every other unknown key.
+func TestBlockConfiguration_IgnoresIsShared(t *testing.T) {
+	var bc BlockConfiguration
+	require.NoError(t, goyaml.Unmarshal([]byte("module: nullstone/aws-rds-postgres\nis_shared: true\n"), &bc))
+	assert.Equal(t, "nullstone/aws-rds-postgres", bc.ModuleSource)
+}

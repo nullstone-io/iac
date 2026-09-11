@@ -9,7 +9,6 @@ type BlockConfiguration struct {
 	ModuleConstraint *string               `yaml:"module_version,omitempty" json:"moduleVersion"`
 	Variables        map[string]any        `yaml:"vars,omitempty" json:"vars"`
 	Connections      ConnectionConstraints `yaml:"connections,omitempty" json:"connections"`
-	IsShared         bool                  `yaml:"is_shared,omitempty" json:"isShared"`
 	// Metadata holds governance/descriptive metadata (e.g. data classification).
 	Metadata *MetadataConfiguration `yaml:"metadata,omitempty" json:"metadata,omitempty"`
 }

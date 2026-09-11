@@ -12,12 +12,12 @@ type DomainConfiguration struct {
 	DomainNameTemplate *string `json:"domainNameTemplate"`
 }
 
-func (d *DomainConfiguration) ToBlock(orgName string, stackId int64) types.Block {
-	block := d.BlockConfiguration.ToBlock(orgName, stackId)
+func (d *DomainConfiguration) toBlockDefinition(orgName string, stackId int64) BlockDefinition {
+	def := d.BlockConfiguration.toBlockDefinition(orgName, stackId)
 	if d.DomainNameTemplate != nil {
-		block.DnsName = *d.DomainNameTemplate
+		def.Block.DnsName = *d.DomainNameTemplate
 	}
-	return block
+	return def
 }
 
 func (d *DomainConfiguration) ApplyChangesTo(ic core.IacContext, updater core.WorkspaceConfigUpdater) error {

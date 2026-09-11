@@ -88,3 +88,58 @@ func TestBlockConfiguration_ApplyChangesTo_dataClassification(t *testing.T) {
 		assert.Equal(t, types.ClassificationLevel(""), wc.Metadata.DataClassification)
 	})
 }
+
+// Sharing is not governed by IaC, so a definition never carries it; a block sync must leave
+// the stored flag alone.
+func TestBlockConfiguration_toBlockDefinitionOmitsUngovernedFields(t *testing.T) {
+	bc := blockConfigFromYaml("db", yaml.BlockConfiguration{ModuleSource: "nullstone/aws-rds-postgres"}, BlockTypeDatastore, types.CategoryDatastore)
+	def := bc.toBlockDefinition("acme", 100)
+	assert.False(t, def.Block.IsShared)
+	assert.Empty(t, def.Block.DnsName)
+	assert.Empty(t, def.Block.Framework)
+	assert.Empty(t, def.Block.Repo)
+	assert.Equal(t, "latest", def.Block.ModuleSourceVersion, "omitted module_version resolves to latest")
+}
+
+func TestEnvConfiguration_ToBlockDefinitions(t *testing.T) {
+	ec := &EnvConfiguration{
+		Applications: map[string]*AppConfiguration{
+			"api": {
+				BlockConfiguration: BlockConfiguration{Type: BlockTypeApplication, Name: "api", ModuleSource: "nullstone/aws-fargate-service", ModuleConstraint: "latest"},
+				Framework:          "go",
+			},
+		},
+		Datastores: map[string]*DatastoreConfiguration{
+			"db": {BlockConfiguration: BlockConfiguration{Type: BlockTypeDatastore, Name: "db", ModuleSource: "nullstone/aws-rds-postgres"}},
+		},
+		Subdomains: map[string]*SubdomainConfiguration{
+			"web": {
+				BlockConfiguration:    BlockConfiguration{Type: BlockTypeSubdomain, Name: "web", ModuleSource: "nullstone/aws-subdomain"},
+				SubdomainNameTemplate: ptr("web.{{ NULLSTONE_ENV }}"),
+			},
+		},
+		Blocks: map[string]*BlockConfiguration{
+			"queue": {Type: BlockTypeBlock, Name: "queue", ModuleSource: "nullstone/aws-sqs-queue"},
+		},
+	}
+
+	defs := ec.ToBlockDefinitions("acme", 100)
+	byName := map[string]BlockDefinition{}
+	for _, def := range defs {
+		byName[def.Block.Name] = def
+	}
+	require.Len(t, byName, 4)
+
+	assert.Equal(t, string(BlockTypeApplication), byName["api"].Block.Type)
+	assert.Equal(t, "go", byName["api"].Block.Framework)
+
+	assert.Equal(t, string(BlockTypeDatastore), byName["db"].Block.Type)
+	assert.Empty(t, byName["db"].Block.Framework)
+
+	assert.Equal(t, "web.{{ NULLSTONE_ENV }}", byName["web"].Block.DnsName)
+
+	assert.Equal(t, string(BlockTypeBlock), byName["queue"].Block.Type)
+	assert.Empty(t, byName["queue"].Block.DnsName)
+
+	assert.Empty(t, (*EnvConfiguration)(nil).ToBlockDefinitions("acme", 100))
+}

@@ -6,7 +6,7 @@ require (
 	github.com/BSick7/go-api v0.18.3
 	github.com/google/go-cmp v0.7.0
 	github.com/gorilla/mux v1.8.1
-	github.com/nullstone-io/module v0.2.11
+	github.com/nullstone-io/module v0.3.1
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/nullstone-io/go-api-client.v0 v0.0.0-20260716142317-86afc1414450
 	gopkg.in/yaml.v3 v3.0.1

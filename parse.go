@@ -60,7 +60,7 @@ func ParseConfig(repoUrl, repoName, filename string, isOverrides bool, r io.Read
 }
 
 func ParseConfigFile(repoUrl, repoName, filename string, isOverrides bool) (*config.EnvConfiguration, error) {
-	raw, err := os.ReadFile(filename)
+	raw, err := os.ReadFile(filename) // #nosec G304 -- IaC file path supplied by the caller
 	if err != nil {
 		return nil, err
 	}

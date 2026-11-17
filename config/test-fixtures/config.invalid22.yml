@@ -1,0 +1,14 @@
+version: "0.1"
+
+apps:
+  api:
+    module: nullstone/aws-fargate-service
+    build:
+      builder: jenkins
+      nullstone:
+        dockerfile: /etc/Dockerfile
+        docker_context: ../outside
+        build_dir: ""
+        publish_dir: C:\dist
+      github-actions:
+        workflow_filename: ../../build.yml

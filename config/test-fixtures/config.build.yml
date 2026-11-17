@@ -1,0 +1,35 @@
+version: "0.1"
+
+apps:
+  api:
+    module: nullstone/aws-fargate-service
+    build:
+      builder: nullstone
+      nullstone:
+        dockerfile: api/Dockerfile
+        docker_context: api
+  site:
+    module: nullstone/aws-s3-site
+    build:
+      builder: nullstone
+      nullstone:
+        build_dir: ./web
+        install_deps_cmd: yarn install --frozen-lockfile
+        build_cmd: yarn build
+        publish_dir: ./web/dist
+  docs:
+    module: nullstone/aws-s3-site
+    build:
+      builder: github-actions
+      github-actions:
+        workflow_filename: .github/workflows/docs.yml
+        initiate_workflow: true
+        perform_push: false
+        workflow_inputs:
+          target: docs
+  legacy:
+    module: nullstone/aws-fargate-service
+    build:
+      builder: manual
+  worker:
+    module: nullstone/aws-fargate-service

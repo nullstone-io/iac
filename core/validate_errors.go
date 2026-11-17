@@ -163,3 +163,17 @@ func InvalidEventTargetError(pc ObjectPathContext, target string) ValidateError 
 		ErrorMessage:      fmt.Sprintf("Event Target (%s) is not a valid event target", target),
 	}
 }
+
+func InvalidBuildValueError(pc ObjectPathContext, value string, allowed []string) ValidateError {
+	return ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Invalid value (%s), must be one of: %s", value, strings.Join(allowed, ", ")),
+	}
+}
+
+func InvalidBuildPathError(pc ObjectPathContext, value string) ValidateError {
+	return ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Invalid path (%s), must be a relative path inside the repository", value),
+	}
+}

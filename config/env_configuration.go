@@ -321,6 +321,19 @@ func (e *EnvConfiguration) ApplyChangesTo(block types.Block, updater core.Worksp
 	return ca.ApplyChangesTo(e.IacContext, updater)
 }
 
+// ApplyBuildChangesTo applies the `build:` this file declares for block to updater.
+// Only applications declare `build:`; any other block changes nothing.
+func (e *EnvConfiguration) ApplyBuildChangesTo(block types.Block, updater core.BuildConfigUpdater) error {
+	if BlockType(block.Type) != BlockTypeApplication {
+		return nil
+	}
+	app, ok := e.Applications[block.Name]
+	if !ok {
+		return nil
+	}
+	return app.ApplyBuildChangesTo(e.IacContext, updater)
+}
+
 func (e *EnvConfiguration) BlockNames() map[string]bool {
 	names := map[string]bool{}
 	for _, cur := range e.Applications {

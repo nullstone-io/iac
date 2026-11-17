@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	_ core.ChangeApplier = &AppConfiguration{}
+	_ core.ChangeApplier      = &AppConfiguration{}
+	_ core.BuildChangeApplier = &AppConfiguration{}
 )
 
 type AppConfiguration struct {
@@ -19,6 +20,10 @@ type AppConfiguration struct {
 	Framework    string                   `json:"framework"`
 	EnvVariables map[string]string        `json:"envVars"`
 	Capabilities CapabilityConfigurations `json:"capabilities"`
+	// Build is `build:` on the app, nil when the file does not declare it.
+	// It is applied through ApplyBuildChangesTo, never through ApplyChangesTo:
+	// a build config is not part of the workspace config.
+	Build *BuildConfiguration `json:"build,omitempty"`
 }
 
 func convertCapabilities(parsed yaml.CapabilityConfigurations) CapabilityConfigurations {
@@ -49,6 +54,7 @@ func convertAppConfigurations(parsed map[string]yaml.AppConfiguration) map[strin
 			Framework:          value.Framework,
 			EnvVariables:       value.EnvVariables,
 			Capabilities:       convertCapabilities(value.Capabilities),
+			Build:              convertBuildConfiguration(value.Build),
 		}
 	}
 	return apps
@@ -69,6 +75,7 @@ func (a *AppConfiguration) Resolve(ctx context.Context, resolver core.ResolveRes
 func (a *AppConfiguration) Validate(ic core.IacContext, pc core.ObjectPathContext) core.ValidateErrors {
 	errs := a.BlockConfiguration.Validate(ic, pc)
 	errs = append(errs, a.ValidateEnvVariables(pc)...)
+	errs = append(errs, a.Build.Validate(pc)...)
 	errs = append(errs, a.Capabilities.Validate(ic, pc, a.Module)...)
 	return errs
 }
@@ -133,4 +140,18 @@ func (a *AppConfiguration) ApplyChangesTo(ic core.IacContext, updater core.Works
 	}
 
 	return a.Capabilities.ApplyChangesTo(ic, updater)
+}
+
+// ApplyBuildChangesTo applies `build:` to updater; a file that does not declare it changes nothing.
+// config.yml declares the whole build config, so it starts from the module default.
+// An overrides file sets only the keys it names on top of what config.yml produced.
+func (a *AppConfiguration) ApplyBuildChangesTo(ic core.IacContext, updater core.BuildConfigUpdater) error {
+	if a.Build == nil {
+		return nil
+	}
+	if !ic.IsOverrides {
+		updater.ResetBuildConfig()
+	}
+	updater.UpdateBuildConfig(ic, a.Build.ApplyTo)
+	return nil
 }

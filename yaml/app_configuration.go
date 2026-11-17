@@ -8,6 +8,9 @@ type AppConfiguration struct {
 	Framework    string                   `yaml:"framework,omitempty" json:"framework"`
 	EnvVariables map[string]string        `yaml:"environment,omitempty" json:"envVars"`
 	Capabilities CapabilityConfigurations `yaml:"capabilities,omitempty" json:"capabilities"`
+	// Build declares how the app is built.
+	// It is not part of the workspace config: it applies to the next build with no infra run.
+	Build *BuildConfiguration `yaml:"build,omitempty" json:"build,omitempty"`
 }
 
 func AppConfigurationFromWorkspaceConfig(stackId, envId int64, config types.WorkspaceConfig) AppConfiguration {

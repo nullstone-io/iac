@@ -1,0 +1,16 @@
+version: "0.1"
+
+apps:
+  api:
+    build:
+      nullstone:
+        dockerfile: api/Dockerfile.prod
+  web:
+    build:
+      github-actions:
+        initiate_workflow: false
+        workflow_inputs:
+          minify: "true"
+  worker:
+    build:
+      builder: manual

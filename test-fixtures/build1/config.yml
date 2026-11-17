@@ -1,0 +1,20 @@
+version: "0.1"
+
+apps:
+  api:
+    module: nullstone/aws-fargate-service
+    build:
+      builder: nullstone
+      nullstone:
+        dockerfile: api/Dockerfile
+        docker_context: api
+  web:
+    module: nullstone/aws-s3-site
+    build:
+      builder: github-actions
+      github-actions:
+        workflow_filename: .github/workflows/web.yml
+        workflow_inputs:
+          target: web
+  worker:
+    module: nullstone/aws-fargate-service

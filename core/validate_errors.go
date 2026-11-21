@@ -177,3 +177,24 @@ func InvalidBuildPathError(pc ObjectPathContext, value string) ValidateError {
 		ErrorMessage:      fmt.Sprintf("Invalid path (%s), must be a relative path inside the repository", value),
 	}
 }
+
+func BuildSectionNotUsedError(pc ObjectPathContext, section, builder string) ValidateError {
+	return ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Settings of the %s builder are not used, the builder is (%s)", section, builder),
+	}
+}
+
+func BuildSettingNotUsedError(pc ObjectPathContext, packageMode string) ValidateError {
+	return ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Setting is not used by the package mode (%s) of the app's module", packageMode),
+	}
+}
+
+func BuilderCannotBuildError(pc ObjectPathContext, builder, packageMode string) ValidateError {
+	return ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("The %s builder cannot build the package mode (%s) of the app's module", builder, packageMode),
+	}
+}

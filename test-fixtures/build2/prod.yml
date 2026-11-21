@@ -1,0 +1,31 @@
+version: "0.1"
+
+apps:
+  # switches the builder and names that builder's settings
+  api:
+    build:
+      builder: github-actions
+      github-actions:
+        workflow_filename: .github/workflows/api.yml
+  # not in config.yml: no file names its module or its builder
+  cron:
+    build:
+      nullstone:
+        build_cmd: make cron
+  # the module in config.yml is a static site
+  site:
+    build:
+      nullstone:
+        docker_context: site
+  # the builder in config.yml is github-actions
+  web:
+    build:
+      nullstone:
+        dockerfile: web/Dockerfile.prod
+  # config.yml declares no build, so the builder is not known; its module is a container
+  worker:
+    build:
+      nullstone:
+        build_dir: ./worker
+      github-actions:
+        initiate_workflow: false

@@ -1,0 +1,34 @@
+version: "0.1"
+
+apps:
+  # a container app whose settings fit
+  api:
+    module: nullstone/aws-fargate-service
+    build:
+      nullstone:
+        dockerfile: api/Dockerfile
+  # a zip app, which the nullstone builder cannot build
+  fn:
+    module: nullstone/aws-lambda-zip
+    build:
+      nullstone:
+        publish_dir: ./out
+  # a static site with a container setting
+  site:
+    module: nullstone/aws-s3-site
+    build:
+      nullstone:
+        dockerfile: site/Dockerfile
+        build_cmd: yarn build
+  # settings of a builder that is not selected
+  web:
+    module: nullstone/aws-fargate-service
+    build:
+      builder: github-actions
+      nullstone:
+        dockerfile: web/Dockerfile
+      github-actions:
+        workflow_filename: .github/workflows/web.yml
+  # no build in config.yml
+  worker:
+    module: nullstone/aws-fargate-service

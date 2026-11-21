@@ -24,6 +24,7 @@ func convertBuildConfiguration(parsed *yaml.BuildConfiguration) *BuildConfigurat
 
 // Validate checks the values the file names. It cannot check the build config as a whole
 // (e.g. that a builder other than manual has a repository), since an overrides file names only part of it.
+// ValidateFit checks the settings against the builder and the module of the app.
 func (b *BuildConfiguration) Validate(pc core.ObjectPathContext) core.ValidateErrors {
 	if b == nil {
 		return nil
@@ -46,6 +47,81 @@ func (b *BuildConfiguration) Validate(pc core.ObjectPathContext) core.ValidateEr
 	if gha := b.GithubActions; gha != nil {
 		ghapc := pc.SubField(types.BuilderGithubActions)
 		errs = append(errs, validateBuildPath(ghapc.SubField("workflow_filename"), gha.WorkflowFilename)...)
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
+
+// BuildTarget is what the `build:` of one file is checked against in ValidateFit.
+// An empty value is not known and is not checked.
+type BuildTarget struct {
+	// Builder is the builder in effect for the file: the one it names, else the one it is laid over
+	Builder string
+	// PackageMode is the package mode of the app's module
+	PackageMode string
+}
+
+var (
+	// nullstoneSettingsByPackageMode lists the settings of the nullstone builder that each package mode reads
+	nullstoneSettingsByPackageMode = map[string][]string{
+		types.BuildPackageModeDockerfile: {"dockerfile", "docker_context"},
+		types.BuildPackageModeSiteAssets: {"build_dir", "install_deps_cmd", "build_cmd", "publish_dir"},
+		types.BuildPackageModeZip:        {"publish_dir"},
+	}
+	// packageModesNotBuiltByNullstone lists the package modes the nullstone builder cannot build
+	packageModesNotBuiltByNullstone = []string{types.BuildPackageModeZip}
+)
+
+// ValidateFit checks that the settings the file names are used: they belong to the builder in effect,
+// that builder can build the package mode, and the package mode reads them.
+// Validate checks the values; this checks them against the app, which one file alone may not know.
+func (b *BuildConfiguration) ValidateFit(pc core.ObjectPathContext, target BuildTarget) core.ValidateErrors {
+	if b == nil {
+		return nil
+	}
+	errs := core.ValidateErrors{}
+	pc = pc.SubField("build")
+
+	builder := target.Builder
+	if !slices.Contains(buildBuilders, builder) {
+		// Validate reports a builder that does not exist
+		builder = ""
+	}
+	if builder != "" {
+		if b.Nullstone != nil && builder != types.BuilderNullstone {
+			errs = append(errs, core.BuildSectionNotUsedError(pc.SubField(types.BuilderNullstone), types.BuilderNullstone, builder))
+		}
+		if b.GithubActions != nil && builder != types.BuilderGithubActions {
+			errs = append(errs, core.BuildSectionNotUsedError(pc.SubField(types.BuilderGithubActions), types.BuilderGithubActions, builder))
+		}
+		if builder == types.BuilderNullstone && slices.Contains(packageModesNotBuiltByNullstone, target.PackageMode) {
+			errs = append(errs, core.BuilderCannotBuildError(pc.SubField("builder"), builder, target.PackageMode))
+		}
+	}
+
+	// A nullstone section under another builder is already reported as a whole
+	used, known := nullstoneSettingsByPackageMode[target.PackageMode]
+	if ns := b.Nullstone; ns != nil && known && (builder == "" || builder == types.BuilderNullstone) {
+		nspc := pc.SubField(types.BuilderNullstone)
+		named := []struct {
+			name  string
+			value *string
+		}{
+			{"dockerfile", ns.Dockerfile},
+			{"docker_context", ns.DockerContext},
+			{"build_dir", ns.BuildDir},
+			{"install_deps_cmd", ns.InstallDepsCmd},
+			{"build_cmd", ns.BuildCmd},
+			{"publish_dir", ns.PublishDir},
+		}
+		for _, setting := range named {
+			if setting.value != nil && !slices.Contains(used, setting.name) {
+				errs = append(errs, core.BuildSettingNotUsedError(nspc.SubField(setting.name), target.PackageMode))
+			}
+		}
 	}
 
 	if len(errs) > 0 {

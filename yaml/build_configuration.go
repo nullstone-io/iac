@@ -12,6 +12,10 @@ package yaml
 // Every key is optional.
 // In config.yml, a key that is left out takes the default of the app's module.
 // In an overrides file (<env>.yml, previews.yml), a key that is left out keeps the value from config.yml.
+//
+// A setting that would not be used fails validation: settings of a builder other than the one in effect,
+// a nullstone setting that the package mode of the app's module does not read,
+// and the nullstone builder on a module it cannot build (zip).
 type BuildConfiguration struct {
 	// Builder is which builder builds the app: manual, nullstone or github-actions
 	Builder *string `yaml:"builder,omitempty" json:"builder,omitempty"`

@@ -21,6 +21,8 @@ func Validate(input ConfigFiles) core.ValidateErrors {
 			errs = append(errs, err)
 		}
 	}
+	// `build:` is checked across the files: an overrides file takes its builder and module from config.yml
+	errs = append(errs, validateBuilds(input)...)
 	if len(errs) > 0 {
 		return errs
 	}

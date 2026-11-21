@@ -102,6 +102,117 @@ func TestBuildConfiguration_Validate(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
+func TestBuildConfiguration_ValidateFit(t *testing.T) {
+	ptr := func(s string) *string { return &s }
+	no := false
+	path := func(fields ...string) core.ObjectPathContext {
+		pc := core.NewObjectPathContextKey("apps", "api")
+		for _, field := range fields {
+			pc = pc.SubField(field)
+		}
+		return pc
+	}
+	everyNullstoneSetting := &yaml.NullstoneBuildConfiguration{
+		Dockerfile:     ptr("Dockerfile"),
+		DockerContext:  ptr("."),
+		BuildDir:       ptr("./"),
+		InstallDepsCmd: ptr("npm ci"),
+		BuildCmd:       ptr("npm run build"),
+		PublishDir:     ptr("./dist"),
+	}
+	notUsedBy := func(packageMode string, settings ...string) core.ValidateErrors {
+		errs := core.ValidateErrors{}
+		for _, setting := range settings {
+			errs = append(errs, core.BuildSettingNotUsedError(path("build", "nullstone", setting), packageMode))
+		}
+		return errs
+	}
+
+	tests := []struct {
+		name   string
+		build  *BuildConfiguration
+		target BuildTarget
+		want   core.ValidateErrors
+	}{
+		{
+			name:   "no build",
+			build:  nil,
+			target: BuildTarget{Builder: "nullstone", PackageMode: "dockerfile"},
+			want:   nil,
+		},
+		{
+			name:   "nothing is known about the app",
+			build:  &BuildConfiguration{Nullstone: everyNullstoneSetting, GithubActions: &yaml.GithubActionsBuildConfiguration{PerformPush: &no}},
+			target: BuildTarget{},
+			want:   nil,
+		},
+		{
+			name:   "a container reads the dockerfile settings",
+			build:  &BuildConfiguration{Nullstone: everyNullstoneSetting},
+			target: BuildTarget{Builder: "nullstone", PackageMode: "dockerfile"},
+			want:   notUsedBy("dockerfile", "build_dir", "install_deps_cmd", "build_cmd", "publish_dir"),
+		},
+		{
+			name:   "a static site reads the site settings",
+			build:  &BuildConfiguration{Nullstone: everyNullstoneSetting},
+			target: BuildTarget{Builder: "nullstone", PackageMode: "site-assets"},
+			want:   notUsedBy("site-assets", "dockerfile", "docker_context"),
+		},
+		{
+			name:   "a setting no builder reads for the module is reported when the builder is not known",
+			build:  &BuildConfiguration{Nullstone: &yaml.NullstoneBuildConfiguration{Dockerfile: ptr("Dockerfile"), BuildCmd: ptr("make")}},
+			target: BuildTarget{PackageMode: "dockerfile"},
+			want:   notUsedBy("dockerfile", "build_cmd"),
+		},
+		{
+			name:   "the nullstone builder cannot build a zip package",
+			build:  &BuildConfiguration{Nullstone: &yaml.NullstoneBuildConfiguration{PublishDir: ptr("./out")}},
+			target: BuildTarget{Builder: "nullstone", PackageMode: "zip"},
+			want:   core.ValidateErrors{core.BuilderCannotBuildError(path("build", "builder"), "nullstone", "zip")},
+		},
+		{
+			name:   "another builder can build a zip package",
+			build:  &BuildConfiguration{Builder: ptr("github-actions"), GithubActions: &yaml.GithubActionsBuildConfiguration{PerformPush: &no}},
+			target: BuildTarget{Builder: "github-actions", PackageMode: "zip"},
+			want:   nil,
+		},
+		{
+			name:   "settings of a builder that is not selected",
+			build:  &BuildConfiguration{Nullstone: everyNullstoneSetting, GithubActions: &yaml.GithubActionsBuildConfiguration{PerformPush: &no}},
+			target: BuildTarget{Builder: "manual", PackageMode: "dockerfile"},
+			want: core.ValidateErrors{
+				core.BuildSectionNotUsedError(path("build", "nullstone"), "nullstone", "manual"),
+				core.BuildSectionNotUsedError(path("build", "github-actions"), "github-actions", "manual"),
+			},
+		},
+		{
+			name:   "nullstone settings under github-actions are reported once, as a section",
+			build:  &BuildConfiguration{Nullstone: everyNullstoneSetting},
+			target: BuildTarget{Builder: "github-actions", PackageMode: "site-assets"},
+			want:   core.ValidateErrors{core.BuildSectionNotUsedError(path("build", "nullstone"), "nullstone", "github-actions")},
+		},
+		{
+			name:   "a builder that does not exist is left to Validate",
+			build:  &BuildConfiguration{Builder: ptr("jenkins"), GithubActions: &yaml.GithubActionsBuildConfiguration{PerformPush: &no}},
+			target: BuildTarget{Builder: "jenkins", PackageMode: "dockerfile"},
+			want:   nil,
+		},
+		{
+			name:   "a package mode with no known settings is not checked",
+			build:  &BuildConfiguration{Nullstone: everyNullstoneSetting},
+			target: BuildTarget{Builder: "nullstone", PackageMode: "buildpacks"},
+			want:   nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := test.build.ValidateFit(core.NewObjectPathContextKey("apps", "api"), test.target)
+
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
 func TestIsPathInsideRepo(t *testing.T) {
 	tests := map[string]bool{
 		"Dockerfile":           true,

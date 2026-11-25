@@ -213,25 +213,66 @@ func TestBuildConfiguration_ValidateFit(t *testing.T) {
 	}
 }
 
-func TestIsPathInsideRepo(t *testing.T) {
-	tests := map[string]bool{
-		"Dockerfile":           true,
-		".":                    true,
-		"./":                   true,
-		"./web/dist":           true,
-		"api/../Dockerfile":    true,
-		"":                     false,
-		"   ":                  false,
-		"/Dockerfile":          false,
-		"..":                   false,
-		"../Dockerfile":        false,
-		"api/../../Dockerfile": false,
-		`..\Dockerfile`:        false,
-		`C:\repo\Dockerfile`:   false,
+// TestBuildConfiguration_ValidateDockerfileAgainstContext covers dockerfile being relative to docker_context:
+// the dockerfile may sit beside its context, but the resolved path (types.BuildConfig.DockerfilePath) must
+// stay inside the repository. Validate checks the pair when the file names both; ValidateFit checks a
+// dockerfile named alone against the context in effect.
+func TestBuildConfiguration_ValidateDockerfileAgainstContext(t *testing.T) {
+	ptr := func(s string) *string { return &s }
+	dockerfilePath := core.NewObjectPathContextKey("apps", "api").SubField("build").SubField("nullstone").SubField("dockerfile")
+
+	tests := []struct {
+		name          string
+		dockerfile    *string
+		dockerContext *string
+		inEffect      string // the docker context ValidateFit is given
+		wantResolved  string
+		want          core.ValidateErrors
+		wantFit       core.ValidateErrors
+	}{
+		{name: "defaults", dockerfile: ptr("Dockerfile"), dockerContext: ptr("."), wantResolved: "Dockerfile"},
+		{name: "dockerfile inside the context", dockerfile: ptr("docker/Dockerfile.prod"), dockerContext: ptr("web"), wantResolved: "web/docker/Dockerfile.prod"},
+		{name: "dockerfile beside the context", dockerfile: ptr("../Dockerfile"), dockerContext: ptr("web"), wantResolved: "Dockerfile"},
+		{name: "context named alone", dockerfile: nil, dockerContext: ptr("web"), inEffect: ".", wantResolved: "web/Dockerfile"},
+		{name: "dockerfile named alone, context in effect not known", dockerfile: ptr("../Dockerfile"), dockerContext: nil, wantResolved: "../Dockerfile"},
+		{name: "dockerfile named alone fits the context in effect", dockerfile: ptr("../Dockerfile"), dockerContext: nil, inEffect: "web", wantResolved: "Dockerfile"},
+		{
+			name:          "dockerfile named alone leaves the repo from the context in effect",
+			dockerfile:    ptr("../Dockerfile"),
+			dockerContext: nil,
+			inEffect:      ".",
+			wantResolved:  "../Dockerfile",
+			wantFit:       core.ValidateErrors{core.DockerfileOutsideRepoError(dockerfilePath, "../Dockerfile", ".")},
+		},
+		{
+			name:          "dockerfile climbs out of the repo through the context",
+			dockerfile:    ptr("../../Dockerfile"),
+			dockerContext: ptr("web"),
+			inEffect:      "web",
+			wantResolved:  "../Dockerfile",
+			want:          core.ValidateErrors{core.DockerfileOutsideRepoError(dockerfilePath, "../../Dockerfile", "web")},
+		},
+		{
+			name:          "an absolute dockerfile is reported once, by Validate",
+			dockerfile:    ptr("/etc/Dockerfile"),
+			dockerContext: nil,
+			inEffect:      "web",
+			wantResolved:  "web/etc/Dockerfile",
+			want:          core.ValidateErrors{core.InvalidBuildPathError(dockerfilePath, "/etc/Dockerfile")},
+		},
 	}
-	for value, want := range tests {
-		t.Run(value, func(t *testing.T) {
-			assert.Equal(t, want, isPathInsideRepo(value))
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			build := &BuildConfiguration{Nullstone: &yaml.NullstoneBuildConfiguration{Dockerfile: test.dockerfile, DockerContext: test.dockerContext}}
+			pc := core.NewObjectPathContextKey("apps", "api")
+
+			assert.Equal(t, test.want, build.Validate(pc), "Validate")
+			assert.Equal(t, test.wantFit, build.ValidateFit(pc, BuildTarget{Builder: "nullstone", PackageMode: "dockerfile", DockerContext: test.inEffect}), "ValidateFit")
+
+			config := types.DefaultBuildConfig(nil)
+			config.DockerContext = test.inEffect
+			build.ApplyTo(&config)
+			assert.Equal(t, test.wantResolved, config.DockerfilePath())
 		})
 	}
 }

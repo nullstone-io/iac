@@ -39,8 +39,8 @@ func validateBuilds(input ConfigFiles) core.ValidateErrors {
 }
 
 // ValidateBuild checks the `build:` that config.yml and the overrides file of env declare for block.
-// base is what the app has outside of the files: the package mode of its module,
-// and the builder of the build config that an overrides file is laid over when config.yml declares none.
+// base is what the app has outside of the files: the package mode of its module, and the builder and
+// docker context of the build config that an overrides file is laid over when config.yml declares none.
 // Pass an empty env to check config.yml alone (the block template).
 func ValidateBuild(input ConfigFiles, block types.Block, env types.Environment, base config.BuildTarget) core.ValidateErrors {
 	if config.BlockType(block.Type) != config.BlockTypeApplication {
@@ -67,10 +67,15 @@ func validateBuildIn(cfg, overrides *config.EnvConfiguration, appName string, ba
 			target.PackageMode = types.DefaultBuildConfig(app.Module).PackageMode
 		}
 		if app.Build != nil {
-			// config.yml starts from the module default, which sets the builder
-			target.Builder = types.DefaultBuildConfig(app.Module).Builder
+			// config.yml starts from the module default, which sets the builder and the docker context
+			moduleDefault := types.DefaultBuildConfig(app.Module)
+			target.Builder = moduleDefault.Builder
+			target.DockerContext = moduleDefault.DockerContext
 			if app.Build.Builder != nil {
 				target.Builder = *app.Build.Builder
+			}
+			if app.Build.Nullstone != nil && app.Build.Nullstone.DockerContext != nil {
+				target.DockerContext = *app.Build.Nullstone.DockerContext
 			}
 		}
 	}
@@ -82,6 +87,9 @@ func validateBuildIn(cfg, overrides *config.EnvConfiguration, appName string, ba
 			}
 			if app.Build != nil && app.Build.Builder != nil {
 				target.Builder = *app.Build.Builder
+			}
+			if app.Build != nil && app.Build.Nullstone != nil && app.Build.Nullstone.DockerContext != nil {
+				target.DockerContext = *app.Build.Nullstone.DockerContext
 			}
 		}
 	}

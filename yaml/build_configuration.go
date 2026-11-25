@@ -6,8 +6,8 @@ package yaml
 //	build:
 //	  builder: nullstone
 //	  nullstone:
-//	    dockerfile: Dockerfile
 //	    docker_context: .
+//	    dockerfile: Dockerfile
 //
 // Every key is optional.
 // In config.yml, a key that is left out takes the default of the app's module.
@@ -31,7 +31,9 @@ type BuildConfiguration struct {
 // Which settings are used depends on the package mode (dockerfile, zip, site-assets).
 // The package mode is not a setting: it comes from the app's module.
 type NullstoneBuildConfiguration struct {
-	// Dockerfile and DockerContext apply to the dockerfile package mode
+	// Dockerfile and DockerContext apply to the dockerfile package mode.
+	// DockerContext is relative to the repository root; Dockerfile is relative to DockerContext,
+	// as in docker compose: docker_context `web` with dockerfile `Dockerfile` builds from web/Dockerfile.
 	Dockerfile    *string `yaml:"dockerfile,omitempty" json:"dockerfile,omitempty"`
 	DockerContext *string `yaml:"docker_context,omitempty" json:"dockerContext,omitempty"`
 

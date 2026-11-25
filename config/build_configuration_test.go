@@ -213,25 +213,49 @@ func TestBuildConfiguration_ValidateFit(t *testing.T) {
 	}
 }
 
-func TestIsPathInsideRepo(t *testing.T) {
-	tests := map[string]bool{
-		"Dockerfile":           true,
-		".":                    true,
-		"./":                   true,
-		"./web/dist":           true,
-		"api/../Dockerfile":    true,
-		"":                     false,
-		"   ":                  false,
-		"/Dockerfile":          false,
-		"..":                   false,
-		"../Dockerfile":        false,
-		"api/../../Dockerfile": false,
-		`..\Dockerfile`:        false,
-		`C:\repo\Dockerfile`:   false,
+// TestBuildConfiguration_ValidateDockerfileAgainstContext pins the rule that dockerfile is relative to
+// docker_context: the resolved path (types.BuildConfig.DockerfilePath) stays inside the repository exactly
+// when the dockerfile does on its own, whatever the context, so each path is checked by itself.
+func TestBuildConfiguration_ValidateDockerfileAgainstContext(t *testing.T) {
+	ptr := func(s string) *string { return &s }
+	dockerfilePath := core.NewObjectPathContextKey("apps", "api").SubField("build").SubField("nullstone").SubField("dockerfile")
+
+	tests := []struct {
+		name          string
+		dockerfile    *string
+		dockerContext *string
+		wantResolved  string
+		want          core.ValidateErrors
+	}{
+		{name: "defaults", dockerfile: ptr("Dockerfile"), dockerContext: ptr("."), wantResolved: "Dockerfile", want: nil},
+		{name: "dockerfile inside the context", dockerfile: ptr("docker/Dockerfile.prod"), dockerContext: ptr("web"), wantResolved: "web/docker/Dockerfile.prod", want: nil},
+		{name: "dockerfile named alone", dockerfile: ptr("Dockerfile"), dockerContext: nil, wantResolved: "Dockerfile", want: nil},
+		{name: "context named alone", dockerfile: nil, dockerContext: ptr("web"), wantResolved: "web/Dockerfile", want: nil},
+		{
+			name:          "dockerfile climbs out of the context: rejected even though web/../.. is the repo root",
+			dockerfile:    ptr("../Dockerfile"),
+			dockerContext: ptr("web"),
+			wantResolved:  "Dockerfile",
+			want:          core.ValidateErrors{core.InvalidBuildPathError(dockerfilePath, "../Dockerfile")},
+		},
+		{
+			name:          "dockerfile climbs out of the repo through the context",
+			dockerfile:    ptr("../../Dockerfile"),
+			dockerContext: ptr("web"),
+			wantResolved:  "../Dockerfile",
+			want:          core.ValidateErrors{core.InvalidBuildPathError(dockerfilePath, "../../Dockerfile")},
+		},
 	}
-	for value, want := range tests {
-		t.Run(value, func(t *testing.T) {
-			assert.Equal(t, want, isPathInsideRepo(value))
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			build := &BuildConfiguration{Nullstone: &yaml.NullstoneBuildConfiguration{Dockerfile: test.dockerfile, DockerContext: test.dockerContext}}
+
+			got := build.Validate(core.NewObjectPathContextKey("apps", "api"))
+			assert.Equal(t, test.want, got)
+
+			config := types.DefaultBuildConfig(nil)
+			build.ApplyTo(&config)
+			assert.Equal(t, test.wantResolved, config.DockerfilePath())
 		})
 	}
 }

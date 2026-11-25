@@ -1,9 +1,7 @@
 package config
 
 import (
-	"path"
 	"slices"
-	"strings"
 
 	"github.com/nullstone-io/iac/core"
 	"github.com/nullstone-io/iac/yaml"
@@ -38,6 +36,9 @@ func (b *BuildConfiguration) Validate(pc core.ObjectPathContext) core.ValidateEr
 
 	if ns := b.Nullstone; ns != nil {
 		nspc := pc.SubField(types.BuilderNullstone)
+		// dockerfile is relative to docker_context (types.BuildConfig.DockerfilePath). Checking each path on
+		// its own is enough to keep the resolved path inside the repository: the context only adds depth,
+		// so the resolved path can climb out only when the dockerfile climbs out by itself.
 		errs = append(errs, validateBuildPath(nspc.SubField("dockerfile"), ns.Dockerfile)...)
 		errs = append(errs, validateBuildPath(nspc.SubField("docker_context"), ns.DockerContext)...)
 		errs = append(errs, validateBuildPath(nspc.SubField("build_dir"), ns.BuildDir)...)
@@ -135,23 +136,10 @@ func validateBuildPath(pc core.ObjectPathContext, value *string) core.ValidateEr
 	if value == nil {
 		return nil
 	}
-	if !isPathInsideRepo(*value) {
+	if !types.IsRepoRelativePath(*value) {
 		return core.ValidateErrors{core.InvalidBuildPathError(pc, *value)}
 	}
 	return nil
-}
-
-func isPathInsideRepo(value string) bool {
-	if strings.TrimSpace(value) == "" {
-		return false
-	}
-	slashed := strings.ReplaceAll(value, `\`, "/")
-	if strings.HasPrefix(slashed, "/") || strings.Contains(slashed, ":") {
-		// an absolute path, a drive letter or a url
-		return false
-	}
-	cleaned := path.Clean(slashed)
-	return cleaned != ".." && !strings.HasPrefix(cleaned, "../")
 }
 
 // ApplyTo lays the keys the file names over config and leaves every other setting as it is.

@@ -36,11 +36,17 @@ func (b *BuildConfiguration) Validate(pc core.ObjectPathContext) core.ValidateEr
 
 	if ns := b.Nullstone; ns != nil {
 		nspc := pc.SubField(types.BuilderNullstone)
-		// dockerfile is relative to docker_context (types.BuildConfig.DockerfilePath). Checking each path on
-		// its own is enough to keep the resolved path inside the repository: the context only adds depth,
-		// so the resolved path can climb out only when the dockerfile climbs out by itself.
-		errs = append(errs, validateBuildPath(nspc.SubField("dockerfile"), ns.Dockerfile)...)
-		errs = append(errs, validateBuildPath(nspc.SubField("docker_context"), ns.DockerContext)...)
+		// dockerfile is relative to docker_context (types.BuildConfig.DockerfilePath) and may sit beside it
+		// (`../Dockerfile`), so on its own it need only be relative. The resolved path must stay inside the
+		// repository: that is checked here when the file names both keys, else in ValidateFit against the
+		// context in effect.
+		dockerfileErrs := validateRelativePath(nspc.SubField("dockerfile"), ns.Dockerfile)
+		contextErrs := validateBuildPath(nspc.SubField("docker_context"), ns.DockerContext)
+		errs = append(errs, dockerfileErrs...)
+		errs = append(errs, contextErrs...)
+		if ns.Dockerfile != nil && ns.DockerContext != nil && len(dockerfileErrs) == 0 && len(contextErrs) == 0 {
+			errs = append(errs, validateDockerfileInRepo(nspc.SubField("dockerfile"), *ns.Dockerfile, *ns.DockerContext)...)
+		}
 		errs = append(errs, validateBuildPath(nspc.SubField("build_dir"), ns.BuildDir)...)
 		errs = append(errs, validateBuildPath(nspc.SubField("publish_dir"), ns.PublishDir)...)
 	}
@@ -63,6 +69,9 @@ type BuildTarget struct {
 	Builder string
 	// PackageMode is the package mode of the app's module
 	PackageMode string
+	// DockerContext is the docker context in effect for the file: the one it names, else the one it is laid over.
+	// A dockerfile the file names is resolved against it to check that it stays inside the repository.
+	DockerContext string
 }
 
 var (
@@ -103,6 +112,12 @@ func (b *BuildConfiguration) ValidateFit(pc core.ObjectPathContext, target Build
 		}
 	}
 
+	// A dockerfile named without its context is resolved against the context in effect.
+	// (Validate checks the pair when the file names both.)
+	if ns := b.Nullstone; ns != nil && ns.Dockerfile != nil && ns.DockerContext == nil && target.DockerContext != "" && types.IsRelativePath(*ns.Dockerfile) {
+		errs = append(errs, validateDockerfileInRepo(pc.SubField(types.BuilderNullstone).SubField("dockerfile"), *ns.Dockerfile, target.DockerContext)...)
+	}
+
 	// A nullstone section under another builder is already reported as a whole
 	used, known := nullstoneSettingsByPackageMode[target.PackageMode]
 	if ns := b.Nullstone; ns != nil && known && (builder == "" || builder == types.BuilderNullstone) {
@@ -138,6 +153,26 @@ func validateBuildPath(pc core.ObjectPathContext, value *string) core.ValidateEr
 	}
 	if !types.IsRepoRelativePath(*value) {
 		return core.ValidateErrors{core.InvalidBuildPathError(pc, *value)}
+	}
+	return nil
+}
+
+// validateRelativePath ensures a path that the file names is set and relative; it may climb, since it is
+// resolved against another path (validateDockerfileInRepo)
+func validateRelativePath(pc core.ObjectPathContext, value *string) core.ValidateErrors {
+	if value == nil {
+		return nil
+	}
+	if !types.IsRelativePath(*value) {
+		return core.ValidateErrors{core.InvalidBuildPathError(pc, *value)}
+	}
+	return nil
+}
+
+// validateDockerfileInRepo ensures the dockerfile, resolved against the docker context, stays inside the repository
+func validateDockerfileInRepo(pc core.ObjectPathContext, dockerfile, dockerContext string) core.ValidateErrors {
+	if !types.IsRepoRelativePath(types.JoinRepoPath(dockerContext, dockerfile)) {
+		return core.ValidateErrors{core.DockerfileOutsideRepoError(pc, dockerfile, dockerContext)}
 	}
 	return nil
 }

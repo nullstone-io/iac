@@ -198,3 +198,11 @@ func BuilderCannotBuildError(pc ObjectPathContext, builder, packageMode string) 
 		ErrorMessage:      fmt.Sprintf("The %s builder cannot build the package mode (%s) of the app's module", builder, packageMode),
 	}
 }
+
+// DockerfileOutsideRepoError reports a dockerfile that leaves the repository once it is resolved against docker_context
+func DockerfileOutsideRepoError(pc ObjectPathContext, dockerfile, dockerContext string) ValidateError {
+	return ValidateError{
+		ObjectPathContext: pc,
+		ErrorMessage:      fmt.Sprintf("Invalid path (%s), dockerfile is relative to docker_context (%s) and must stay inside the repository", dockerfile, dockerContext),
+	}
+}
